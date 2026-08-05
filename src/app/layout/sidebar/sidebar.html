@@ -1,0 +1,72 @@
+<aside class="sidebar">
+  <div class="sidebar__brand">
+    <span class="sidebar__brand-cc">CC</span>
+    <span class="sidebar__brand-name">Sacramento</span>
+  </div>
+
+  <nav class="sidebar__nav">
+    @for (item of navItems; track item.route) {
+      <a class="sidebar__link" [routerLink]="item.route" routerLinkActive="sidebar__link--active">
+        <span class="sidebar__icon">
+          @switch (item.icon) {
+            @case ('dashboard') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                <rect x="14" y="14" width="7" height="7" rx="1.5" />
+              </svg>
+            }
+            @case ('store') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M3 9.5 4.5 4h15L21 9.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path
+                  d="M4 9.5v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path d="M9 19.5v-6h6v6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            }
+            @case ('receipt') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path
+                  d="M6 2h12v19l-3-2-3 2-3-2-3 2V2Z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path d="M9 8h6M9 12h6" stroke-linecap="round" />
+              </svg>
+            }
+            @case ('expenses') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="m3 7 6 6 4-4 8 8" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M15 17h6v-6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            }
+            @case ('wallet') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path
+                  d="M3 7a2 2 0 0 1 2-2h13a1 1 0 0 1 1 1v3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M3 7v11a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1h-4a2 2 0 1 0 0 4h5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            }
+          }
+        </span>
+        <span class="sidebar__label">{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+
+  <div class="sidebar__footer">
+    <p>Centro Comercial Sacramento</p>
+    <p>Los Teques, Venezuela</p>
+  </div>
+</aside>

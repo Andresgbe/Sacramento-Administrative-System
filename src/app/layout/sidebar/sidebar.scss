@@ -1,0 +1,89 @@
+@use '../../styles/mixins' as *;
+
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  @include custom-scrollbar;
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 24px 20px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.25rem;
+}
+
+.sidebar__brand-cc {
+  color: #ffffff;
+}
+
+.sidebar__brand-name {
+  color: var(--color-accent);
+}
+
+.sidebar__nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+}
+
+.sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  color: var(--sidebar-text);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    background: var(--sidebar-bg-hover);
+    color: #ffffff;
+  }
+
+  &--active {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+  }
+}
+
+.sidebar__icon {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.sidebar__footer {
+  padding: 20px;
+  border-top: 1px solid rgb(255 255 255 / 8%);
+  font-size: 0.75rem;
+  color: var(--sidebar-text-muted);
+  line-height: 1.5;
+
+  p {
+    margin: 0;
+  }
+}

@@ -26,8 +26,51 @@
 Tables: usuarios, locales, pagos, servicios_pagos, egresos, caja_chica,
 remodelaciones, tasas_cambio, documentos
 
+## Folder structure (feature-based)
+```
+src/app/
+├── core/                     # Singletons: guards, interceptors, services
+│   ├── guards/                # auth.guard.ts, role.guard.ts
+│   ├── services/               # supabase.service.ts, auth.service.ts
+│   └── models/                 # TS interfaces aligned with the Postgres schema
+├── shared/                   # Reusable components/pipes/directives
+├── features/                 # One folder per business module
+│   ├── auth/
+│   ├── dashboard/
+│   ├── locales/
+│   ├── pagos/
+│   ├── egresos/
+│   ├── caja-chica/
+│   ├── tasas-cambio/
+│   ├── calculadora/
+│   └── reportes/
+├── layout/                   # Shell: sidebar, navbar, main-layout
+└── styles/                   # Global SCSS: _variables, _mixins, _typography
+```
+
+Each feature is lazy-loaded via routes, and contains its own components,
+service(s), and routes file.
+
+## Adopted design patterns
+- **Repository Pattern**: each feature encapsulates its Supabase calls in
+  a dedicated service (e.g. LocalesService), never called directly from
+  components. Eases testing and allows swapping the data source without
+  touching the UI.
+- **Smart/Dumb Components**: "smart" components (containers) handle state
+  and business logic; "dumb" components (presentational) only receive
+  @Input()/@Output(), with no logic of their own, and are reusable across
+  features.
+
+When generating new code, follow this structure and these patterns strictly.
+Any new component or service belongs in its corresponding feature folder,
+not in the root of app/.
+
 ## Working conventions
-- All code and explanations in English
+- **Language rule**: all code, file/folder names, variables, functions, classes,
+  components, comments, commit messages, and explanations are in English.
+  The only exception is client-facing text — anything the end user (admin/subadmin)
+  actually sees in the UI: labels, buttons, messages, validation errors, PDF/report
+  content — which is written in Spanish.
 - Development environment: Windows, PowerShell, VS Code
 - Prefer step-by-step progress: test each working piece before moving on
 - The user wants to understand the backend architecture, not just copy/paste solutions

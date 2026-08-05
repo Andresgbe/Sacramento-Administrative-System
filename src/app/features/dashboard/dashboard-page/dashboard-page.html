@@ -1,0 +1,59 @@
+<section class="stats">
+  @for (stat of stats; track stat.label) {
+    <div class="stat-card">
+      <span class="stat-card__label">{{ stat.label }}</span>
+      <span class="stat-card__value" [class]="'stat-card__value--' + stat.tone">
+        {{ stat.value }}
+      </span>
+    </div>
+  }
+</section>
+
+<section class="panels">
+  <div class="panel">
+    <div class="panel__header">
+      <h2>Últimos pagos</h2>
+      <button type="button" class="panel__link">Ver todos</button>
+    </div>
+    <table class="panel__table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Local</th>
+          <th class="panel__table-amount">Monto</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (payment of recentPayments; track payment.date + payment.local) {
+          <tr>
+            <td>{{ payment.date }}</td>
+            <td>{{ payment.local }}</td>
+            <td class="panel__table-amount">{{ payment.amount }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <div class="panel__header">
+      <h2>Próximos a vencer</h2>
+    </div>
+    <table class="panel__table">
+      <thead>
+        <tr>
+          <th>Local</th>
+          <th class="panel__table-amount">Vence</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (due of upcomingDues; track due.local) {
+          <tr>
+            <td>{{ due.local }}</td>
+            <td class="panel__table-amount">{{ due.dueDate }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
