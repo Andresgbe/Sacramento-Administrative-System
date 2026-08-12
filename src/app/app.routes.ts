@@ -17,7 +17,7 @@ export const routes: Routes = [
       {
         path: 'locales',
         loadComponent: () =>
-          import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+          import('./features/locales/locales-page/locales-page').then((m) => m.LocalesPage),
         data: { title: 'Locales', subtitle: 'Gestión de locales comerciales' },
       },
       {

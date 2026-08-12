@@ -1,0 +1,33 @@
+<div class="locales-page__header">
+  <button type="button" class="btn btn--primary" (click)="openModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+    </svg>
+    Agregar local
+  </button>
+</div>
+
+@if (isLoading()) {
+  <p class="locales-page__status">Cargando locales…</p>
+} @else if (loadError()) {
+  <p class="locales-page__status locales-page__status--error">
+    No se pudieron cargar los locales: {{ loadError() }}
+  </p>
+} @else if (locales().length === 0) {
+  <p class="locales-page__status">Todavía no hay locales registrados.</p>
+} @else {
+  <div class="locales-grid">
+    @for (local of locales(); track local.id) {
+      <app-local-card [local]="local" />
+    }
+  </div>
+}
+
+@if (modalOpen()) {
+  <app-local-form-modal
+    [saving]="saving()"
+    [errorMessage]="saveError()"
+    (closed)="closeModal()"
+    (saved)="onLocalSaved($event)"
+  />
+}

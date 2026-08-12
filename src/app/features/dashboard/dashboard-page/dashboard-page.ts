@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { BarChart, BarDatum } from '../../../shared/components/bar-chart/bar-chart';
+import { DonutChart, DonutSegment } from '../../../shared/components/donut-chart/donut-chart';
 
 interface DashboardStat {
   label: string;
@@ -19,7 +21,7 @@ interface UpcomingDue {
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [],
+  imports: [DonutChart, BarChart],
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
 })
@@ -42,5 +44,20 @@ export class DashboardPage {
     { local: 'Local 22 — Farmacia San José', dueDate: '10/08/2026' },
     { local: 'Local 14 — Panadería Central', dueDate: '05/08/2026' },
     { local: 'Local 17 — Café Andino', dueDate: '05/08/2026' },
+  ];
+
+  protected readonly localesPorEstado: DonutSegment[] = [
+    { label: 'Activo', value: 39, color: 'var(--color-success)' },
+    { label: 'Vencido', value: 3, color: 'var(--color-danger)' },
+    { label: 'Inactivo', value: 5, color: 'var(--color-neutral)' },
+  ];
+
+  protected readonly ingresosMensuales: BarDatum[] = [
+    { label: 'Mar', value: 3200 },
+    { label: 'Abr', value: 3450 },
+    { label: 'May', value: 3100 },
+    { label: 'Jun', value: 3800 },
+    { label: 'Jul', value: 3950 },
+    { label: 'Ago', value: 4120 },
   ];
 }

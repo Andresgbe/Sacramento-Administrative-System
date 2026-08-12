@@ -99,3 +99,10 @@
   text-align: right;
   font-family: var(--font-mono);
 }
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}

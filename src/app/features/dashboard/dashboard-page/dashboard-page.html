@@ -57,3 +57,19 @@
     </table>
   </div>
 </section>
+
+<section class="charts">
+  <div class="panel">
+    <div class="panel__header">
+      <h2>Locales por estado</h2>
+    </div>
+    <app-donut-chart [segments]="localesPorEstado" centerLabel="Locales" />
+  </div>
+
+  <div class="panel">
+    <div class="panel__header">
+      <h2>Ingresos mensuales</h2>
+    </div>
+    <app-bar-chart [data]="ingresosMensuales" valuePrefix="$ " />
+  </div>
+</section>

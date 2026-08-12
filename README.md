@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # CC Sacramento
 
 Administrative system for Centro Comercial Sacramento (Carrizal, Los Teques, Venezuela).
@@ -23,3 +24,6 @@ ng build
 ```bash
 ng test
 ```
+=======
+
+>>>>>>> 63f61f96892a290545d9b0c8ae38f712b8639f71

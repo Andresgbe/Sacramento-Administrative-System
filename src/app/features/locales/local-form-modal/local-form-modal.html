@@ -1,0 +1,68 @@
+<div class="modal-backdrop" (click)="closed.emit()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal__header">
+      <h2>Agregar local</h2>
+      <button type="button" class="modal__close" (click)="closed.emit()" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="modal__form">
+      <label class="field">
+        <span>Número de local</span>
+        <input type="text" formControlName="numeroLocal" placeholder="Local 12" />
+      </label>
+
+      <label class="field">
+        <span>Nombre comercial</span>
+        <input type="text" formControlName="nombreComercial" placeholder="Panadería Central" />
+      </label>
+
+      <label class="field">
+        <span>Imagen (URL)</span>
+        <input type="text" formControlName="imagenUrl" placeholder="https://..." />
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span>Piso</span>
+          <input type="text" formControlName="piso" placeholder="PB" />
+        </label>
+
+        <label class="field">
+          <span>Área (m²)</span>
+          <input type="number" formControlName="areaM2" min="0" />
+        </label>
+      </div>
+
+      <div class="field-row">
+        <label class="field">
+          <span>Monto de alquiler (USD)</span>
+          <input type="number" formControlName="montoAlquiler" min="0" step="0.01" />
+        </label>
+
+        <label class="field">
+          <span>Estado</span>
+          <select formControlName="estado">
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+            <option value="vencido">Vencido</option>
+          </select>
+        </label>
+      </div>
+
+      @if (errorMessage) {
+        <p class="modal__error">{{ errorMessage }}</p>
+      }
+
+      <div class="modal__actions">
+        <button type="button" class="btn btn--secondary" (click)="closed.emit()">Cancelar</button>
+        <button type="submit" class="btn btn--primary" [disabled]="saving">
+          {{ saving ? 'Guardando…' : 'Guardar local' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
