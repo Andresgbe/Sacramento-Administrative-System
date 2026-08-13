@@ -24,12 +24,9 @@
   <div class="local-card__body">
     <h3 class="local-card__title">{{ local.nombreComercial }}</h3>
 
-    <div class="local-card__meta">
-      <span>{{ local.piso || 'Sin piso asignado' }}</span>
-      @if (local.areaM2) {
-        <span>· {{ local.areaM2 }} m²</span>
-      }
-    </div>
+    <span class="local-card__pago-badge local-card__pago-badge--{{ pagoStatus }}">
+      {{ pagoStatusLabel[pagoStatus] }}
+    </span>
 
     @if (local.montoAlquiler) {
       <span class="local-card__rent">$ {{ local.montoAlquiler | number: '1.2-2' }}</span>

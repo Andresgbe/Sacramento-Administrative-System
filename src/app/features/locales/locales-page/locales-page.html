@@ -18,7 +18,7 @@
 } @else {
   <div class="locales-grid">
     @for (local of locales(); track local.id) {
-      <app-local-card [local]="local" />
+      <app-local-card [local]="local" [pagoStatus]="pagoStatus(local.id)" />
     }
   </div>
 }

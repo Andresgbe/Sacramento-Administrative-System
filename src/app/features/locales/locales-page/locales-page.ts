@@ -1,8 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { Local } from '../../../core/models/local.model';
-import { LocalCard } from '../local-card/local-card';
-import { LocalFormModal } from '../local-form-modal/local-form-modal';
+import { LocalCard, PagoStatus } from '../local-card/local-card';
+import { LocalFormModal, LocalFormPayload } from '../local-form-modal/local-form-modal';
 import { LocalesService } from '../locales.service';
+import { PagosService } from '../../pagos/pagos.service';
 
 @Component({
   selector: 'app-locales-page',
@@ -12,6 +12,7 @@ import { LocalesService } from '../locales.service';
 })
 export class LocalesPage implements OnInit {
   private readonly localesService = inject(LocalesService);
+  private readonly pagosService = inject(PagosService);
 
   protected readonly locales = this.localesService.all;
   protected readonly isLoading = this.localesService.isLoading;
@@ -23,6 +24,11 @@ export class LocalesPage implements OnInit {
 
   ngOnInit(): void {
     this.localesService.load();
+    this.pagosService.load();
+  }
+
+  protected pagoStatus(localId: string): PagoStatus {
+    return this.pagosService.hasPaidThisMonth(localId) ? 'al-dia' : 'debe';
   }
 
   protected openModal(): void {
@@ -34,11 +40,33 @@ export class LocalesPage implements OnInit {
     this.modalOpen.set(false);
   }
 
-  protected async onLocalSaved(local: Omit<Local, 'id' | 'createdAt'>): Promise<void> {
+  protected async onLocalSaved(payload: LocalFormPayload): Promise<void> {
     this.saving.set(true);
     this.saveError.set(null);
 
-    const { error } = await this.localesService.add(local);
+    let imagenUrl: string | null = null;
+
+    if (payload.imageFile) {
+      const { url, error } = await this.localesService.uploadImage(payload.imageFile);
+
+      if (error) {
+        this.saveError.set(error);
+        this.saving.set(false);
+        return;
+      }
+
+      imagenUrl = url;
+    }
+
+    const { error } = await this.localesService.add({
+      numeroLocal: payload.numeroLocal,
+      nombreComercial: payload.nombreComercial,
+      imagenUrl,
+      piso: payload.piso,
+      areaM2: null,
+      montoAlquiler: payload.montoAlquiler,
+      estado: payload.estado,
+    });
 
     this.saving.set(false);
 

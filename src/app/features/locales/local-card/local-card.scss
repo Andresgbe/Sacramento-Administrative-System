@@ -113,12 +113,24 @@
   color: var(--color-text-primary);
 }
 
-.local-card__meta {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.825rem;
-  color: var(--color-text-secondary);
+.local-card__pago-badge {
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+
+  &--al-dia {
+    background: rgb(22 163 74 / 12%);
+    color: var(--color-success);
+  }
+
+  &--debe {
+    background: rgb(220 38 38 / 12%);
+    color: var(--color-danger);
+  }
 }
 
 .local-card__rent {

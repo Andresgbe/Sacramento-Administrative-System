@@ -60,6 +60,20 @@ export class LocalesService {
     this.loading.set(false);
   }
 
+  async uploadImage(file: File): Promise<{ url: string | null; error: string | null }> {
+    const extension = file.name.split('.').pop();
+    const path = `${crypto.randomUUID()}.${extension}`;
+
+    const { error } = await this.supabase.storage.from('locales').upload(path, file);
+
+    if (error) {
+      return { url: null, error: error.message };
+    }
+
+    const { data } = this.supabase.storage.from('locales').getPublicUrl(path);
+    return { url: data.publicUrl, error: null };
+  }
+
   async add(local: Omit<Local, 'id' | 'createdAt'>): Promise<{ error: string | null }> {
     const { data, error } = await this.supabase
       .from('locales')

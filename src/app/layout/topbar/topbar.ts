@@ -1,5 +1,6 @@
-import { Component, ElementRef, HostListener, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 import { PageHeaderService } from '../../core/services/page-header.service';
 
 @Component({
@@ -11,13 +12,15 @@ import { PageHeaderService } from '../../core/services/page-header.service';
 export class Topbar {
   private readonly elementRef = inject(ElementRef);
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
   protected readonly pageHeader = inject(PageHeaderService);
 
   protected readonly menuOpen = signal(false);
 
-  // Placeholder until Supabase Auth provides the signed-in user
-  protected readonly userName = 'Usuario Administrador';
-  protected readonly userInitials = 'UA';
+  protected readonly userName = computed(
+    () => this.authService.currentSession()?.user.email ?? 'Usuario',
+  );
+  protected readonly userInitials = computed(() => this.userName().slice(0, 2).toUpperCase());
 
   protected toggleMenu(): void {
     this.menuOpen.update((open) => !open);
@@ -34,8 +37,9 @@ export class Topbar {
     }
   }
 
-  protected logOut(): void {
+  protected async logOut(): Promise<void> {
     this.closeMenu();
+    await this.authService.signOut();
     this.router.navigateByUrl('/login');
   }
 }

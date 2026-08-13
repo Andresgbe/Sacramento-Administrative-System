@@ -13,12 +13,12 @@
       (click)="toggleMenu()"
       [attr.aria-expanded]="menuOpen()"
     >
-      {{ userInitials }}
+      {{ userInitials() }}
     </button>
 
     @if (menuOpen()) {
       <div class="topbar__menu">
-        <div class="topbar__menu-header">{{ userName }}</div>
+        <div class="topbar__menu-header">{{ userName() }}</div>
         <button type="button" class="topbar__menu-item" (click)="closeMenu()">
           Mi información
         </button>

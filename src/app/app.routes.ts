@@ -1,8 +1,15 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/login-page/login-page').then((m) => m.LoginPage),
+  },
+  {
     path: '',
+    canActivate: [authGuard],
     loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
@@ -12,13 +19,13 @@ export const routes: Routes = [
           import('./features/dashboard/dashboard-page/dashboard-page').then(
             (m) => m.DashboardPage,
           ),
-        data: { title: 'Dashboard', subtitle: 'Resumen general del centro comercial' },
+        data: { title: 'Dashboard'},
       },
       {
         path: 'locales',
         loadComponent: () =>
           import('./features/locales/locales-page/locales-page').then((m) => m.LocalesPage),
-        data: { title: 'Locales', subtitle: 'Gestión de locales comerciales' },
+        data: { title: 'Locales' },
       },
       {
         path: 'pagos',

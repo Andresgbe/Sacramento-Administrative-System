@@ -1,5 +1,5 @@
-<div class="modal-backdrop" (click)="closed.emit()">
-  <div class="modal" (click)="$event.stopPropagation()">
+<div class="modal-backdrop" (mousedown)="onBackdropMouseDown($event)" (click)="onBackdropClick($event)">
+  <div class="modal">
     <div class="modal__header">
       <h2>Agregar local</h2>
       <button type="button" class="modal__close" (click)="closed.emit()" aria-label="Cerrar">
@@ -20,22 +20,39 @@
         <input type="text" formControlName="nombreComercial" placeholder="Panadería Central" />
       </label>
 
-      <label class="field">
-        <span>Imagen (URL)</span>
-        <input type="text" formControlName="imagenUrl" placeholder="https://..." />
-      </label>
-
-      <div class="field-row">
-        <label class="field">
-          <span>Piso</span>
-          <input type="text" formControlName="piso" placeholder="PB" />
-        </label>
-
-        <label class="field">
-          <span>Área (m²)</span>
-          <input type="number" formControlName="areaM2" min="0" />
-        </label>
+      <div class="field">
+        <span>Imagen</span>
+        @if (imagePreviewUrl) {
+          <div class="image-picker__preview">
+            <img [src]="imagePreviewUrl" alt="Vista previa" />
+            <button type="button" class="image-picker__remove" (click)="removeImage()">
+              Quitar
+            </button>
+          </div>
+        } @else {
+          <label class="image-picker__dropzone">
+            <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path
+                d="M12 16V4m0 0-4 4m4-4 4 4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span>Subir foto desde tu computadora</span>
+          </label>
+        }
       </div>
+
+      <label class="field">
+        <span>Piso</span>
+        <input type="text" formControlName="piso" placeholder="PB" />
+      </label>
 
       <div class="field-row">
         <label class="field">
