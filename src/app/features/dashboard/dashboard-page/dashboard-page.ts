@@ -1,4 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
+import { PagosService } from '../../pagos/pagos.service';
+import { LocalesService } from '../../locales/locales.service';
 import { BarChart, BarDatum } from '../../../shared/components/bar-chart/bar-chart';
 import { DonutChart, DonutSegment } from '../../../shared/components/donut-chart/donut-chart';
 
@@ -25,7 +27,10 @@ interface UpcomingDue {
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
 })
-export class DashboardPage {
+export class DashboardPage implements OnInit {
+  private readonly localesService = inject(LocalesService);
+  private readonly pagosService = inject(PagosService);
+
   // Placeholder data until dashboard queries are wired up to Supabase
   protected readonly stats: DashboardStat[] = [
     { label: 'Caja chica disponible', value: '$ 1,208.50', tone: 'accent' },
@@ -46,11 +51,32 @@ export class DashboardPage {
     { local: 'Local 17 — Café Andino', dueDate: '05/08/2026' },
   ];
 
-  protected readonly localesPorEstado: DonutSegment[] = [
-    { label: 'Activo', value: 39, color: 'var(--color-success)' },
-    { label: 'Vencido', value: 3, color: 'var(--color-danger)' },
-    { label: 'Inactivo', value: 5, color: 'var(--color-neutral)' },
-  ];
+  // Live: computed from LocalesService + PagosService.
+  protected readonly localesPorPago = computed<DonutSegment[]>(() => {
+    const locales = this.localesService.all();
+
+    let alDia = 0;
+    let faltanPorPagar = 0;
+    let masDeDosMeses = 0;
+
+    for (const local of locales) {
+      const meses = this.pagosService.monthsSinceLastPayment(local.id);
+
+      if (meses === 0) {
+        alDia++;
+      } else if (meses === null || meses > 2) {
+        masDeDosMeses++;
+      } else {
+        faltanPorPagar++;
+      }
+    }
+
+    return [
+      { label: 'Al día', value: alDia, color: 'var(--color-success)' },
+      { label: 'Faltan por pagar', value: faltanPorPagar, color: 'var(--color-accent)' },
+      { label: 'Más de 2 meses sin pagar', value: masDeDosMeses, color: 'var(--color-danger)' },
+    ];
+  });
 
   protected readonly ingresosMensuales: BarDatum[] = [
     { label: 'Mar', value: 3200 },
@@ -60,4 +86,9 @@ export class DashboardPage {
     { label: 'Jul', value: 3950 },
     { label: 'Ago', value: 4120 },
   ];
+
+  ngOnInit(): void {
+    this.localesService.load();
+    this.pagosService.load();
+  }
 }

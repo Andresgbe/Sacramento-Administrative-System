@@ -70,6 +70,79 @@
         </label>
       </div>
 
+      <button type="button" class="advanced-toggle" (click)="toggleAdvanced()">
+        <svg
+          class="advanced-toggle__chevron"
+          [class.advanced-toggle__chevron--open]="showAdvanced()"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="m9 6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Datos avanzados
+      </button>
+
+      @if (showAdvanced()) {
+        <div class="advanced-section">
+          <p class="advanced-section__hint">
+            Opcional — contrato, RIF u otros documentos del local.
+          </p>
+
+          <div class="field">
+            <span>Contrato</span>
+            @if (contratoFile) {
+              <div class="file-picker__selected">
+                <span class="file-picker__name">{{ contratoFile.name }}</span>
+                <button type="button" class="file-picker__remove" (click)="removeContrato()">
+                  Quitar
+                </button>
+              </div>
+            } @else {
+              <label class="file-picker__dropzone">
+                <input type="file" (change)="onContratoSelected($event)" hidden />
+                Subir archivo
+              </label>
+            }
+          </div>
+
+          <div class="field">
+            <span>RIF</span>
+            @if (rifFile) {
+              <div class="file-picker__selected">
+                <span class="file-picker__name">{{ rifFile.name }}</span>
+                <button type="button" class="file-picker__remove" (click)="removeRif()">
+                  Quitar
+                </button>
+              </div>
+            } @else {
+              <label class="file-picker__dropzone">
+                <input type="file" (change)="onRifSelected($event)" hidden />
+                Subir archivo
+              </label>
+            }
+          </div>
+
+          <div class="field">
+            <span>Otro documento</span>
+            @if (otroFile) {
+              <div class="file-picker__selected">
+                <span class="file-picker__name">{{ otroFile.name }}</span>
+                <button type="button" class="file-picker__remove" (click)="removeOtro()">
+                  Quitar
+                </button>
+              </div>
+            } @else {
+              <label class="file-picker__dropzone">
+                <input type="file" (change)="onOtroSelected($event)" hidden />
+                Subir archivo
+              </label>
+            }
+          </div>
+        </div>
+      }
+
       @if (errorMessage) {
         <p class="modal__error">{{ errorMessage }}</p>
       }

@@ -1,4 +1,4 @@
-<article class="local-card">
+<article class="local-card" [routerLink]="['/locales', local.id]">
   <div class="local-card__image">
     @if (local.imagenUrl) {
       <img [src]="local.imagenUrl" [alt]="local.nombreComercial" loading="lazy" />

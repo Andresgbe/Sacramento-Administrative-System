@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { LocalCard, PagoStatus } from '../local-card/local-card';
 import { LocalFormModal, LocalFormPayload } from '../local-form-modal/local-form-modal';
 import { LocalesService } from '../locales.service';
+import { DocumentosService } from '../documentos.service';
 import { PagosService } from '../../pagos/pagos.service';
 
 @Component({
@@ -12,6 +13,7 @@ import { PagosService } from '../../pagos/pagos.service';
 })
 export class LocalesPage implements OnInit {
   private readonly localesService = inject(LocalesService);
+  private readonly documentosService = inject(DocumentosService);
   private readonly pagosService = inject(PagosService);
 
   protected readonly locales = this.localesService.all;
@@ -58,7 +60,7 @@ export class LocalesPage implements OnInit {
       imagenUrl = url;
     }
 
-    const { error } = await this.localesService.add({
+    const { local, error } = await this.localesService.add({
       numeroLocal: payload.numeroLocal,
       nombreComercial: payload.nombreComercial,
       imagenUrl,
@@ -68,13 +70,19 @@ export class LocalesPage implements OnInit {
       estado: payload.estado,
     });
 
-    this.saving.set(false);
-
-    if (error) {
+    if (error || !local) {
+      this.saving.set(false);
       this.saveError.set(error);
       return;
     }
 
+    // Advanced documents are optional metadata — the local itself is already
+    // saved at this point, so an upload failure here shouldn't block or undo it.
+    for (const documento of payload.documentos) {
+      await this.documentosService.upload(local.id, documento.tipo, documento.file);
+    }
+
+    this.saving.set(false);
     this.closeModal();
   }
 }

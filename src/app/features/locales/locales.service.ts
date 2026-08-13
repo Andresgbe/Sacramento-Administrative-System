@@ -74,7 +74,9 @@ export class LocalesService {
     return { url: data.publicUrl, error: null };
   }
 
-  async add(local: Omit<Local, 'id' | 'createdAt'>): Promise<{ error: string | null }> {
+  async add(
+    local: Omit<Local, 'id' | 'createdAt'>,
+  ): Promise<{ local: Local | null; error: string | null }> {
     const { data, error } = await this.supabase
       .from('locales')
       .insert({
@@ -90,10 +92,47 @@ export class LocalesService {
       .single();
 
     if (error) {
+      return { local: null, error: error.message };
+    }
+
+    const created = fromRow(data);
+    this.locales.update((current) => [created, ...current]);
+    return { local: created, error: null };
+  }
+
+  async getById(id: string): Promise<{ local: Local | null; error: string | null }> {
+    const { data, error } = await this.supabase.from('locales').select('*').eq('id', id).single();
+
+    if (error) {
+      return { local: null, error: error.message };
+    }
+
+    return { local: fromRow(data), error: null };
+  }
+
+  async update(
+    id: string,
+    changes: Omit<Local, 'id' | 'createdAt' | 'areaM2'>,
+  ): Promise<{ error: string | null }> {
+    const { data, error } = await this.supabase
+      .from('locales')
+      .update({
+        numero_local: changes.numeroLocal,
+        nombre_comercial: changes.nombreComercial,
+        imagen_url: changes.imagenUrl,
+        piso: changes.piso,
+        monto_alquiler: changes.montoAlquiler,
+        estado: changes.estado,
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
       return { error: error.message };
     }
 
-    this.locales.update((current) => [fromRow(data), ...current]);
+    this.locales.update((current) => current.map((l) => (l.id === id ? fromRow(data) : l)));
     return { error: null };
   }
 }

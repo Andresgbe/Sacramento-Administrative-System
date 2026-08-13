@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LocalEstado } from '../../../core/models/local.model';
+import { DocumentoTipo } from '../../../core/models/documento.model';
 
 export interface LocalFormPayload {
   numeroLocal: string;
@@ -9,6 +10,7 @@ export interface LocalFormPayload {
   montoAlquiler: number | null;
   estado: LocalEstado;
   imageFile: File | null;
+  documentos: { tipo: DocumentoTipo; file: File }[];
 }
 
 @Component({
@@ -28,6 +30,11 @@ export class LocalFormModal implements OnDestroy {
 
   protected imageFile: File | null = null;
   protected imagePreviewUrl: string | null = null;
+
+  protected readonly showAdvanced = signal(false);
+  protected contratoFile: File | null = null;
+  protected rifFile: File | null = null;
+  protected otroFile: File | null = null;
 
   private mouseDownOnBackdrop = false;
 
@@ -50,6 +57,10 @@ export class LocalFormModal implements OnDestroy {
     estado: ['activo' as LocalEstado, Validators.required],
   });
 
+  protected toggleAdvanced(): void {
+    this.showAdvanced.update((show) => !show);
+  }
+
   protected onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
@@ -68,10 +79,50 @@ export class LocalFormModal implements OnDestroy {
     this.imagePreviewUrl = file ? URL.createObjectURL(file) : null;
   }
 
+  protected onContratoSelected(event: Event): void {
+    this.contratoFile = this.fileFromEvent(event);
+  }
+
+  protected onRifSelected(event: Event): void {
+    this.rifFile = this.fileFromEvent(event);
+  }
+
+  protected onOtroSelected(event: Event): void {
+    this.otroFile = this.fileFromEvent(event);
+  }
+
+  protected removeContrato(): void {
+    this.contratoFile = null;
+  }
+
+  protected removeRif(): void {
+    this.rifFile = null;
+  }
+
+  protected removeOtro(): void {
+    this.otroFile = null;
+  }
+
+  private fileFromEvent(event: Event): File | null {
+    const input = event.target as HTMLInputElement;
+    return input.files?.[0] ?? null;
+  }
+
   protected submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
+    }
+
+    const documentos: { tipo: DocumentoTipo; file: File }[] = [];
+    if (this.contratoFile) {
+      documentos.push({ tipo: 'contrato', file: this.contratoFile });
+    }
+    if (this.rifFile) {
+      documentos.push({ tipo: 'rif', file: this.rifFile });
+    }
+    if (this.otroFile) {
+      documentos.push({ tipo: 'otro', file: this.otroFile });
     }
 
     const value = this.form.getRawValue();
@@ -82,6 +133,7 @@ export class LocalFormModal implements OnDestroy {
       montoAlquiler: value.montoAlquiler || null,
       estado: value.estado,
       imageFile: this.imageFile,
+      documentos,
     });
   }
 

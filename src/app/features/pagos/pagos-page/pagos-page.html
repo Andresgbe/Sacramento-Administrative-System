@@ -1,0 +1,53 @@
+<div class="pagos-page__header">
+  <button type="button" class="btn btn--primary" (click)="openModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+    </svg>
+    Registrar pago
+  </button>
+</div>
+
+@if (isLoading()) {
+  <p class="pagos-page__status">Cargando pagos…</p>
+} @else if (loadError()) {
+  <p class="pagos-page__status pagos-page__status--error">
+    No se pudieron cargar los pagos: {{ loadError() }}
+  </p>
+} @else if (pagos().length === 0) {
+  <p class="pagos-page__status">Todavía no hay pagos registrados.</p>
+} @else {
+  <div class="pagos-table-wrapper">
+    <table class="pagos-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Local</th>
+          <th class="pagos-table__amount">Monto</th>
+          <th>Tasa</th>
+          <th>Descripción</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (pago of pagos(); track pago.id) {
+          <tr>
+            <td>{{ pago.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
+            <td>{{ pago.localNumero }} — {{ pago.localNombre }}</td>
+            <td class="pagos-table__amount">$ {{ pago.monto | number: '1.2-2' }}</td>
+            <td>{{ tasaLabel[pago.tipoTasa] }}</td>
+            <td>{{ pago.descripcion || '—' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (modalOpen()) {
+  <app-pago-form-modal
+    [locales]="locales()"
+    [saving]="saving()"
+    [errorMessage]="saveError()"
+    (closed)="closeModal()"
+    (saved)="onPagoSaved($event)"
+  />
+}

@@ -1,0 +1,62 @@
+<div class="modal-backdrop" (mousedown)="onBackdropMouseDown($event)" (click)="onBackdropClick($event)">
+  <div class="modal">
+    <div class="modal__header">
+      <h2>Registrar pago</h2>
+      <button type="button" class="modal__close" (click)="closed.emit()" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="modal__form">
+      <label class="field">
+        <span>Local</span>
+        <select formControlName="localId">
+          <option value="" disabled>Selecciona un local</option>
+          @for (local of locales; track local.id) {
+            <option [value]="local.id">{{ local.numeroLocal }} — {{ local.nombreComercial }}</option>
+          }
+        </select>
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span>Fecha</span>
+          <input type="date" formControlName="fecha" />
+        </label>
+
+        <label class="field">
+          <span>Monto (USD)</span>
+          <input type="number" formControlName="monto" min="0" step="0.01" />
+        </label>
+      </div>
+
+      <label class="field">
+        <span>Tasa</span>
+        <select formControlName="tipoTasa">
+          <option value="BCV">BCV</option>
+          <option value="EUR">Euro</option>
+          <option value="USD">Dólar</option>
+          <option value="otra">Otra</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Descripción</span>
+        <input type="text" formControlName="descripcion" placeholder="Opcional" />
+      </label>
+
+      @if (errorMessage) {
+        <p class="modal__error">{{ errorMessage }}</p>
+      }
+
+      <div class="modal__actions">
+        <button type="button" class="btn btn--secondary" (click)="closed.emit()">Cancelar</button>
+        <button type="submit" class="btn btn--primary" [disabled]="saving">
+          {{ saving ? 'Guardando…' : 'Registrar pago' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

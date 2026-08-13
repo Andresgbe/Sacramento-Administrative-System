@@ -83,15 +83,32 @@ export class PagosService {
   }
 
   hasPaidThisMonth(localId: string): boolean {
+    return this.monthsSinceLastPayment(localId) === 0;
+  }
+
+  /**
+   * Whole months elapsed since the local's most recent payment (0 = paid
+   * this month). Returns null if the local has never made a payment.
+   *
+   * Computed from "YYYY-MM" parts rather than `Date` arithmetic — `fecha` is
+   * a date-only string (no time), so parsing it with `new Date()` reads it
+   * as UTC midnight and can roll over to the previous month once converted
+   * to a negative-offset local timezone (e.g. Venezuela, UTC-4).
+   */
+  monthsSinceLastPayment(localId: string): number | null {
+    const pagosDelLocal = this.pagos().filter((pago) => pago.localId === localId);
+
+    if (pagosDelLocal.length === 0) {
+      return null;
+    }
+
+    const ultimoPago = pagosDelLocal.reduce((latest, pago) =>
+      pago.fecha > latest.fecha ? pago : latest,
+    );
+
+    const [year, month] = ultimoPago.fecha.split('-').map(Number);
     const now = new Date();
 
-    return this.pagos().some((pago) => {
-      if (pago.localId !== localId) {
-        return false;
-      }
-
-      const fecha = new Date(pago.fecha);
-      return fecha.getFullYear() === now.getFullYear() && fecha.getMonth() === now.getMonth();
-    });
+    return (now.getFullYear() - year) * 12 + (now.getMonth() + 1 - month);
   }
 }

@@ -35,4 +35,10 @@ export class PageHeaderService {
       subtitle: data['subtitle'],
     });
   }
+
+  // Lets a page override the header with dynamic content (e.g. a business name)
+  // once it's loaded; the next navigation resets it from route data as usual.
+  setHeader(header: PageHeader): void {
+    this.header.set(header);
+  }
 }

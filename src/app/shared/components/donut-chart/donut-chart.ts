@@ -1,4 +1,4 @@
-import { Component, Input, computed, signal } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 
 export interface DonutSegment {
   label: string;
@@ -19,8 +19,8 @@ interface ComputedSegment extends DonutSegment {
   styleUrl: './donut-chart.scss',
 })
 export class DonutChart {
-  @Input({ required: true }) segments: DonutSegment[] = [];
-  @Input() centerLabel = 'Total';
+  readonly segments = input.required<DonutSegment[]>();
+  readonly centerLabel = input('Total');
 
   protected readonly radius = 60;
   protected readonly strokeWidth = 22;
@@ -30,7 +30,7 @@ export class DonutChart {
   protected readonly hoveredIndex = signal<number | null>(null);
 
   protected readonly total = computed(() =>
-    this.segments.reduce((sum, segment) => sum + segment.value, 0),
+    this.segments().reduce((sum, segment) => sum + segment.value, 0),
   );
 
   protected readonly computedSegments = computed<ComputedSegment[]>(() => {
@@ -40,7 +40,7 @@ export class DonutChart {
     }
 
     let cumulative = 0;
-    return this.segments.map((segment) => {
+    return this.segments().map((segment) => {
       const fraction = segment.value / total;
       const length = fraction * this.circumference;
       const visibleLength = Math.max(length - this.gap, 0);

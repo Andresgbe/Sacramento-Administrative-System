@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, Input, computed, signal } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 
 export interface BarDatum {
   label: string;
@@ -13,13 +13,15 @@ export interface BarDatum {
   styleUrl: './bar-chart.scss',
 })
 export class BarChart {
-  @Input({ required: true }) data: BarDatum[] = [];
-  @Input() color = 'var(--color-accent)';
-  @Input() valuePrefix = '';
+  readonly data = input.required<BarDatum[]>();
+  readonly color = input('var(--color-accent)');
+  readonly valuePrefix = input('');
 
   protected readonly hoveredIndex = signal<number | null>(null);
 
-  private readonly maxValue = computed(() => Math.max(...this.data.map((item) => item.value), 1));
+  private readonly maxValue = computed(() =>
+    Math.max(...this.data().map((item) => item.value), 1),
+  );
 
   protected barHeight(value: number): number {
     return (value / this.maxValue()) * 100;

@@ -28,9 +28,17 @@ export const routes: Routes = [
         data: { title: 'Locales' },
       },
       {
+        path: 'locales/:id',
+        loadComponent: () =>
+          import('./features/locales/local-detail-page/local-detail-page').then(
+            (m) => m.LocalDetailPage,
+          ),
+        data: { title: 'Local' },
+      },
+      {
         path: 'pagos',
         loadComponent: () =>
-          import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+          import('./features/pagos/pagos-page/pagos-page').then((m) => m.PagosPage),
         data: { title: 'Pagos de alquiler', subtitle: 'Registro y control de pagos' },
       },
       {
