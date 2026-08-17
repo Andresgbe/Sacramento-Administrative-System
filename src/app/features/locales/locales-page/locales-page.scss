@@ -1,0 +1,25 @@
+﻿.locales-page__header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.locales-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.locales-page__status {
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  text-align: center;
+
+  &--error {
+    border-color: rgb(185 28 28 / 30%);
+    color: var(--color-danger);
+  }
+}

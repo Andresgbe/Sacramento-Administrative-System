@@ -1,0 +1,48 @@
+<div class="pie">
+  @if (total() === 0) {
+    <p class="pie__empty">Sin datos todavía.</p>
+  } @else {
+    <div class="pie__chart-wrapper">
+      <svg viewBox="0 0 160 160" class="pie__svg">
+        @for (wedge of wedges(); track wedge.label; let i = $index) {
+          @if (wedge.value > 0) {
+            <path
+              [attr.d]="wedge.path"
+              [attr.fill]="wedge.color"
+              class="pie__wedge"
+              [class.pie__wedge--hovered]="hoveredIndex() === i"
+              (pointerenter)="onHover(i)"
+              (pointerleave)="onLeave()"
+            />
+          }
+        }
+      </svg>
+
+      @if (hoveredSegment(); as tooltip) {
+        <div class="pie__tooltip">
+          {{ tooltip.label }}: {{ tooltip.value }} ({{ tooltip.percentage }}%)
+        </div>
+      }
+    </div>
+
+    <ul class="pie__legend">
+      @for (segment of wedges(); track segment.label) {
+        <li class="pie__legend-item">
+          <div class="pie__legend-row">
+            <span class="pie__legend-dot" [style.background]="segment.color"></span>
+            <span class="pie__legend-label">{{ segment.label }}</span>
+            <span class="pie__legend-value">{{ segment.value }}</span>
+          </div>
+
+          @if (segment.items && segment.items.length > 0) {
+            <ul class="pie__legend-sublist">
+              @for (item of segment.items; track item) {
+                <li>{{ item }}</li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

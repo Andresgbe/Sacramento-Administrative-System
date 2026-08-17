@@ -1,0 +1,35 @@
+<article class="local-card" [routerLink]="['/locales', local.id]">
+  <div class="local-card__image">
+    @if (local.imagenUrl) {
+      <img [src]="local.imagenUrl" [alt]="local.nombreComercial" loading="lazy" />
+    } @else {
+      <div class="local-card__placeholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 9.5 4.5 4h15L21 9.5" stroke-linecap="round" stroke-linejoin="round" />
+          <path
+            d="M4 9.5v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path d="M9 19.5v-6h6v6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+    }
+    <span class="local-card__badge local-card__badge--{{ local.estado }}">
+      {{ estadoLabel[local.estado] }}
+    </span>
+    <span class="local-card__number">{{ local.numeroLocal }}</span>
+  </div>
+
+  <div class="local-card__body">
+    <h3 class="local-card__title">{{ local.nombreComercial }}</h3>
+
+    <span class="local-card__pago-badge local-card__pago-badge--{{ pagoStatus }}">
+      {{ pagoStatusLabel[pagoStatus] }}
+    </span>
+
+    @if (local.montoAlquiler) {
+      <span class="local-card__rent">$ {{ local.montoAlquiler | number: '1.2-2' }}</span>
+    }
+  </div>
+</article>

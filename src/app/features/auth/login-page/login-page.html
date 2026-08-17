@@ -1,0 +1,27 @@
+<div class="login">
+  <form [formGroup]="form" (ngSubmit)="submit()" class="login__card">
+    <div class="login__brand">
+      <span class="login__brand-icon">CC</span>
+      <h1>CC <span>Sacramento</span></h1>
+    </div>
+    <p class="login__subtitle">Inicia sesión para continuar</p>
+
+    <label class="field">
+      <span>Correo electrónico</span>
+      <input type="email" formControlName="email" placeholder="admin@ccsacramento.com" />
+    </label>
+
+    <label class="field">
+      <span>Contraseña</span>
+      <input type="password" formControlName="password" placeholder="••••••••" />
+    </label>
+
+    @if (errorMessage()) {
+      <p class="login__error">{{ errorMessage() }}</p>
+    }
+
+    <button type="submit" class="btn btn--primary login__submit" [disabled]="submitting()">
+      {{ submitting() ? 'Ingresando…' : 'Ingresar' }}
+    </button>
+  </form>
+</div>

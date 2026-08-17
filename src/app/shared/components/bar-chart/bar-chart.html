@@ -1,0 +1,18 @@
+<div class="bar-chart">
+  <div class="bar-chart__plot">
+    @for (item of data(); track item.label; let i = $index) {
+      <div class="bar-chart__column" (pointerenter)="onHover(i)" (pointerleave)="onLeave()">
+        @if (hoveredIndex() === i || isMax(item.value)) {
+          <span class="bar-chart__value">{{ valuePrefix() }}{{ item.value | number: '1.0-0' }}</span>
+        }
+        <div
+          class="bar-chart__bar"
+          [class.bar-chart__bar--active]="hoveredIndex() === i"
+          [style.height.%]="barHeight(item.value)"
+          [style.background]="color()"
+        ></div>
+        <span class="bar-chart__label">{{ item.label }}</span>
+      </div>
+    }
+  </div>
+</div>

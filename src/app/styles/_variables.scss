@@ -1,0 +1,41 @@
+:root {
+  // Surfaces
+  --color-bg: #f3f4f6;
+  --color-surface: #ffffff;
+  --color-surface-muted: #eceef1;
+  --color-border: #e5e7eb;
+
+  // Text
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+
+  // Accent (brand orange)
+  --color-accent: #f97316;
+  --color-accent-hover: #ea580c;
+  --color-accent-soft: rgb(249 115 22 / 12%);
+
+  // Status
+  --color-danger: #b91c1c;
+  --color-success: #15803d;
+  --color-neutral: #64748b;
+
+  // Sidebar
+  --sidebar-bg: #0f1729;
+  --sidebar-bg-hover: rgb(255 255 255 / 6%);
+  --sidebar-text: #cbd5e1;
+  --sidebar-text-muted: #64748b;
+
+  // Layout
+  --sidebar-width: 260px;
+  --topbar-height: 72px;
+
+  // Radius
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  // Shadows
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 5%);
+  --shadow-md: 0 4px 12px rgb(0 0 0 / 8%);
+}

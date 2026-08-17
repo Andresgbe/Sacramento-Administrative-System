@@ -1,0 +1,52 @@
+@if (isLoading()) {
+  <p class="calc-status">Cargando tasas del día…</p>
+} @else if (loadError()) {
+  <p class="calc-status calc-status--error">No se pudieron cargar las tasas: {{ loadError() }}</p>
+} @else if (tasas(); as tasas) {
+  <section class="rate-cards">
+    @for (key of tasaKeys; track key) {
+      <button
+        type="button"
+        class="rate-card"
+        [class.rate-card--active]="tasaSeleccionada() === key"
+        (click)="seleccionarTasa(key)"
+      >
+        <span class="rate-card__label">{{ tasaLabel[key] }}</span>
+        <span class="rate-card__value">Bs. {{ tasas[key] | number: '1.2-2' }}</span>
+      </button>
+    }
+  </section>
+  <p class="rate-cards__updated">Tasas del {{ tasas.fecha }}</p>
+
+  <section class="converter">
+    <div class="converter__field">
+      <span class="converter__label">{{ direccion() === 'usd-a-bs' ? 'Monto en USD' : 'Monto en Bs' }}</span>
+      <input
+        type="number"
+        min="0"
+        step="0.01"
+        [value]="monto()"
+        (input)="onMontoChange($any($event.target).value)"
+      />
+    </div>
+
+    <button type="button" class="converter__swap" (click)="invertirDireccion()" aria-label="Invertir dirección">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M7 4v13m0 0-4-4m4 4 4-4" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M17 20V7m0 0 4 4m-4-4-4 4" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+
+    <div class="converter__field">
+      <span class="converter__label">{{ direccion() === 'usd-a-bs' ? 'Equivale en Bs' : 'Equivale en USD' }}</span>
+      <div class="converter__result">
+        {{ resultado() | number: '1.2-2' }}
+      </div>
+    </div>
+  </section>
+
+  <p class="converter__hint">
+    Calculado con la tasa {{ tasaLabel[tasaSeleccionada()] }} — Bs. {{ tasas[tasaSeleccionada()] | number: '1.2-2' }}
+    por USD.
+  </p>
+}

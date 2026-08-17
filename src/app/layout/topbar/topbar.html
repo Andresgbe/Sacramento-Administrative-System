@@ -1,0 +1,38 @@
+<header class="topbar">
+  <div class="topbar__title">
+    <h1>{{ pageHeader.current().title }}</h1>
+    @if (pageHeader.current().subtitle) {
+      <p>{{ pageHeader.current().subtitle }}</p>
+    }
+  </div>
+
+  <div class="topbar__profile">
+    <button
+      type="button"
+      class="topbar__avatar"
+      (click)="toggleMenu()"
+      [attr.aria-expanded]="menuOpen()"
+    >
+      {{ userInitials() }}
+    </button>
+
+    @if (menuOpen()) {
+      <div class="topbar__menu">
+        <div class="topbar__menu-header">{{ userName() }}</div>
+        <button type="button" class="topbar__menu-item" (click)="closeMenu()">
+          Mi información
+        </button>
+        <button type="button" class="topbar__menu-item" (click)="closeMenu()">
+          Cambiar contraseña
+        </button>
+        <button
+          type="button"
+          class="topbar__menu-item topbar__menu-item--danger"
+          (click)="logOut()"
+        >
+          Cerrar sesión
+        </button>
+      </div>
+    }
+  </div>
+</header>
