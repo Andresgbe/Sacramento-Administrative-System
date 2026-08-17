@@ -1,4 +1,4 @@
-.locales-page__header {
+﻿.locales-page__header {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 20px;
@@ -19,7 +19,7 @@
   text-align: center;
 
   &--error {
-    border-color: rgb(220 38 38 / 30%);
+    border-color: rgb(185 28 28 / 30%);
     color: var(--color-danger);
   }
 }

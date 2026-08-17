@@ -1,4 +1,4 @@
-.pagos-page__header {
+﻿.pagos-page__header {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 20px;
@@ -13,7 +13,7 @@
   text-align: center;
 
   &--error {
-    border-color: rgb(220 38 38 / 30%);
+    border-color: rgb(185 28 28 / 30%);
     color: var(--color-danger);
   }
 }
@@ -52,7 +52,7 @@
   }
 }
 
-.pagos-table__amount {
+.pagos-table th.pagos-table__amount,
+.pagos-table td.pagos-table__amount {
   text-align: right;
-  font-family: var(--font-mono);
 }

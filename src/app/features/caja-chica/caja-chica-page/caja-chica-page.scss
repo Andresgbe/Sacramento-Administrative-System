@@ -1,0 +1,110 @@
+.balance-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px 28px;
+  margin-bottom: 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.balance-card__label {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.balance-card__value {
+  font-family: var(--font-mono);
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.caja-chica-page__header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.caja-chica-page__status {
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  text-align: center;
+
+  &--error {
+    border-color: rgb(185 28 28 / 30%);
+    color: var(--color-danger);
+  }
+}
+
+.caja-chica-table-wrapper {
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.caja-chica-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th {
+    text-align: left;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+    color: var(--color-text-muted);
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.caja-chica-table th.caja-chica-table__amount,
+.caja-chica-table td.caja-chica-table__amount {
+  text-align: right;
+}
+
+.caja-chica-table__amount {
+  font-weight: 700;
+
+  &--ingreso {
+    color: var(--color-success);
+  }
+
+  &--retiro {
+    color: var(--color-danger);
+  }
+}
+
+.caja-chica-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &--ingreso {
+    background: rgb(21 128 61 / 12%);
+    color: var(--color-success);
+  }
+
+  &--retiro {
+    background: rgb(185 28 28 / 12%);
+    color: var(--color-danger);
+  }
+}

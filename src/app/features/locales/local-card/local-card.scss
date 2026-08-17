@@ -1,4 +1,4 @@
-.local-card {
+﻿.local-card {
   display: flex;
   flex-direction: column;
   background: var(--color-surface);
@@ -74,11 +74,11 @@
   backdrop-filter: blur(6px);
 
   &--activo {
-    background: rgb(22 163 74 / 90%);
+    background: rgb(21 128 61 / 90%);
   }
 
   &--vencido {
-    background: rgb(220 38 38 / 90%);
+    background: rgb(185 28 28 / 90%);
   }
 
   &--inactivo {
@@ -123,12 +123,12 @@
   letter-spacing: 0.03em;
 
   &--al-dia {
-    background: rgb(22 163 74 / 12%);
+    background: rgb(21 128 61 / 12%);
     color: var(--color-success);
   }
 
   &--debe {
-    background: rgb(220 38 38 / 12%);
+    background: rgb(185 28 28 / 12%);
     color: var(--color-danger);
   }
 }

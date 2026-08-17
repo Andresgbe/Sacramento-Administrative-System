@@ -1,5 +1,5 @@
 <section class="stats">
-  @for (stat of stats; track stat.label) {
+  @for (stat of stats(); track stat.label) {
     <div class="stat-card">
       <span class="stat-card__label">{{ stat.label }}</span>
       <span class="stat-card__value" [class]="'stat-card__value--' + stat.tone">
@@ -14,7 +14,7 @@
     <div class="panel__header">
       <h2>Locales por estado de pago</h2>
     </div>
-    <app-donut-chart [segments]="localesPorPago()" centerLabel="Locales" />
+     <app-pie-chart [segments]="localesPorPago()" />
   </div>
 
   <div class="panel">

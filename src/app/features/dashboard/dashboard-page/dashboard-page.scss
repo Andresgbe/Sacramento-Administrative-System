@@ -95,9 +95,9 @@
   }
 }
 
-.panel__table-amount {
+.panel__table th.panel__table-amount,
+.panel__table td.panel__table-amount {
   text-align: right;
-  font-family: var(--font-mono);
 }
 
 .charts {

@@ -52,13 +52,15 @@ export const routes: Routes = [
       {
         path: 'egresos',
         loadComponent: () =>
-          import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+          import('./features/egresos/egresos-page/egresos-page').then((m) => m.EgresosPage),
         data: { title: 'Egresos', subtitle: 'Gastos y salidas de dinero' },
       },
       {
         path: 'caja-chica',
         loadComponent: () =>
-          import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+          import('./features/caja-chica/caja-chica-page/caja-chica-page').then(
+            (m) => m.CajaChicaPage,
+          ),
         data: { title: 'Caja chica', subtitle: 'Control de caja chica' },
       },
     ],

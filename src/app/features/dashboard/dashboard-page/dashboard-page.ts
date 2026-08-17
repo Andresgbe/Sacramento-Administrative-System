@@ -1,8 +1,9 @@
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { PagosService } from '../../pagos/pagos.service';
 import { LocalesService } from '../../locales/locales.service';
+import { CajaChicaService } from '../../caja-chica/caja-chica.service';
 import { BarChart, BarDatum } from '../../../shared/components/bar-chart/bar-chart';
-import { DonutChart, DonutSegment } from '../../../shared/components/donut-chart/donut-chart';
+import { PieChart, PieSegment } from '../../../shared/components/pie-chart/pie-chart';
 
 interface DashboardStat {
   label: string;
@@ -23,21 +24,27 @@ interface UpcomingDue {
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [DonutChart, BarChart],
+  imports: [PieChart, BarChart],
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
 })
 export class DashboardPage implements OnInit {
   private readonly localesService = inject(LocalesService);
   private readonly pagosService = inject(PagosService);
+  private readonly cajaChicaService = inject(CajaChicaService);
 
-  // Placeholder data until dashboard queries are wired up to Supabase
-  protected readonly stats: DashboardStat[] = [
-    { label: 'Caja chica disponible', value: '$ 1,208.50', tone: 'accent' },
+  // Live: caja chica disponible comes from CajaChicaService; the rest are
+  // still placeholders until those queries get wired up to Supabase.
+  protected readonly stats = computed<DashboardStat[]>(() => [
+    {
+      label: 'Caja chica disponible',
+      value: `$ ${this.cajaChicaService.balance().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      tone: 'accent',
+    },
     { label: 'Locales activos', value: '39', tone: 'default' },
     { label: 'Locales vencidos', value: '3', tone: 'danger' },
     { label: 'Ingresos del mes', value: '$ 4,120.00', tone: 'default' },
-  ];
+  ]);
 
   protected readonly recentPayments: RecentPayment[] = [
     { date: '03/08/2026', local: 'Local 31 — Óptica Visión', amount: '$ 425.00' },
@@ -52,29 +59,23 @@ export class DashboardPage implements OnInit {
   ];
 
   // Live: computed from LocalesService + PagosService.
-  protected readonly localesPorPago = computed<DonutSegment[]>(() => {
+  protected readonly localesPorPago = computed<PieSegment[]>(() => {
     const locales = this.localesService.all();
 
     let alDia = 0;
-    let faltanPorPagar = 0;
-    let masDeDosMeses = 0;
+    const morosos: string[] = [];
 
     for (const local of locales) {
-      const meses = this.pagosService.monthsSinceLastPayment(local.id);
-
-      if (meses === 0) {
+      if (this.pagosService.hasPaidThisMonth(local.id)) {
         alDia++;
-      } else if (meses === null || meses > 2) {
-        masDeDosMeses++;
       } else {
-        faltanPorPagar++;
+        morosos.push(`${local.numeroLocal} — ${local.nombreComercial}`);
       }
     }
 
     return [
       { label: 'Al día', value: alDia, color: 'var(--color-success)' },
-      { label: 'Faltan por pagar', value: faltanPorPagar, color: 'var(--color-accent)' },
-      { label: 'Más de 2 meses sin pagar', value: masDeDosMeses, color: 'var(--color-danger)' },
+      { label: 'Morosos', value: morosos.length, color: 'var(--color-danger)', items: morosos },
     ];
   });
 
@@ -90,5 +91,6 @@ export class DashboardPage implements OnInit {
   ngOnInit(): void {
     this.localesService.load();
     this.pagosService.load();
+    this.cajaChicaService.load();
   }
 }

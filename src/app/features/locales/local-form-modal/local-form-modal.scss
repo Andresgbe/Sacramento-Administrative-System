@@ -1,4 +1,4 @@
-.modal-backdrop {
+﻿.modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 100;
@@ -267,7 +267,7 @@
 .modal__error {
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  background: rgb(220 38 38 / 8%);
+  background: rgb(185 28 28 / 8%);
   color: var(--color-danger);
   font-size: 0.825rem;
 }

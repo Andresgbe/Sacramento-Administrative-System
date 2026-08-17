@@ -1,0 +1,98 @@
+<div class="egresos-page__header">
+  <div class="egresos-tabs">
+    <button
+      type="button"
+      class="egresos-tab"
+      [class.egresos-tab--active]="filtro() === 'administrativo'"
+      (click)="setFiltro('administrativo')"
+    >
+      Gastos administrativos
+    </button>
+    <button
+      type="button"
+      class="egresos-tab"
+      [class.egresos-tab--active]="filtro() === 'operativo'"
+      (click)="setFiltro('operativo')"
+    >
+      Gastos operativos
+    </button>
+    <button
+      type="button"
+      class="egresos-tab"
+      [class.egresos-tab--active]="filtro() === 'todos'"
+      (click)="setFiltro('todos')"
+    >
+      Total
+    </button>
+  </div>
+
+  <button type="button" class="btn btn--primary" (click)="openModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+    </svg>
+    Registrar gasto
+  </button>
+</div>
+
+<div class="egresos-total">
+  <span class="egresos-total__label">
+    @switch (filtro()) {
+      @case ('administrativo') {
+        Total gastos administrativos
+      }
+      @case ('operativo') {
+        Total gastos operativos
+      }
+      @default {
+        Total general (administrativos + operativos)
+      }
+    }
+  </span>
+  <span class="egresos-total__value">$ {{ total() | number: '1.2-2' }}</span>
+</div>
+
+@if (isLoading()) {
+  <p class="egresos-page__status">Cargando egresos…</p>
+} @else if (loadError()) {
+  <p class="egresos-page__status egresos-page__status--error">
+    No se pudieron cargar los egresos: {{ loadError() }}
+  </p>
+} @else if (egresosFiltrados().length === 0) {
+  <p class="egresos-page__status">Todavía no hay gastos registrados en esta categoría.</p>
+} @else {
+  <div class="egresos-table-wrapper">
+    <table class="egresos-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Categoría</th>
+          <th class="egresos-table__amount">Monto</th>
+          <th>Descripción</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (egreso of egresosFiltrados(); track egreso.id) {
+          <tr>
+            <td>{{ egreso.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
+            <td>
+              <span class="egresos-badge egresos-badge--{{ egreso.categoria }}">
+                {{ categoriaLabel[egreso.categoria] }}
+              </span>
+            </td>
+            <td class="egresos-table__amount">$ {{ egreso.monto | number: '1.2-2' }}</td>
+            <td>{{ egreso.descripcion || '—' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (modalOpen()) {
+  <app-egreso-form-modal
+    [saving]="saving()"
+    [errorMessage]="saveError()"
+    (closed)="closeModal()"
+    (saved)="onEgresoSaved($event)"
+  />
+}

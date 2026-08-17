@@ -1,59 +1,69 @@
-﻿.login {
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
   padding: 20px;
-  background: var(--color-bg);
+  background: rgb(15 23 41 / 55%);
+  backdrop-filter: blur(2px);
 }
 
-.login__card {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.modal {
   width: 100%;
-  max-width: 380px;
-  padding: 32px;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
 }
 
-.login__brand {
+.modal__header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 20px;
 
-  h1 {
+  h2 {
     font-size: 1.25rem;
     font-weight: 700;
-    color: var(--color-text-primary);
-
-    span {
-      color: var(--color-accent);
-    }
   }
 }
 
-.login__brand-icon {
+.modal__close {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  background: var(--color-accent);
-  color: #ffffff;
-  font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 0.9rem;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    background: var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
-.login__subtitle {
-  margin: -8px 0 4px;
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
+.modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .field {
@@ -64,7 +74,8 @@
   font-weight: 600;
   color: var(--color-text-secondary);
 
-  input {
+  input,
+  select {
     font-family: var(--font-body);
     font-size: 0.9rem;
     font-weight: 400;
@@ -85,7 +96,13 @@
   }
 }
 
-.login__error {
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.modal__error {
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   background: rgb(185 28 28 / 8%);
@@ -93,7 +110,9 @@
   font-size: 0.825rem;
 }
 
-.login__submit {
-  width: 100%;
-  margin-top: 4px;
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
 }
