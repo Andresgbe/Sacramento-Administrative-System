@@ -42,6 +42,14 @@ export const routes: Routes = [
         data: { title: 'Pagos de alquiler', subtitle: 'Registro y control de pagos' },
       },
       {
+        path: 'calculadora',
+        loadComponent: () =>
+          import('./features/calculadora/calculadora-page/calculadora-page').then(
+            (m) => m.CalculadoraPage,
+          ),
+        data: { title: 'Calculadora', subtitle: 'Conversión USD ↔ Bs con tasas del día' },
+      },
+      {
         path: 'egresos',
         loadComponent: () =>
           import('./shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),

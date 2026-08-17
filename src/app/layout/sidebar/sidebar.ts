@@ -3,7 +3,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 
 interface NavItem {
   label: string;
-  icon: 'dashboard' | 'store' | 'receipt' | 'expenses' | 'wallet';
+  icon: 'dashboard' | 'store' | 'receipt' | 'expenses' | 'wallet' | 'calculator';
   route: string;
 }
 
@@ -20,5 +20,6 @@ export class Sidebar {
     { label: 'Pagos de alquiler', icon: 'receipt', route: '/pagos' },
     { label: 'Egresos', icon: 'expenses', route: '/egresos' },
     { label: 'Caja chica', icon: 'wallet', route: '/caja-chica' },
+    { label: 'Calculadora', icon: 'calculator', route: '/calculadora' },
   ];
 }
