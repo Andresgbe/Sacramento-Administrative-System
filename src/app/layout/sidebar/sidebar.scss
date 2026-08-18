@@ -12,6 +12,32 @@
   background: var(--sidebar-bg);
   color: var(--sidebar-text);
   @include custom-scrollbar;
+
+  @media (max-width: 900px) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 101;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-md);
+    transition: transform 0.2s ease;
+
+    &--open {
+      transform: translateX(0);
+    }
+  }
+}
+
+.sidebar__backdrop {
+  display: none;
+
+  @media (max-width: 900px) {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgb(15 23 41 / 55%);
+  }
 }
 
 .sidebar__brand {

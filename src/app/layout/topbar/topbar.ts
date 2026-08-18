@@ -1,4 +1,13 @@
-import { Component, ElementRef, HostListener, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  Output,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { PageHeaderService } from '../../core/services/page-header.service';
@@ -14,6 +23,8 @@ export class Topbar {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   protected readonly pageHeader = inject(PageHeaderService);
+
+  @Output() menuToggle = new EventEmitter<void>();
 
   protected readonly menuOpen = signal(false);
 

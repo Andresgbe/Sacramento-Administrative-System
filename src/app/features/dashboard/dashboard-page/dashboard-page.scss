@@ -95,6 +95,12 @@
   }
 }
 
+.panel__empty {
+  padding: 12px 4px;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
 .panel__table th.panel__table-amount,
 .panel__table td.panel__table-amount {
   text-align: right;
