@@ -42,16 +42,20 @@
 
 .sidebar__brand {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 24px 20px;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 1.25rem;
 }
 
-.sidebar__brand-cc {
-  color: #ffffff;
+.sidebar__logo {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .sidebar__brand-name {

@@ -1,8 +1,7 @@
 <div class="login">
   <form [formGroup]="form" (ngSubmit)="submit()" class="login__card">
     <div class="login__brand">
-      <span class="login__brand-icon">CC</span>
-      <h1>CC <span>Sacramento</span></h1>
+      <img class="login__logo" src="/images/logo.jpg" alt="Centro Comercial Sacramento" />
     </div>
     <p class="login__subtitle">Inicia sesión para continuar</p>
 
@@ -22,6 +21,15 @@
 
     <button type="submit" class="btn btn--primary login__submit" [disabled]="submitting()">
       {{ submitting() ? 'Ingresando…' : 'Ingresar' }}
+    </button>
+
+    <button
+      type="button"
+      class="btn btn--secondary login__quick"
+      [disabled]="submitting()"
+      (click)="quickLogin()"
+    >
+      Acceso rápido
     </button>
   </form>
 </div>
