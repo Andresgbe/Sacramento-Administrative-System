@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -62,6 +63,13 @@ export const routes: Routes = [
             (m) => m.CajaChicaPage,
           ),
         data: { title: 'Caja chica', subtitle: 'Control de caja chica' },
+      },
+      {
+        path: 'usuarios',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/usuarios/usuarios-page/usuarios-page').then((m) => m.UsuariosPage),
+        data: { title: 'Usuarios', subtitle: 'Gestión de accesos del equipo' },
       },
     ],
   },

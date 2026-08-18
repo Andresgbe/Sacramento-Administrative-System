@@ -29,47 +29,58 @@
   <div class="panel">
     <div class="panel__header">
       <h2>Últimos pagos</h2>
-      <button type="button" class="panel__link">Ver todos</button>
+      <a routerLink="/pagos" class="panel__link">Ver todos</a>
     </div>
-    <table class="panel__table">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Local</th>
-          <th class="panel__table-amount">Monto</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (payment of recentPayments; track payment.date + payment.local) {
+    @if (recentPayments().length === 0) {
+      <p class="panel__empty">Todavía no hay pagos registrados.</p>
+    } @else {
+      <table class="panel__table">
+        <thead>
           <tr>
-            <td>{{ payment.date }}</td>
-            <td>{{ payment.local }}</td>
-            <td class="panel__table-amount">{{ payment.amount }}</td>
+            <th>Fecha</th>
+            <th>Local</th>
+            <th class="panel__table-amount">Monto</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (payment of recentPayments(); track payment.id) {
+            <tr>
+              <td>{{ payment.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
+              <td>{{ payment.localNumero }} — {{ payment.localNombre }}</td>
+              <td class="panel__table-amount">$ {{ payment.monto | number: '1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
   </div>
 
   <div class="panel">
     <div class="panel__header">
-      <h2>Próximos a vencer</h2>
+      <h2>Últimos egresos</h2>
+      <a routerLink="/egresos" class="panel__link">Ver todos</a>
     </div>
-    <table class="panel__table">
-      <thead>
-        <tr>
-          <th>Local</th>
-          <th class="panel__table-amount">Vence</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (due of upcomingDues; track due.local) {
+    @if (recentEgresos().length === 0) {
+      <p class="panel__empty">Todavía no hay egresos registrados.</p>
+    } @else {
+      <table class="panel__table">
+        <thead>
           <tr>
-            <td>{{ due.local }}</td>
-            <td class="panel__table-amount">{{ due.dueDate }}</td>
+            <th>Fecha</th>
+            <th>Categoría</th>
+            <th class="panel__table-amount">Monto</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (egreso of recentEgresos(); track egreso.id) {
+            <tr>
+              <td>{{ egreso.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
+              <td>{{ categoriaEgresoLabel[egreso.categoria] }}</td>
+              <td class="panel__table-amount">$ {{ egreso.monto | number: '1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
   </div>
 </section>

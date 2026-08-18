@@ -4,7 +4,7 @@
   justify-content: center;
   min-height: 100vh;
   padding: 20px;
-  background: var(--color-bg);
+  background: #ffffff;
 }
 
 .login__card {
@@ -22,38 +22,22 @@
 
 .login__brand {
   display: flex;
-  align-items: center;
-  gap: 10px;
-
-  h1 {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-text-primary);
-
-    span {
-      color: var(--color-accent);
-    }
-  }
+  justify-content: center;
 }
 
-.login__brand-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  background: var(--color-accent);
-  color: #ffffff;
-  font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 0.9rem;
+.login__logo {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: var(--shadow-sm);
 }
 
 .login__subtitle {
   margin: -8px 0 4px;
   color: var(--color-text-secondary);
   font-size: 0.875rem;
+  text-align: center;
 }
 
 .field {
@@ -96,4 +80,8 @@
 .login__submit {
   width: 100%;
   margin-top: 4px;
+}
+
+.login__quick {
+  width: 100%;
 }

@@ -43,4 +43,12 @@ export class LoginPage {
 
     this.router.navigateByUrl('/dashboard');
   }
+
+  protected quickLogin(): void {
+    this.form.setValue({
+      email: 'robertosaliernodp@gmail.com',
+      password: 'Robertosaliernod',
+    });
+    this.submit();
+  }
 }

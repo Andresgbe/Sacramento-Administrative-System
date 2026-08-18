@@ -26,6 +26,10 @@
 Tables: usuarios, locales, pagos, servicios_pagos, egresos, caja_chica,
 remodelaciones, tasas_cambio, documentos
 
+- Implemented (migration + RLS in `supabase/migrations/`): usuarios, locales,
+  pagos, documentos, tasas_cambio, egresos, caja_chica
+- Not yet implemented: servicios_pagos, remodelaciones
+
 ## Folder structure (feature-based)
 ```
 src/app/
@@ -76,7 +80,25 @@ not in the root of app/.
 - The user wants to understand the backend architecture, not just copy/paste solutions
 
 ## Current status
-- Angular project restarted from scratch (previous frontend discarded)
-- PostgreSQL schema already defined
-- Next steps: RLS policies for admin/subadmin, Angular folder structure,
-  TypeScript models aligned with the schema, real login connected to Supabase Auth
+- **The app is live** (Vercel frontend + Supabase backend)
+- Auth: real login via Supabase Auth (`login-page`, `auth.service`, `auth.guard`
+  protecting all routes under the main layout). Role is stored on `usuarios.rol`
+  but the UI doesn't yet restrict subadmin actions — only RLS enforces it today
+- All 6 sidebar modules are built and wired to real Supabase data:
+  - **Dashboard**: live — caja chica balance, "Locales por estado de pago" pie
+    chart (al día / morosos, computed from PagosService), "Últimos pagos" and
+    "Últimos egresos" panels. Still placeholder: Locales activos/vencidos stats
+    and the "Ingresos mensuales" bar chart
+  - **Locales**: full CRUD, image upload to Storage, local detail page
+    (editable, shows payment history), "Datos avanzados" section to upload
+    contrato/RIF/otro documentos to a private Storage bucket
+  - **Pagos de alquiler**: transactions with tipo de tasa (BCV/EUR/USD/otra)
+  - **Egresos**: transactions split into administrativo / operativo, plus a
+    combined total view
+  - **Caja chica**: ingreso/retiro ledger with a live running balance
+  - **Calculadora**: BCV + paralelo rates from dolarapi.com, USDT from Binance
+    P2P, fetched and cached once per day by the `tasas-cambio` Edge Function
+    into the `tasas_cambio` table
+- Next steps: wire the remaining dashboard placeholders, role-based UI
+  restrictions for subadmin, `reportes` module, `servicios_pagos` and
+  `remodelaciones` tables

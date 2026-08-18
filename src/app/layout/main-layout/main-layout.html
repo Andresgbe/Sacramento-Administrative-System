@@ -1,7 +1,7 @@
 <div class="shell">
-  <app-sidebar />
+  <app-sidebar [open]="sidebarOpen()" (closeRequested)="closeSidebar()" />
   <div class="shell__content">
-    <app-topbar />
+    <app-topbar (menuToggle)="toggleSidebar()" />
     <main class="shell__main">
       <router-outlet />
     </main>

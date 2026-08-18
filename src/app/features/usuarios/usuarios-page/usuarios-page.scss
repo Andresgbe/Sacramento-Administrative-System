@@ -1,0 +1,87 @@
+.usuarios-page__header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.usuarios-page__status {
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  text-align: center;
+
+  &--error {
+    border-color: rgb(185 28 28 / 30%);
+    color: var(--color-danger);
+  }
+}
+
+.usuarios-table-wrapper {
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.usuarios-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th {
+    text-align: left;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+    color: var(--color-text-muted);
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.usuarios-table__actions {
+  text-align: right;
+}
+
+.usuarios-table__link {
+  border: none;
+  background: none;
+  color: var(--color-accent);
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.usuarios-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &--admin {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+  }
+
+  &--subadmin {
+    background: rgb(100 116 139 / 12%);
+    color: var(--color-neutral);
+  }
+}

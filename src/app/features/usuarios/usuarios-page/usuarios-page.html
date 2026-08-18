@@ -1,0 +1,72 @@
+<div class="usuarios-page__header">
+  <button type="button" class="btn btn--primary" (click)="openCreateModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+    </svg>
+    Agregar subadmin
+  </button>
+</div>
+
+@if (isLoading()) {
+  <p class="usuarios-page__status">Cargando usuarios…</p>
+} @else if (loadError()) {
+  <p class="usuarios-page__status usuarios-page__status--error">
+    No se pudieron cargar los usuarios: {{ loadError() }}
+  </p>
+} @else if (usuarios().length === 0) {
+  <p class="usuarios-page__status">Todavía no hay usuarios registrados.</p>
+} @else {
+  <div class="usuarios-table-wrapper">
+    <table class="usuarios-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Rol</th>
+          <th>Desde</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (usuario of usuarios(); track usuario.id) {
+          <tr>
+            <td>{{ usuario.nombreCompleto }}</td>
+            <td>{{ usuario.email }}</td>
+            <td>
+              <span class="usuarios-badge usuarios-badge--{{ usuario.rol }}">
+                {{ usuario.rol === 'admin' ? 'Admin' : 'Subadmin' }}
+              </span>
+            </td>
+            <td>{{ usuario.createdAt | date: 'dd/MM/yyyy':'UTC' }}</td>
+            <td class="usuarios-table__actions">
+              @if (usuario.rol === 'subadmin') {
+                <button type="button" class="usuarios-table__link" (click)="openPasswordModal(usuario)">
+                  Cambiar contraseña
+                </button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (createModalOpen()) {
+  <app-usuario-form-modal
+    [saving]="saving()"
+    [errorMessage]="saveError()"
+    (closed)="closeCreateModal()"
+    (saved)="onUsuarioSaved($event)"
+  />
+}
+
+@if (passwordTarget(); as target) {
+  <app-password-form-modal
+    [nombreCompleto]="target.nombreCompleto"
+    [saving]="passwordSaving()"
+    [errorMessage]="passwordError()"
+    (closed)="closePasswordModal()"
+    (saved)="onPasswordSaved($event)"
+  />
+}
