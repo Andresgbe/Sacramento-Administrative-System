@@ -109,4 +109,15 @@ export class CajaChicaService {
     await this.load();
     return { error: null };
   }
+
+  async delete(id: string): Promise<{ error: string | null }> {
+    const { error } = await this.supabase.from('caja_chica').delete().eq('id', id);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    this.movimientos.update((current) => current.filter((m) => m.id !== id));
+    return { error: null };
+  }
 }

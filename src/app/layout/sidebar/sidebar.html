@@ -2,10 +2,29 @@
   <div class="sidebar__backdrop" (click)="closeRequested.emit()"></div>
 }
 
-<aside class="sidebar" [class.sidebar--open]="open">
-  <div class="sidebar__brand">
-    <img class="sidebar__logo" src="/images/logo.jpg" alt="Centro Comercial Sacramento" />
-    <span class="sidebar__brand-name">Sacramento</span>
+<aside class="sidebar" [class.sidebar--open]="open" [class.sidebar--collapsed]="collapsed()">
+  <div class="sidebar__brand-row">
+    <div class="sidebar__brand">
+      <img class="sidebar__logo" src="/images/logo.jpg" alt="Centro Comercial Sacramento" />
+      <span class="sidebar__brand-name">Sacramento</span>
+    </div>
+
+    <button
+      type="button"
+      class="sidebar__collapse-toggle"
+      (click)="toggleCollapsed()"
+      [attr.aria-label]="collapsed() ? 'Expandir menú' : 'Minimizar menú'"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        [class.sidebar__collapse-icon--flipped]="collapsed()"
+      >
+        <path d="m14 6-6 6 6 6" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
   </div>
 
   <nav class="sidebar__nav">
@@ -14,6 +33,7 @@
         class="sidebar__link"
         [routerLink]="item.route"
         routerLinkActive="sidebar__link--active"
+        [title]="item.label"
         (click)="closeRequested.emit()"
       >
         <span class="sidebar__icon">

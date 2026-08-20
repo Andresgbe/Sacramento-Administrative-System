@@ -101,4 +101,15 @@ export class EgresosService {
     await this.load();
     return { error: null };
   }
+
+  async delete(id: string): Promise<{ error: string | null }> {
+    const { error } = await this.supabase.from('egresos').delete().eq('id', id);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    this.egresos.update((current) => current.filter((e) => e.id !== id));
+    return { error: null };
+  }
 }

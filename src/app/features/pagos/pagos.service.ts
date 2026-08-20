@@ -110,6 +110,17 @@ export class PagosService {
     return { error: null };
   }
 
+  async delete(id: string): Promise<{ error: string | null }> {
+    const { error } = await this.supabase.from('pagos').delete().eq('id', id);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    this.pagos.update((current) => current.filter((p) => p.id !== id));
+    return { error: null };
+  }
+
   hasPaidThisMonth(localId: string): boolean {
     return this.monthsSinceLastPayment(localId) === 0;
   }
