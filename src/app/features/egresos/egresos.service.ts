@@ -74,4 +74,42 @@ export class EgresosService {
     await this.load();
     return { error: null };
   }
+
+  async update(
+    id: string,
+    egreso: {
+      fecha: string;
+      monto: number;
+      categoria: CategoriaEgreso;
+      descripcion: string | null;
+    },
+  ): Promise<{ error: string | null }> {
+    const { error } = await this.supabase
+      .from('egresos')
+      .update({
+        fecha: egreso.fecha,
+        monto: egreso.monto,
+        categoria: egreso.categoria,
+        descripcion: egreso.descripcion,
+      })
+      .eq('id', id);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    await this.load();
+    return { error: null };
+  }
+
+  async delete(id: string): Promise<{ error: string | null }> {
+    const { error } = await this.supabase.from('egresos').delete().eq('id', id);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    this.egresos.update((current) => current.filter((e) => e.id !== id));
+    return { error: null };
+  }
 }

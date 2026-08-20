@@ -49,15 +49,29 @@
         }
       </div>
 
-      <label class="field">
-        <span>Piso</span>
-        <input type="text" formControlName="piso" placeholder="PB" />
-      </label>
+      <div class="field-row">
+        <label class="field">
+          <span>Piso</span>
+          <input type="text" formControlName="piso" placeholder="PB" />
+        </label>
+
+        <label class="field">
+          <span>RIF</span>
+          <input type="text" formControlName="rif" placeholder="J-12345678-9" />
+        </label>
+      </div>
 
       <div class="field-row">
         <label class="field">
           <span>Monto de alquiler (USD)</span>
-          <input type="number" formControlName="montoAlquiler" min="0" step="0.01" />
+          <input
+            type="number"
+            formControlName="montoAlquiler"
+            min="0"
+            step="0.01"
+            appSelectOnFocus
+            appPositiveDecimal
+          />
         </label>
 
         <label class="field">

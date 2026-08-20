@@ -3,12 +3,56 @@
 } @else if (notFound()) {
   <p class="detail-status detail-status--error">No se encontró el local.</p>
 } @else {
-  <a routerLink="/locales" class="detail-back">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="m15 18-6-6 6-6" stroke-linecap="round" stroke-linejoin="round" />
-    </svg>
-    Volver a Locales
-  </a>
+  <div class="detail-header">
+    <a routerLink="/locales" class="btn btn--ghost detail-back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="m15 18-6-6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      Volver a Locales
+    </a>
+
+    <div class="detail-menu">
+      <button
+        type="button"
+        class="btn btn--ghost detail-menu__trigger"
+        (click)="toggleMenu()"
+        aria-label="Más opciones"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path
+            d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+
+      @if (menuOpen()) {
+        <div class="detail-menu__backdrop" (click)="closeMenu()"></div>
+        <div class="detail-menu__panel">
+          <button
+            type="button"
+            class="detail-menu__item detail-menu__item--danger"
+            [disabled]="deleting()"
+            (click)="deleteLocal()"
+          >
+            {{ deleting() ? 'Eliminando…' : 'ELIMINAR' }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (deleteError()) {
+    <p class="detail-status detail-status--error">
+      No se pudo eliminar el local: {{ deleteError() }}
+    </p>
+  }
 
   <div class="detail-layout">
     <div class="detail-image-panel">
@@ -69,10 +113,22 @@
         </label>
 
         <label class="field">
-          <span>Monto de alquiler (USD)</span>
-          <input type="number" formControlName="montoAlquiler" min="0" step="0.01" />
+          <span>RIF</span>
+          <input type="text" formControlName="rif" placeholder="J-12345678-9" />
         </label>
       </div>
+
+      <label class="field">
+        <span>Monto de alquiler (USD)</span>
+        <input
+          type="number"
+          formControlName="montoAlquiler"
+          min="0"
+          step="0.01"
+          appSelectOnFocus
+          appPositiveDecimal
+        />
+      </label>
 
       @if (saveError()) {
         <p class="detail-form__error">{{ saveError() }}</p>
@@ -95,12 +151,12 @@
     @if (pagosDelLocal().length === 0) {
       <p class="detail-status">Este local todavía no tiene pagos registrados.</p>
     } @else {
-      <div class="detail-table-wrapper">
-        <table class="detail-table">
+      <div class="data-table-wrapper">
+        <table class="data-table">
           <thead>
             <tr>
               <th>Fecha</th>
-              <th class="detail-table__amount">Monto</th>
+              <th>Monto</th>
               <th>Tasa</th>
               <th>Descripción</th>
             </tr>
@@ -109,7 +165,7 @@
             @for (pago of pagosDelLocal(); track pago.id) {
               <tr>
                 <td>{{ pago.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
-                <td class="detail-table__amount">$ {{ pago.monto | number: '1.2-2' }}</td>
+                <td>$ {{ pago.monto | number: '1.2-2' }}</td>
                 <td>{{ tasaLabel[pago.tipoTasa] }}</td>
                 <td>{{ pago.descripcion || '—' }}</td>
               </tr>

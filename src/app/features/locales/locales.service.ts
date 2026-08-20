@@ -8,6 +8,7 @@ interface LocalRow {
   nombre_comercial: string;
   imagen_url: string | null;
   piso: string | null;
+  rif: string | null;
   area_m2: number | null;
   monto_alquiler: number | null;
   estado: LocalEstado;
@@ -21,6 +22,7 @@ function fromRow(row: LocalRow): Local {
     nombreComercial: row.nombre_comercial,
     imagenUrl: row.imagen_url,
     piso: row.piso,
+    rif: row.rif,
     areaM2: row.area_m2,
     montoAlquiler: row.monto_alquiler,
     estado: row.estado,
@@ -84,6 +86,7 @@ export class LocalesService {
         nombre_comercial: local.nombreComercial,
         imagen_url: local.imagenUrl,
         piso: local.piso,
+        rif: local.rif,
         area_m2: local.areaM2,
         monto_alquiler: local.montoAlquiler,
         estado: local.estado,
@@ -121,6 +124,7 @@ export class LocalesService {
         nombre_comercial: changes.nombreComercial,
         imagen_url: changes.imagenUrl,
         piso: changes.piso,
+        rif: changes.rif,
         monto_alquiler: changes.montoAlquiler,
         estado: changes.estado,
       })
@@ -133,6 +137,17 @@ export class LocalesService {
     }
 
     this.locales.update((current) => current.map((l) => (l.id === id ? fromRow(data) : l)));
+    return { error: null };
+  }
+
+  async delete(id: string): Promise<{ error: string | null }> {
+    const { error } = await this.supabase.from('locales').delete().eq('id', id);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    this.locales.update((current) => current.filter((l) => l.id !== id));
     return { error: null };
   }
 }

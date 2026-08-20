@@ -65,6 +65,7 @@ export class LocalesPage implements OnInit {
       nombreComercial: payload.nombreComercial,
       imagenUrl,
       piso: payload.piso,
+      rif: payload.rif,
       areaM2: null,
       montoAlquiler: payload.montoAlquiler,
       estado: payload.estado,

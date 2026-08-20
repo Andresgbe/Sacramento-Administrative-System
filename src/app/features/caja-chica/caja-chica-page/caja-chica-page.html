@@ -12,27 +12,87 @@
   </button>
 </div>
 
+<div class="filters-bar">
+  <div class="filters-field filters-field--search">
+    <span>Buscar</span>
+    <div class="filters-search">
+      <input
+        type="text"
+        placeholder="Descripción…"
+        [ngModel]="searchInput()"
+        (ngModelChange)="setSearchInput($event)"
+        (keydown.enter)="applySearch()"
+      />
+      <button type="button" class="filters-search__button" (click)="applySearch()" aria-label="Buscar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <label class="filters-field">
+    <span>Mes</span>
+    <input type="month" [ngModel]="month()" (ngModelChange)="setMonth($event)" />
+  </label>
+
+  <div class="filters-field">
+    <span>Monto</span>
+    <div class="filters-field__amount-row">
+      <input
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="Mín."
+        appSelectOnFocus
+        appPositiveDecimal
+        [ngModel]="montoMin()"
+        (ngModelChange)="setMontoMin($event)"
+      />
+      <span>—</span>
+      <input
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="Máx."
+        appSelectOnFocus
+        appPositiveDecimal
+        [ngModel]="montoMax()"
+        (ngModelChange)="setMontoMax($event)"
+      />
+    </div>
+  </div>
+
+  @if (hasActiveFilters()) {
+    <button type="button" class="filters-clear" (click)="clearAllFilters()">
+      Limpiar filtros
+    </button>
+  }
+</div>
+
 @if (isLoading()) {
   <p class="caja-chica-page__status">Cargando movimientos…</p>
 } @else if (loadError()) {
   <p class="caja-chica-page__status caja-chica-page__status--error">
     No se pudieron cargar los movimientos: {{ loadError() }}
   </p>
-} @else if (movimientos().length === 0) {
-  <p class="caja-chica-page__status">Todavía no hay movimientos registrados.</p>
+} @else if (movimientosFiltrados().length === 0) {
+  <p class="caja-chica-page__status">Ningún movimiento coincide con los filtros aplicados.</p>
 } @else {
-  <div class="caja-chica-table-wrapper">
-    <table class="caja-chica-table">
+  <div class="data-table-wrapper">
+    <table class="data-table">
       <thead>
         <tr>
           <th>Fecha</th>
           <th>Tipo</th>
-          <th class="caja-chica-table__amount">Monto</th>
+          <th>Monto</th>
           <th>Descripción</th>
+          <th class="data-table__actions"></th>
         </tr>
       </thead>
       <tbody>
-        @for (movimiento of movimientos(); track movimiento.id) {
+        @for (movimiento of movimientosFiltrados(); track movimiento.id) {
           <tr>
             <td>{{ movimiento.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
             <td>
@@ -49,6 +109,38 @@
               {{ movimiento.monto | number: '1.2-2' }}
             </td>
             <td>{{ movimiento.descripcion || '—' }}</td>
+            <td class="data-table__actions">
+              <div class="data-table__action-group">
+                <button
+                  type="button"
+                  class="data-table__edit"
+                  (click)="openEditModal(movimiento)"
+                  aria-label="Editar movimiento"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                      d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="data-table__delete"
+                  (click)="deleteMovimiento(movimiento)"
+                  aria-label="Eliminar movimiento"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                      d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </td>
           </tr>
         }
       </tbody>
@@ -60,6 +152,7 @@
   <app-movimiento-form-modal
     [saving]="saving()"
     [errorMessage]="saveError()"
+    [movimiento]="editingMovimiento()"
     (closed)="closeModal()"
     (saved)="onMovimientoSaved($event)"
   />

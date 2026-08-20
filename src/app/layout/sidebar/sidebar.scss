@@ -7,11 +7,39 @@
   position: sticky;
   top: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   background: var(--sidebar-bg);
   color: var(--sidebar-text);
+  transition: width 0.2s ease;
   @include custom-scrollbar;
+
+  @media (min-width: 901px) {
+    &.sidebar--collapsed {
+      width: 76px;
+
+      .sidebar__brand-row {
+        flex-direction: column;
+        gap: 10px;
+        padding: 20px 8px 12px;
+      }
+
+      .sidebar__brand-name,
+      .sidebar__label,
+      .sidebar__footer {
+        display: none;
+      }
+
+      .sidebar__link {
+        justify-content: center;
+      }
+
+      .sidebar__collapse-icon--flipped {
+        transform: rotate(180deg);
+      }
+    }
+  }
 
   @media (max-width: 900px) {
     position: fixed;
@@ -25,6 +53,32 @@
     &--open {
       transform: translateX(0);
     }
+
+    .sidebar__collapse-toggle {
+      display: none;
+    }
+  }
+}
+
+.sidebar__collapse-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: var(--sidebar-text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: var(--color-accent);
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.2s ease;
   }
 }
 
@@ -40,11 +94,19 @@
   }
 }
 
+.sidebar__brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 20px;
+}
+
 .sidebar__brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 20px;
+  min-width: 0;
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 1.25rem;

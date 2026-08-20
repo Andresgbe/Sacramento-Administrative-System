@@ -101,3 +101,211 @@ button {
   }
 }
 
+.btn--danger {
+  background: var(--color-danger);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgb(185 28 28 / 30%);
+
+  &:hover {
+    background: #991b1b;
+    box-shadow: 0 4px 14px rgb(185 28 28 / 40%);
+  }
+}
+
+// Shared transaction-table styles, used across features via the .data-table
+// utility classes. Component stylesheets may still add their own modifiers
+// (e.g. a wider `min-width`, status badges, action columns) on top of these.
+.data-table-wrapper {
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.data-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th {
+    text-align: left;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+    color: var(--color-text-muted);
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  tbody tr {
+    background: var(--color-surface-muted);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.data-table__actions {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.data-table__action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.data-table__edit,
+.data-table__delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.data-table__edit {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+
+  &:hover {
+    background: var(--color-accent);
+    color: #ffffff;
+  }
+}
+
+.data-table__delete {
+  background: rgb(185 28 28 / 10%);
+  color: var(--color-danger);
+
+  &:hover {
+    background: var(--color-danger);
+    color: #ffffff;
+  }
+}
+
+// Shared filter-bar styles, used across the transaction report pages
+// (pagos, egresos, caja chica) — a search box + date/amount/etc. inputs
+// above the .data-table.
+.filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.filters-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+
+  input,
+  select {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--color-text-primary);
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px var(--color-accent-soft);
+    }
+  }
+}
+
+.filters-field--search {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filters-search {
+  display: flex;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+    border-right: none;
+  }
+}
+
+.filters-search__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--color-accent);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(--color-accent-hover);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.filters-field__amount-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  input {
+    width: 100px;
+  }
+}
+
+.filters-clear {
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 9px 4px;
+
+  &:hover {
+    color: var(--color-accent);
+  }
+}
+

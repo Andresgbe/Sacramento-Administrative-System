@@ -40,7 +40,7 @@ export const routes: Routes = [
         path: 'pagos',
         loadComponent: () =>
           import('./features/pagos/pagos-page/pagos-page').then((m) => m.PagosPage),
-        data: { title: 'Pagos de alquiler', subtitle: 'Registro y control de pagos' },
+        data: { title: 'Pagos de alquiler', subtitle: 'Reporte de pagos de alquiler' },
       },
       {
         path: 'calculadora',
@@ -54,7 +54,7 @@ export const routes: Routes = [
         path: 'egresos',
         loadComponent: () =>
           import('./features/egresos/egresos-page/egresos-page').then((m) => m.EgresosPage),
-        data: { title: 'Egresos', subtitle: 'Gastos y salidas de dinero' },
+        data: { title: 'Egresos', subtitle: 'Reporte de gastos' },
       },
       {
         path: 'caja-chica',

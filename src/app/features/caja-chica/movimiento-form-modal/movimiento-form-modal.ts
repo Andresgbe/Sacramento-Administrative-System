@@ -1,6 +1,8 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CajaChicaTipo } from '../../../core/models/caja-chica.model';
+import { CajaChicaTipo, MovimientoCajaChica } from '../../../core/models/caja-chica.model';
+import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
+import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 
 export interface MovimientoFormPayload {
   fecha: string;
@@ -20,13 +22,14 @@ function todayLocalIso(): string {
 
 @Component({
   selector: 'app-movimiento-form-modal',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, SelectOnFocusDirective, PositiveDecimalDirective],
   templateUrl: './movimiento-form-modal.html',
   styleUrl: './movimiento-form-modal.scss',
 })
-export class MovimientoFormModal {
+export class MovimientoFormModal implements OnInit {
   @Input() saving = false;
   @Input() errorMessage: string | null = null;
+  @Input() movimiento: MovimientoCajaChica | null = null;
 
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<MovimientoFormPayload>();
@@ -52,6 +55,17 @@ export class MovimientoFormModal {
     monto: [0, [Validators.required, Validators.min(0.01)]],
     descripcion: [''],
   });
+
+  ngOnInit(): void {
+    if (this.movimiento) {
+      this.form.patchValue({
+        fecha: this.movimiento.fecha,
+        tipo: this.movimiento.tipo,
+        monto: this.movimiento.monto,
+        descripcion: this.movimiento.descripcion ?? '',
+      });
+    }
+  }
 
   protected submit(): void {
     if (this.form.invalid) {

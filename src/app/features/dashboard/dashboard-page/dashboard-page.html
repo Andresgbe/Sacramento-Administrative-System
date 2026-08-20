@@ -22,6 +22,15 @@
       <h2>Ingresos mensuales</h2>
     </div>
     <app-bar-chart [data]="ingresosMensuales" valuePrefix="$ " />
+
+    <ul class="income-breakdown">
+      @for (item of ingresosMensuales; track item.label) {
+        <li class="income-breakdown__item">
+          <span class="income-breakdown__label">{{ item.label }}</span>
+          <span class="income-breakdown__value">$ {{ item.value | number: '1.2-2' }}</span>
+        </li>
+      }
+    </ul>
   </div>
 </section>
 
@@ -46,7 +55,7 @@
           @for (payment of recentPayments(); track payment.id) {
             <tr>
               <td>{{ payment.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
-              <td>{{ payment.localNumero }} — {{ payment.localNombre }}</td>
+              <td>{{ payment.localNombre }}</td>
               <td class="panel__table-amount">$ {{ payment.monto | number: '1.2-2' }}</td>
             </tr>
           }

@@ -82,4 +82,42 @@ export class CajaChicaService {
     await this.load();
     return { error: null };
   }
+
+  async update(
+    id: string,
+    movimiento: {
+      fecha: string;
+      tipo: CajaChicaTipo;
+      monto: number;
+      descripcion: string | null;
+    },
+  ): Promise<{ error: string | null }> {
+    const { error } = await this.supabase
+      .from('caja_chica')
+      .update({
+        fecha: movimiento.fecha,
+        tipo: movimiento.tipo,
+        monto: movimiento.monto,
+        descripcion: movimiento.descripcion,
+      })
+      .eq('id', id);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    await this.load();
+    return { error: null };
+  }
+
+  async delete(id: string): Promise<{ error: string | null }> {
+    const { error } = await this.supabase.from('caja_chica').delete().eq('id', id);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    this.movimientos.update((current) => current.filter((m) => m.id !== id));
+    return { error: null };
+  }
 }

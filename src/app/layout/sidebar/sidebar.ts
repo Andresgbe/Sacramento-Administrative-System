@@ -1,6 +1,8 @@
-import { Component, EventEmitter, Input, Output, computed, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+
+const COLLAPSED_STORAGE_KEY = 'sidebar-collapsed';
 
 interface NavItem {
   label: string;
@@ -19,6 +21,16 @@ export class Sidebar {
   @Output() closeRequested = new EventEmitter<void>();
 
   private readonly authService = inject(AuthService);
+
+  protected readonly collapsed = signal(localStorage.getItem(COLLAPSED_STORAGE_KEY) === 'true');
+
+  protected toggleCollapsed(): void {
+    this.collapsed.update((collapsed) => {
+      const next = !collapsed;
+      localStorage.setItem(COLLAPSED_STORAGE_KEY, String(next));
+      return next;
+    });
+  }
 
   private readonly baseNavItems: NavItem[] = [
     { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },

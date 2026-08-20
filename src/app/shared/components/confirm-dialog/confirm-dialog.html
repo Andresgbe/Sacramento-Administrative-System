@@ -1,0 +1,23 @@
+@if (config(); as cfg) {
+  <div class="confirm-backdrop" (mousedown)="onBackdropMouseDown($event)" (click)="onBackdropClick($event)">
+    <div class="confirm-modal">
+      <h2 class="confirm-modal__title">{{ cfg.title }}</h2>
+      <p class="confirm-modal__message">{{ cfg.message }}</p>
+
+      <div class="confirm-modal__actions">
+        <button type="button" class="btn btn--secondary" (click)="cancel()">
+          {{ cfg.cancelLabel ?? 'Cancelar' }}
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [class.btn--primary]="!cfg.danger"
+          [class.btn--danger]="cfg.danger"
+          (click)="confirm()"
+        >
+          {{ cfg.confirmLabel ?? 'Confirmar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
