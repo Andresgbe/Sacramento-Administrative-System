@@ -23,7 +23,7 @@ function todayLocalIso(): string {
 
 @Component({
   selector: 'app-pago-form-modal',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, SelectOnFocusDirective],
   templateUrl: './pago-form-modal.html',
   styleUrl: './pago-form-modal.scss',
 })

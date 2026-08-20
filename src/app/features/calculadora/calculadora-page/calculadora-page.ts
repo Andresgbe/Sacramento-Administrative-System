@@ -2,13 +2,14 @@ import { DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TasasCambioService } from '../../tasas-cambio/tasas-cambio.service';
+import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 
 type TasaKey = 'bcv' | 'paralelo' | 'usdt';
 type Direccion = 'usd-a-bs' | 'bs-a-usd';
 
 @Component({
   selector: 'app-calculadora-page',
-  imports: [FormsModule, DecimalPipe],
+  imports: [FormsModule, DecimalPipe, SelectOnFocusDirective],
   templateUrl: './calculadora-page.html',
   styleUrl: './calculadora-page.scss',
 })

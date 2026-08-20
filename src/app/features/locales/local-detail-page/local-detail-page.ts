@@ -5,13 +5,14 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Local, LocalEstado } from '../../../core/models/local.model';
 import { TipoTasa } from '../../../core/models/pago.model';
 import { PageHeaderService } from '../../../core/services/page-header.service';
+import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 import { PagosService } from '../../pagos/pagos.service';
 import { PagoStatus } from '../local-card/local-card';
 import { LocalesService } from '../locales.service';
 
 @Component({
   selector: 'app-local-detail-page',
-  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, DatePipe],
+  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, DatePipe, SelectOnFocusDirective],
   templateUrl: './local-detail-page.html',
   styleUrl: './local-detail-page.scss',
 })

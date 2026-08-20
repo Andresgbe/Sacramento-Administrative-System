@@ -6,8 +6,8 @@ import { Directive, HostListener } from '@angular/core';
   selector: '[appSelectOnFocus]',
 })
 export class SelectOnFocusDirective {
-  @HostListener('focus', ['$event.target'])
-  onFocus(target: HTMLInputElement): void {
-    target.select();
+  @HostListener('focus', ['$event'])
+  onFocus(event: FocusEvent): void {
+    (event.target as HTMLInputElement).select();
   }
 }

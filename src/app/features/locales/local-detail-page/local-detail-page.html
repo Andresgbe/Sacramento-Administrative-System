@@ -70,7 +70,13 @@
 
         <label class="field">
           <span>Monto de alquiler (USD)</span>
-          <input type="number" formControlName="montoAlquiler" min="0" step="0.01" />
+          <input
+            type="number"
+            formControlName="montoAlquiler"
+            min="0"
+            step="0.01"
+            appSelectOnFocus
+          />
         </label>
       </div>
 

@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnDestroy, Output, inject, signal } fro
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LocalEstado } from '../../../core/models/local.model';
 import { DocumentoTipo } from '../../../core/models/documento.model';
+import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 
 export interface LocalFormPayload {
   numeroLocal: string;
@@ -15,7 +16,7 @@ export interface LocalFormPayload {
 
 @Component({
   selector: 'app-local-form-modal',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, SelectOnFocusDirective],
   templateUrl: './local-form-modal.html',
   styleUrl: './local-form-modal.scss',
 })
