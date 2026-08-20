@@ -10,14 +10,13 @@ interface PagoRow {
   tipo_tasa: TipoTasa;
   descripcion: string | null;
   created_at: string;
-  locales: { numero_local: string; nombre_comercial: string } | null;
+  locales: { nombre_comercial: string } | null;
 }
 
 function fromRow(row: PagoRow): Pago {
   return {
     id: row.id,
     localId: row.local_id,
-    localNumero: row.locales?.numero_local ?? '',
     localNombre: row.locales?.nombre_comercial ?? '',
     fecha: row.fecha,
     monto: row.monto,
@@ -46,7 +45,7 @@ export class PagosService {
 
     const { data, error } = await this.supabase
       .from('pagos')
-      .select('*, locales(numero_local, nombre_comercial)')
+      .select('*, locales(nombre_comercial)')
       .order('fecha', { ascending: false });
 
     if (error) {

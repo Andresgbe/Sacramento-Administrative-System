@@ -75,7 +75,8 @@
   color: var(--color-text-secondary);
 
   input,
-  select {
+  select,
+  textarea {
     font-family: var(--font-body);
     font-size: 0.9rem;
     font-weight: 400;
@@ -93,6 +94,11 @@
       border-color: var(--color-accent);
       box-shadow: 0 0 0 3px var(--color-accent-soft);
     }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 90px;
   }
 }
 

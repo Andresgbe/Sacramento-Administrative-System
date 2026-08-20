@@ -3,6 +3,14 @@
     <button
       type="button"
       class="egresos-tab"
+      [class.egresos-tab--active]="filtro() === 'todos'"
+      (click)="setFiltro('todos')"
+    >
+      Total
+    </button>
+    <button
+      type="button"
+      class="egresos-tab"
       [class.egresos-tab--active]="filtro() === 'administrativo'"
       (click)="setFiltro('administrativo')"
     >
@@ -15,14 +23,6 @@
       (click)="setFiltro('operativo')"
     >
       Gastos operativos
-    </button>
-    <button
-      type="button"
-      class="egresos-tab"
-      [class.egresos-tab--active]="filtro() === 'todos'"
-      (click)="setFiltro('todos')"
-    >
-      Total
     </button>
   </div>
 
@@ -60,14 +60,15 @@
 } @else if (egresosFiltrados().length === 0) {
   <p class="egresos-page__status">Todavía no hay gastos registrados en esta categoría.</p>
 } @else {
-  <div class="egresos-table-wrapper">
-    <table class="egresos-table">
+  <div class="data-table-wrapper">
+    <table class="data-table">
       <thead>
         <tr>
           <th>Fecha</th>
           <th>Categoría</th>
-          <th class="egresos-table__amount">Monto</th>
+          <th>Monto</th>
           <th>Descripción</th>
+          <th class="data-table__actions"></th>
         </tr>
       </thead>
       <tbody>
@@ -79,8 +80,24 @@
                 {{ categoriaLabel[egreso.categoria] }}
               </span>
             </td>
-            <td class="egresos-table__amount">$ {{ egreso.monto | number: '1.2-2' }}</td>
+            <td>$ {{ egreso.monto | number: '1.2-2' }}</td>
             <td>{{ egreso.descripcion || '—' }}</td>
+            <td class="data-table__actions">
+              <button
+                type="button"
+                class="data-table__edit"
+                (click)="openEditModal(egreso)"
+                aria-label="Editar gasto"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            </td>
           </tr>
         }
       </tbody>
@@ -92,6 +109,7 @@
   <app-egreso-form-modal
     [saving]="saving()"
     [errorMessage]="saveError()"
+    [egreso]="editingEgreso()"
     (closed)="closeModal()"
     (saved)="onEgresoSaved($event)"
   />

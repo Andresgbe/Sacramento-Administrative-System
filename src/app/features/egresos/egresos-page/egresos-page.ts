@@ -1,6 +1,6 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { CategoriaEgreso } from '../../../core/models/egreso.model';
+import { CategoriaEgreso, Egreso } from '../../../core/models/egreso.model';
 import { EgresoFormModal, EgresoFormPayload } from '../egreso-form-modal/egreso-form-modal';
 import { EgresosService } from '../egresos.service';
 
@@ -36,6 +36,7 @@ export class EgresosPage implements OnInit {
   );
 
   protected readonly modalOpen = signal(false);
+  protected readonly editingEgreso = signal<Egreso | null>(null);
   protected readonly saving = signal(false);
   protected readonly saveError = signal<string | null>(null);
 
@@ -49,6 +50,13 @@ export class EgresosPage implements OnInit {
 
   protected openModal(): void {
     this.saveError.set(null);
+    this.editingEgreso.set(null);
+    this.modalOpen.set(true);
+  }
+
+  protected openEditModal(egreso: Egreso): void {
+    this.saveError.set(null);
+    this.editingEgreso.set(egreso);
     this.modalOpen.set(true);
   }
 
@@ -60,7 +68,10 @@ export class EgresosPage implements OnInit {
     this.saving.set(true);
     this.saveError.set(null);
 
-    const { error } = await this.egresosService.add(payload);
+    const editing = this.editingEgreso();
+    const { error } = editing
+      ? await this.egresosService.update(editing.id, payload)
+      : await this.egresosService.add(payload);
 
     this.saving.set(false);
 

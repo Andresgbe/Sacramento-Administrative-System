@@ -3,7 +3,7 @@
 } @else if (notFound()) {
   <p class="detail-status detail-status--error">No se encontró el local.</p>
 } @else {
-  <a routerLink="/locales" class="detail-back">
+  <a routerLink="/locales" class="btn btn--ghost detail-back">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="m15 18-6-6 6-6" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
@@ -95,12 +95,12 @@
     @if (pagosDelLocal().length === 0) {
       <p class="detail-status">Este local todavía no tiene pagos registrados.</p>
     } @else {
-      <div class="detail-table-wrapper">
-        <table class="detail-table">
+      <div class="data-table-wrapper">
+        <table class="data-table">
           <thead>
             <tr>
               <th>Fecha</th>
-              <th class="detail-table__amount">Monto</th>
+              <th>Monto</th>
               <th>Tasa</th>
               <th>Descripción</th>
             </tr>
@@ -109,7 +109,7 @@
             @for (pago of pagosDelLocal(); track pago.id) {
               <tr>
                 <td>{{ pago.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
-                <td class="detail-table__amount">$ {{ pago.monto | number: '1.2-2' }}</td>
+                <td>$ {{ pago.monto | number: '1.2-2' }}</td>
                 <td>{{ tasaLabel[pago.tipoTasa] }}</td>
                 <td>{{ pago.descripcion || '—' }}</td>
               </tr>

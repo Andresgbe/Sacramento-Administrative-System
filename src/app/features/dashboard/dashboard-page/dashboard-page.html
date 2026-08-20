@@ -55,7 +55,7 @@
           @for (payment of recentPayments(); track payment.id) {
             <tr>
               <td>{{ payment.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
-              <td>{{ payment.localNumero }} — {{ payment.localNombre }}</td>
+              <td>{{ payment.localNombre }}</td>
               <td class="panel__table-amount">$ {{ payment.monto | number: '1.2-2' }}</td>
             </tr>
           }

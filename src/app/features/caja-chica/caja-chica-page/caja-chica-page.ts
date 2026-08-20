@@ -1,6 +1,6 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CajaChicaTipo } from '../../../core/models/caja-chica.model';
+import { CajaChicaTipo, MovimientoCajaChica } from '../../../core/models/caja-chica.model';
 import {
   MovimientoFormModal,
   MovimientoFormPayload,
@@ -27,6 +27,7 @@ export class CajaChicaPage implements OnInit {
   };
 
   protected readonly modalOpen = signal(false);
+  protected readonly editingMovimiento = signal<MovimientoCajaChica | null>(null);
   protected readonly saving = signal(false);
   protected readonly saveError = signal<string | null>(null);
 
@@ -36,6 +37,13 @@ export class CajaChicaPage implements OnInit {
 
   protected openModal(): void {
     this.saveError.set(null);
+    this.editingMovimiento.set(null);
+    this.modalOpen.set(true);
+  }
+
+  protected openEditModal(movimiento: MovimientoCajaChica): void {
+    this.saveError.set(null);
+    this.editingMovimiento.set(movimiento);
     this.modalOpen.set(true);
   }
 
@@ -47,7 +55,10 @@ export class CajaChicaPage implements OnInit {
     this.saving.set(true);
     this.saveError.set(null);
 
-    const { error } = await this.cajaChicaService.add(payload);
+    const editing = this.editingMovimiento();
+    const { error } = editing
+      ? await this.cajaChicaService.update(editing.id, payload)
+      : await this.cajaChicaService.add(payload);
 
     this.saving.set(false);
 

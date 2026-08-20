@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Local } from '../../../core/models/local.model';
 import { Pago, TipoTasa } from '../../../core/models/pago.model';
+import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 
 export interface PagoFormPayload {
   localId: string;

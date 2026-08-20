@@ -1,6 +1,6 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CategoriaEgreso } from '../../../core/models/egreso.model';
+import { CategoriaEgreso, Egreso } from '../../../core/models/egreso.model';
 
 export interface EgresoFormPayload {
   fecha: string;
@@ -24,9 +24,10 @@ function todayLocalIso(): string {
   templateUrl: './egreso-form-modal.html',
   styleUrl: './egreso-form-modal.scss',
 })
-export class EgresoFormModal {
+export class EgresoFormModal implements OnInit {
   @Input() saving = false;
   @Input() errorMessage: string | null = null;
+  @Input() egreso: Egreso | null = null;
 
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<EgresoFormPayload>();
@@ -52,6 +53,17 @@ export class EgresoFormModal {
     monto: [0, [Validators.required, Validators.min(0.01)]],
     descripcion: [''],
   });
+
+  ngOnInit(): void {
+    if (this.egreso) {
+      this.form.patchValue({
+        fecha: this.egreso.fecha,
+        categoria: this.egreso.categoria,
+        monto: this.egreso.monto,
+        descripcion: this.egreso.descripcion ?? '',
+      });
+    }
+  }
 
   protected submit(): void {
     if (this.form.invalid) {

@@ -16,30 +16,30 @@
 } @else if (pagos().length === 0) {
   <p class="pagos-page__status">Todavía no hay pagos registrados.</p>
 } @else {
-  <div class="pagos-table-wrapper">
-    <table class="pagos-table">
+  <div class="data-table-wrapper">
+    <table class="data-table pagos-table">
       <thead>
         <tr>
           <th>Fecha</th>
           <th>Local</th>
-          <th class="pagos-table__amount">Monto</th>
+          <th>Monto</th>
           <th>Tasa</th>
           <th>Descripción</th>
-          <th class="pagos-table__actions"></th>
+          <th class="data-table__actions"></th>
         </tr>
       </thead>
       <tbody>
         @for (pago of pagos(); track pago.id) {
           <tr>
             <td>{{ pago.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
-            <td>{{ pago.localNumero }} — {{ pago.localNombre }}</td>
-            <td class="pagos-table__amount">$ {{ pago.monto | number: '1.2-2' }}</td>
+            <td>{{ pago.localNombre }}</td>
+            <td>$ {{ pago.monto | number: '1.2-2' }}</td>
             <td>{{ tasaLabel[pago.tipoTasa] }}</td>
             <td>{{ pago.descripcion || '—' }}</td>
-            <td class="pagos-table__actions">
+            <td class="data-table__actions">
               <button
                 type="button"
-                class="pagos-table__edit"
+                class="data-table__edit"
                 (click)="openEditModal(pago)"
                 aria-label="Editar pago"
               >

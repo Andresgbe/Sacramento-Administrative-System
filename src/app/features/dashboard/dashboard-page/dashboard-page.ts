@@ -32,18 +32,32 @@ export class DashboardPage implements OnInit {
     operativo: 'Operativo',
   };
 
-  // Live: caja chica disponible comes from CajaChicaService; the rest are
-  // still placeholders until those queries get wired up to Supabase.
-  protected readonly stats = computed<DashboardStat[]>(() => [
-    {
-      label: 'Caja chica disponible',
-      value: `$ ${this.cajaChicaService.balance().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      tone: 'accent',
-    },
-    { label: 'Locales activos', value: '39', tone: 'default' },
-    { label: 'Locales vencidos', value: '3', tone: 'danger' },
-    { label: 'Ingresos del mes', value: '$ 4,120.00', tone: 'default' },
-  ]);
+  protected readonly stats = computed<DashboardStat[]>(() => {
+    const locales = this.localesService.all();
+    const localesActivos = locales.filter((local) => local.estado === 'activo').length;
+
+    const now = new Date();
+    const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const ingresosDelMes = this.pagosService
+      .all()
+      .filter((pago) => pago.fecha.startsWith(yearMonth))
+      .reduce((sum, pago) => sum + pago.monto, 0);
+    const egresosDelMes = this.egresosService
+      .all()
+      .filter((egreso) => egreso.fecha.startsWith(yearMonth))
+      .reduce((sum, egreso) => sum + egreso.monto, 0);
+
+    return [
+      {
+        label: 'Caja chica disponible',
+        value: this.formatUsd(this.cajaChicaService.balance()),
+        tone: 'accent',
+      },
+      { label: 'Locales activos', value: `${localesActivos}`, tone: 'default' },
+      { label: 'Egresos del mes', value: this.formatUsd(egresosDelMes), tone: 'danger' },
+      { label: 'Ingresos del mes', value: this.formatUsd(ingresosDelMes), tone: 'default' },
+    ];
+  });
 
   // Live: most recent payments, already sorted newest-first by PagosService.
   protected readonly recentPayments = computed(() => this.pagosService.all().slice(0, 3));
@@ -86,5 +100,9 @@ export class DashboardPage implements OnInit {
     this.pagosService.load();
     this.cajaChicaService.load();
     this.egresosService.load();
+  }
+
+  private formatUsd(value: number): string {
+    return `$ ${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 }

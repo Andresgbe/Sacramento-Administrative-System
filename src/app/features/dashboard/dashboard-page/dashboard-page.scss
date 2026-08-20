@@ -90,6 +90,10 @@
     color: var(--color-text-primary);
   }
 
+  tbody tr {
+    background: var(--color-surface-muted);
+  }
+
   tr:last-child td {
     border-bottom: none;
   }

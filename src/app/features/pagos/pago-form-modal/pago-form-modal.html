@@ -15,7 +15,7 @@
         <select formControlName="localId">
           <option value="" disabled>Selecciona un local</option>
           @for (local of locales; track local.id) {
-            <option [value]="local.id">{{ local.numeroLocal }} — {{ local.nombreComercial }}</option>
+            <option [value]="local.id">{{ local.nombreComercial }}</option>
           }
         </select>
       </label>
@@ -44,7 +44,7 @@
 
       <label class="field">
         <span>Descripción</span>
-        <input type="text" formControlName="descripcion" placeholder="Opcional" />
+        <textarea formControlName="descripcion" placeholder="Opcional" rows="4"></textarea>
       </label>
 
       @if (errorMessage) {

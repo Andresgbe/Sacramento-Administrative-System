@@ -1,7 +1,7 @@
 <div class="modal-backdrop" (mousedown)="onBackdropMouseDown($event)" (click)="onBackdropClick($event)">
   <div class="modal">
     <div class="modal__header">
-      <h2>Registrar gasto</h2>
+      <h2>{{ egreso ? 'Editar gasto' : 'Registrar gasto' }}</h2>
       <button type="button" class="modal__close" (click)="closed.emit()" aria-label="Cerrar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
@@ -32,7 +32,7 @@
 
       <label class="field">
         <span>Descripción</span>
-        <input type="text" formControlName="descripcion" placeholder="Opcional" />
+        <textarea formControlName="descripcion" placeholder="Opcional" rows="4"></textarea>
       </label>
 
       @if (errorMessage) {
@@ -42,7 +42,7 @@
       <div class="modal__actions">
         <button type="button" class="btn btn--secondary" (click)="closed.emit()">Cancelar</button>
         <button type="submit" class="btn btn--primary" [disabled]="saving">
-          {{ saving ? 'Guardando…' : 'Registrar gasto' }}
+          {{ saving ? 'Guardando…' : egreso ? 'Guardar cambios' : 'Registrar gasto' }}
         </button>
       </div>
     </form>
