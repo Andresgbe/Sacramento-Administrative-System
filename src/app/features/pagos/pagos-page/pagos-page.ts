@@ -1,6 +1,6 @@
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { TipoTasa } from '../../../core/models/pago.model';
+import { Pago, TipoTasa } from '../../../core/models/pago.model';
 import { LocalesService } from '../../locales/locales.service';
 import { PagoFormModal, PagoFormPayload } from '../pago-form-modal/pago-form-modal';
 import { PagosService } from '../pagos.service';
@@ -29,6 +29,7 @@ export class PagosPage implements OnInit {
   };
 
   protected readonly modalOpen = signal(false);
+  protected readonly editingPago = signal<Pago | null>(null);
   protected readonly saving = signal(false);
   protected readonly saveError = signal<string | null>(null);
 
@@ -39,6 +40,13 @@ export class PagosPage implements OnInit {
 
   protected openModal(): void {
     this.saveError.set(null);
+    this.editingPago.set(null);
+    this.modalOpen.set(true);
+  }
+
+  protected openEditModal(pago: Pago): void {
+    this.saveError.set(null);
+    this.editingPago.set(pago);
     this.modalOpen.set(true);
   }
 
@@ -50,7 +58,10 @@ export class PagosPage implements OnInit {
     this.saving.set(true);
     this.saveError.set(null);
 
-    const { error } = await this.pagosService.add(payload);
+    const editing = this.editingPago();
+    const { error } = editing
+      ? await this.pagosService.update(editing.id, payload)
+      : await this.pagosService.add(payload);
 
     this.saving.set(false);
 

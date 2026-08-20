@@ -82,6 +82,35 @@ export class PagosService {
     return { error: null };
   }
 
+  async update(
+    id: string,
+    pago: {
+      localId: string;
+      fecha: string;
+      monto: number;
+      tipoTasa: TipoTasa;
+      descripcion: string | null;
+    },
+  ): Promise<{ error: string | null }> {
+    const { error } = await this.supabase
+      .from('pagos')
+      .update({
+        local_id: pago.localId,
+        fecha: pago.fecha,
+        monto: pago.monto,
+        tipo_tasa: pago.tipoTasa,
+        descripcion: pago.descripcion,
+      })
+      .eq('id', id);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    await this.load();
+    return { error: null };
+  }
+
   hasPaidThisMonth(localId: string): boolean {
     return this.monthsSinceLastPayment(localId) === 0;
   }

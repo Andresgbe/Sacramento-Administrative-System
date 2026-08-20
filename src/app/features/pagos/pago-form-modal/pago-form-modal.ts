@@ -1,7 +1,7 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Local } from '../../../core/models/local.model';
-import { TipoTasa } from '../../../core/models/pago.model';
+import { Pago, TipoTasa } from '../../../core/models/pago.model';
 
 export interface PagoFormPayload {
   localId: string;
@@ -26,10 +26,11 @@ function todayLocalIso(): string {
   templateUrl: './pago-form-modal.html',
   styleUrl: './pago-form-modal.scss',
 })
-export class PagoFormModal {
+export class PagoFormModal implements OnInit {
   @Input({ required: true }) locales: Local[] = [];
   @Input() saving = false;
   @Input() errorMessage: string | null = null;
+  @Input() pago: Pago | null = null;
 
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<PagoFormPayload>();
@@ -56,6 +57,18 @@ export class PagoFormModal {
     tipoTasa: ['BCV' as TipoTasa, Validators.required],
     descripcion: [''],
   });
+
+  ngOnInit(): void {
+    if (this.pago) {
+      this.form.patchValue({
+        localId: this.pago.localId,
+        fecha: this.pago.fecha,
+        monto: this.pago.monto,
+        tipoTasa: this.pago.tipoTasa,
+        descripcion: this.pago.descripcion ?? '',
+      });
+    }
+  }
 
   protected submit(): void {
     if (this.form.invalid) {

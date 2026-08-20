@@ -112,3 +112,34 @@
   gap: 16px;
   margin-bottom: 24px;
 }
+
+.income-breakdown {
+  display: flex;
+  flex-direction: column;
+  margin: 20px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  list-style: none;
+}
+
+.income-breakdown__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 4px;
+  font-size: 0.875rem;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--color-border);
+  }
+}
+
+.income-breakdown__label {
+  color: var(--color-text-secondary);
+}
+
+.income-breakdown__value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}

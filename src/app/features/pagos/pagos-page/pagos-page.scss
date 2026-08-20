@@ -56,3 +56,35 @@
 .pagos-table td.pagos-table__amount {
   text-align: right;
 }
+
+.pagos-table td.pagos-table__actions {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.pagos-table__edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}

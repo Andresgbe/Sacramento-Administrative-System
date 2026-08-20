@@ -25,6 +25,7 @@
           <th class="pagos-table__amount">Monto</th>
           <th>Tasa</th>
           <th>Descripción</th>
+          <th class="pagos-table__actions"></th>
         </tr>
       </thead>
       <tbody>
@@ -35,6 +36,22 @@
             <td class="pagos-table__amount">$ {{ pago.monto | number: '1.2-2' }}</td>
             <td>{{ tasaLabel[pago.tipoTasa] }}</td>
             <td>{{ pago.descripcion || '—' }}</td>
+            <td class="pagos-table__actions">
+              <button
+                type="button"
+                class="pagos-table__edit"
+                (click)="openEditModal(pago)"
+                aria-label="Editar pago"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            </td>
           </tr>
         }
       </tbody>
@@ -47,6 +64,7 @@
     [locales]="locales()"
     [saving]="saving()"
     [errorMessage]="saveError()"
+    [pago]="editingPago()"
     (closed)="closeModal()"
     (saved)="onPagoSaved($event)"
   />
