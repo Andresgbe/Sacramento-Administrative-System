@@ -3,11 +3,13 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LocalEstado } from '../../../core/models/local.model';
 import { DocumentoTipo } from '../../../core/models/documento.model';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
+import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 
 export interface LocalFormPayload {
   numeroLocal: string;
   nombreComercial: string;
   piso: string | null;
+  rif: string | null;
   montoAlquiler: number | null;
   estado: LocalEstado;
   imageFile: File | null;
@@ -16,7 +18,7 @@ export interface LocalFormPayload {
 
 @Component({
   selector: 'app-local-form-modal',
-  imports: [ReactiveFormsModule, SelectOnFocusDirective],
+  imports: [ReactiveFormsModule, SelectOnFocusDirective, PositiveDecimalDirective],
   templateUrl: './local-form-modal.html',
   styleUrl: './local-form-modal.scss',
 })
@@ -54,6 +56,7 @@ export class LocalFormModal implements OnDestroy {
     numeroLocal: ['', Validators.required],
     nombreComercial: ['', Validators.required],
     piso: [''],
+    rif: [''],
     montoAlquiler: [0, [Validators.min(0)]],
     estado: ['activo' as LocalEstado, Validators.required],
   });
@@ -131,6 +134,7 @@ export class LocalFormModal implements OnDestroy {
       numeroLocal: value.numeroLocal,
       nombreComercial: value.nombreComercial,
       piso: value.piso || null,
+      rif: value.rif || null,
       montoAlquiler: value.montoAlquiler || null,
       estado: value.estado,
       imageFile: this.imageFile,

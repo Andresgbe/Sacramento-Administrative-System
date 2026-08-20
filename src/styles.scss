@@ -101,6 +101,17 @@ button {
   }
 }
 
+.btn--danger {
+  background: var(--color-danger);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgb(185 28 28 / 30%);
+
+  &:hover {
+    background: #991b1b;
+    box-shadow: 0 4px 14px rgb(185 28 28 / 40%);
+  }
+}
+
 // Shared transaction-table styles, used across features via the .data-table
 // utility classes. Component stylesheets may still add their own modifiers
 // (e.g. a wider `min-width`, status badges, action columns) on top of these.

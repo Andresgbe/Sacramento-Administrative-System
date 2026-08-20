@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CategoriaEgreso, Egreso } from '../../../core/models/egreso.model';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
+import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 
 export interface EgresoFormPayload {
   fecha: string;
@@ -21,7 +22,7 @@ function todayLocalIso(): string {
 
 @Component({
   selector: 'app-egreso-form-modal',
-  imports: [ReactiveFormsModule, SelectOnFocusDirective],
+  imports: [ReactiveFormsModule, SelectOnFocusDirective, PositiveDecimalDirective],
   templateUrl: './egreso-form-modal.html',
   styleUrl: './egreso-form-modal.scss',
 })

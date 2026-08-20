@@ -28,7 +28,14 @@
 
         <label class="field">
           <span>Monto (USD)</span>
-          <input type="number" formControlName="monto" min="0" step="0.01" appSelectOnFocus />
+          <input
+            type="number"
+            formControlName="monto"
+            min="0"
+            step="0.01"
+            appSelectOnFocus
+            appPositiveDecimal
+          />
         </label>
       </div>
 

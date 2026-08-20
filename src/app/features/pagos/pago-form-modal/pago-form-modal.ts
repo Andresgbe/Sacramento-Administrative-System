@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Local } from '../../../core/models/local.model';
 import { Pago, TipoTasa } from '../../../core/models/pago.model';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
+import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 
 export interface PagoFormPayload {
   localId: string;
@@ -23,7 +24,7 @@ function todayLocalIso(): string {
 
 @Component({
   selector: 'app-pago-form-modal',
-  imports: [ReactiveFormsModule, SelectOnFocusDirective],
+  imports: [ReactiveFormsModule, SelectOnFocusDirective, PositiveDecimalDirective],
   templateUrl: './pago-form-modal.html',
   styleUrl: './pago-form-modal.scss',
 })

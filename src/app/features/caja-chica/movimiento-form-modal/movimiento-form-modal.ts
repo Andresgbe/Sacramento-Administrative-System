@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CajaChicaTipo, MovimientoCajaChica } from '../../../core/models/caja-chica.model';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
+import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 
 export interface MovimientoFormPayload {
   fecha: string;
@@ -21,7 +22,7 @@ function todayLocalIso(): string {
 
 @Component({
   selector: 'app-movimiento-form-modal',
-  imports: [ReactiveFormsModule, SelectOnFocusDirective],
+  imports: [ReactiveFormsModule, SelectOnFocusDirective, PositiveDecimalDirective],
   templateUrl: './movimiento-form-modal.html',
   styleUrl: './movimiento-form-modal.scss',
 })

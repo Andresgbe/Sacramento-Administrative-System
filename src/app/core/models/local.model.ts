@@ -7,6 +7,7 @@ export interface Local {
   imagenUrl: string | null;
   estado: LocalEstado;
   piso: string | null;
+  rif: string | null;
   areaM2: number | null;
   montoAlquiler: number | null;
   createdAt: string;
