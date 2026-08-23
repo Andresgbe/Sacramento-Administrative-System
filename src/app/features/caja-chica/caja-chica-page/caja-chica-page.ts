@@ -2,9 +2,11 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CajaChicaTipo, MovimientoCajaChica } from '../../../core/models/caja-chica.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import {
   MovimientoFormModal,
   MovimientoFormPayload,
@@ -32,6 +34,10 @@ function currentMonthIso(): string {
 export class CajaChicaPage implements OnInit {
   private readonly cajaChicaService = inject(CajaChicaService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly toastService = inject(ToastService);
+  private readonly authService = inject(AuthService);
+
+  protected readonly isAdmin = this.authService.isAdmin;
 
   protected readonly balance = this.cajaChicaService.balance;
   protected readonly isLoading = this.cajaChicaService.isLoading;
@@ -83,6 +89,7 @@ export class CajaChicaPage implements OnInit {
   protected readonly editingMovimiento = signal<MovimientoCajaChica | null>(null);
   protected readonly saving = signal(false);
   protected readonly saveError = signal<string | null>(null);
+  protected readonly deletingId = signal<string | null>(null);
 
   ngOnInit(): void {
     this.cajaChicaService.load();
@@ -149,6 +156,7 @@ export class CajaChicaPage implements OnInit {
     }
 
     this.closeModal();
+    this.toastService.success(editing ? 'Movimiento actualizado.' : 'Movimiento registrado.');
   }
 
   protected async deleteMovimiento(movimiento: MovimientoCajaChica): Promise<void> {
@@ -163,10 +171,15 @@ export class CajaChicaPage implements OnInit {
       return;
     }
 
+    this.deletingId.set(movimiento.id);
     const { error } = await this.cajaChicaService.delete(movimiento.id);
+    this.deletingId.set(null);
 
     if (error) {
-      this.saveError.set(error);
+      this.toastService.error(error);
+      return;
     }
+
+    this.toastService.success('Movimiento eliminado.');
   }
 }

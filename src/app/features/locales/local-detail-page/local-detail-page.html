@@ -11,41 +11,46 @@
       Volver a Locales
     </a>
 
-    <div class="detail-menu">
-      <button
-        type="button"
-        class="btn btn--ghost detail-menu__trigger"
-        (click)="toggleMenu()"
-        aria-label="Más opciones"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path
-            d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path
-            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
+    @if (isAdmin()) {
+      <div class="detail-menu">
+        <button
+          type="button"
+          class="btn btn--ghost detail-menu__trigger"
+          (click)="toggleMenu()"
+          aria-label="Más opciones"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path
+              d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
 
-      @if (menuOpen()) {
-        <div class="detail-menu__backdrop" (click)="closeMenu()"></div>
-        <div class="detail-menu__panel">
-          <button
-            type="button"
-            class="detail-menu__item detail-menu__item--danger"
-            [disabled]="deleting()"
-            (click)="deleteLocal()"
-          >
-            {{ deleting() ? 'Eliminando…' : 'ELIMINAR' }}
-          </button>
-        </div>
-      }
-    </div>
+        @if (menuOpen()) {
+          <div class="detail-menu__backdrop" (click)="closeMenu()"></div>
+          <div class="detail-menu__panel">
+            <button
+              type="button"
+              class="detail-menu__item detail-menu__item--danger"
+              [disabled]="deleting()"
+              (click)="deleteLocal()"
+            >
+              @if (deleting()) {
+                <span class="spinner spinner--dark"></span>
+              }
+              {{ deleting() ? 'Eliminando…' : 'ELIMINAR' }}
+            </button>
+          </div>
+        }
+      </div>
+    }
   </div>
 
   @if (deleteError()) {
@@ -74,10 +79,12 @@
         </div>
       }
 
-      <label class="btn btn--secondary detail-image__upload">
-        <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
-        Cambiar foto
-      </label>
+      @if (isAdmin()) {
+        <label class="btn btn--secondary detail-image__upload">
+          <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
+          Cambiar foto
+        </label>
+      }
 
       <span class="detail-pago-badge detail-pago-badge--{{ pagoStatus() }}">
         {{ pagoStatus() === 'al-dia' ? 'Al día' : 'No ha pagado alquiler' }}
@@ -86,9 +93,15 @@
 
     <form [formGroup]="form" (ngSubmit)="submit()" class="detail-form">
       <div class="field-row">
-        <label class="field">
+        <label
+          class="field"
+          [class.field--invalid]="form.controls.numeroLocal.invalid && form.controls.numeroLocal.touched"
+        >
           <span>Número de local</span>
           <input type="text" formControlName="numeroLocal" />
+          @if (form.controls.numeroLocal.invalid && form.controls.numeroLocal.touched) {
+            <span class="field__error">Este campo es obligatorio.</span>
+          }
         </label>
 
         <label class="field">
@@ -101,9 +114,17 @@
         </label>
       </div>
 
-      <label class="field">
+      <label
+        class="field"
+        [class.field--invalid]="
+          form.controls.nombreComercial.invalid && form.controls.nombreComercial.touched
+        "
+      >
         <span>Nombre comercial</span>
         <input type="text" formControlName="nombreComercial" />
+        @if (form.controls.nombreComercial.invalid && form.controls.nombreComercial.touched) {
+          <span class="field__error">Este campo es obligatorio.</span>
+        }
       </label>
 
       <div class="field-row">
@@ -133,15 +154,17 @@
       @if (saveError()) {
         <p class="detail-form__error">{{ saveError() }}</p>
       }
-      @if (saveSuccess()) {
-        <p class="detail-form__success">Cambios guardados.</p>
-      }
 
-      <div class="detail-form__actions">
-        <button type="submit" class="btn btn--primary" [disabled]="saving()">
-          {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
-        </button>
-      </div>
+      @if (isAdmin()) {
+        <div class="detail-form__actions">
+          <button type="submit" class="btn btn--primary" [disabled]="saving()">
+            @if (saving()) {
+              <span class="spinner"></span>
+            }
+            {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
+          </button>
+        </div>
+      }
     </form>
   </div>
 

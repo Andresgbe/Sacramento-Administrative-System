@@ -1,5 +1,5 @@
 :root {
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-heading: 'Plus Jakarta Sans', var(--font-body);
-  --font-mono: 'Courier New', ui-monospace, monospace;
+  --font-mono: var(--font-body);
 }

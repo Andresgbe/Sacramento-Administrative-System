@@ -204,6 +204,17 @@
   }
 }
 
+.field--invalid input,
+.field--invalid select {
+  border-color: var(--color-danger);
+}
+
+.field__error {
+  color: var(--color-danger);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
 .field-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -215,14 +226,6 @@
   border-radius: var(--radius-sm);
   background: rgb(185 28 28 / 8%);
   color: var(--color-danger);
-  font-size: 0.825rem;
-}
-
-.detail-form__success {
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  background: rgb(21 128 61 / 8%);
-  color: var(--color-success);
   font-size: 0.825rem;
 }
 

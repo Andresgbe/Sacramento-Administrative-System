@@ -4,10 +4,12 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Local, LocalEstado } from '../../../core/models/local.model';
 import { TipoTasa } from '../../../core/models/pago.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { PageHeaderService } from '../../../core/services/page-header.service';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { PagosService } from '../../pagos/pagos.service';
 import { PagoStatus } from '../local-card/local-card';
 import { LocalesService } from '../locales.service';
@@ -33,12 +35,15 @@ export class LocalDetailPage implements OnInit {
   private readonly pagosService = inject(PagosService);
   private readonly pageHeaderService = inject(PageHeaderService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly toastService = inject(ToastService);
+  private readonly authService = inject(AuthService);
+
+  protected readonly isAdmin = this.authService.isAdmin;
 
   protected readonly loading = signal(true);
   protected readonly notFound = signal(false);
   protected readonly saving = signal(false);
   protected readonly saveError = signal<string | null>(null);
-  protected readonly saveSuccess = signal(false);
   protected readonly menuOpen = signal(false);
   protected readonly deleting = signal(false);
   protected readonly deleteError = signal<string | null>(null);
@@ -83,6 +88,10 @@ export class LocalDetailPage implements OnInit {
     }
 
     this.applyLocal(local);
+
+    if (!this.isAdmin()) {
+      this.form.disable();
+    }
   }
 
   private applyLocal(local: Local): void {
@@ -99,7 +108,6 @@ export class LocalDetailPage implements OnInit {
 
     this.pageHeaderService.setHeader({
       title: local.nombreComercial,
-      subtitle: local.numeroLocal,
     });
   }
 
@@ -138,7 +146,6 @@ export class LocalDetailPage implements OnInit {
 
     this.saving.set(true);
     this.saveError.set(null);
-    this.saveSuccess.set(false);
 
     let imagenUrl = this.local.imagenUrl;
 
@@ -184,7 +191,7 @@ export class LocalDetailPage implements OnInit {
       montoAlquiler: value.montoAlquiler || null,
       estado: value.estado,
     });
-    this.saveSuccess.set(true);
+    this.toastService.success('Cambios guardados.');
   }
 
   protected toggleMenu(): void {
@@ -224,6 +231,7 @@ export class LocalDetailPage implements OnInit {
       return;
     }
 
+    this.toastService.success('Local eliminado.');
     this.router.navigateByUrl('/locales');
   }
 }

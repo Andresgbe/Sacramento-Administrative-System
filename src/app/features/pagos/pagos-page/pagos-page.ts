@@ -2,9 +2,11 @@ import { DecimalPipe, DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Pago, TipoTasa } from '../../../core/models/pago.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { LocalesService } from '../../locales/locales.service';
 import { PagoFormModal, PagoFormPayload } from '../pago-form-modal/pago-form-modal';
 import { PagosService } from '../pagos.service';
@@ -31,6 +33,10 @@ export class PagosPage implements OnInit {
   private readonly pagosService = inject(PagosService);
   private readonly localesService = inject(LocalesService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly toastService = inject(ToastService);
+  private readonly authService = inject(AuthService);
+
+  protected readonly isAdmin = this.authService.isAdmin;
 
   protected readonly pagos = this.pagosService.all;
   protected readonly isLoading = this.pagosService.isLoading;
@@ -49,6 +55,7 @@ export class PagosPage implements OnInit {
   protected readonly editingPago = signal<Pago | null>(null);
   protected readonly saving = signal(false);
   protected readonly saveError = signal<string | null>(null);
+  protected readonly deletingId = signal<string | null>(null);
 
   protected readonly searchInput = signal('');
   protected readonly appliedSearch = signal('');
@@ -205,6 +212,7 @@ export class PagosPage implements OnInit {
     }
 
     this.closeModal();
+    this.toastService.success(editing ? 'Pago actualizado.' : 'Pago registrado.');
   }
 
   protected async deletePago(pago: Pago): Promise<void> {
@@ -219,10 +227,15 @@ export class PagosPage implements OnInit {
       return;
     }
 
+    this.deletingId.set(pago.id);
     const { error } = await this.pagosService.delete(pago.id);
+    this.deletingId.set(null);
 
     if (error) {
-      this.saveError.set(error);
+      this.toastService.error(error);
+      return;
     }
+
+    this.toastService.success('Pago eliminado.');
   }
 }

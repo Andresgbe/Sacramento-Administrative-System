@@ -1,9 +1,11 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AuthService } from '../../../core/services/auth.service';
 import { LocalCard, PagoStatus } from '../local-card/local-card';
 import { LocalFormModal, LocalFormPayload } from '../local-form-modal/local-form-modal';
 import { LocalesService } from '../locales.service';
 import { DocumentosService } from '../documentos.service';
 import { PagosService } from '../../pagos/pagos.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-locales-page',
@@ -15,6 +17,10 @@ export class LocalesPage implements OnInit {
   private readonly localesService = inject(LocalesService);
   private readonly documentosService = inject(DocumentosService);
   private readonly pagosService = inject(PagosService);
+  private readonly authService = inject(AuthService);
+  private readonly toastService = inject(ToastService);
+
+  protected readonly isAdmin = this.authService.isAdmin;
 
   protected readonly locales = this.localesService.all;
   protected readonly isLoading = this.localesService.isLoading;
@@ -85,5 +91,6 @@ export class LocalesPage implements OnInit {
 
     this.saving.set(false);
     this.closeModal();
+    this.toastService.success('Local creado.');
   }
 }

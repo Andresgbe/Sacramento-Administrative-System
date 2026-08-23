@@ -4,6 +4,7 @@ import { Usuario } from '../../../core/models/usuario.model';
 import { PasswordFormModal } from '../password-form-modal/password-form-modal';
 import { UsuarioFormModal, UsuarioFormPayload } from '../usuario-form-modal/usuario-form-modal';
 import { UsuariosService } from '../usuarios.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-usuarios-page',
@@ -13,6 +14,7 @@ import { UsuariosService } from '../usuarios.service';
 })
 export class UsuariosPage implements OnInit {
   private readonly usuariosService = inject(UsuariosService);
+  private readonly toastService = inject(ToastService);
 
   protected readonly usuarios = this.usuariosService.all;
   protected readonly isLoading = this.usuariosService.isLoading;
@@ -53,6 +55,7 @@ export class UsuariosPage implements OnInit {
     }
 
     this.closeCreateModal();
+    this.toastService.success('Subadmin creado.');
   }
 
   protected openPasswordModal(usuario: Usuario): void {
@@ -81,5 +84,6 @@ export class UsuariosPage implements OnInit {
     }
 
     this.closePasswordModal();
+    this.toastService.success('Contraseña actualizada.');
   }
 }
