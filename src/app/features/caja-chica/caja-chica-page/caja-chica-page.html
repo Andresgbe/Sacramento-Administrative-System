@@ -1,15 +1,17 @@
-<div class="balance-card">
-  <span class="balance-card__label">Caja chica disponible</span>
-  <span class="balance-card__value">$ {{ balance() | number: '1.2-2' }}</span>
-</div>
-
 <div class="caja-chica-page__header">
-  <button type="button" class="btn btn--primary" (click)="openModal()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M12 5v14M5 12h14" stroke-linecap="round" />
-    </svg>
-    Registrar movimiento
-  </button>
+  <div class="balance-card">
+    <span class="balance-card__label">Caja chica disponible</span>
+    <span class="balance-card__value">$ {{ balance() | number: '1.2-2' }}</span>
+  </div>
+
+  @if (isAdmin()) {
+    <button type="button" class="btn btn--primary" (click)="openModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+      </svg>
+      Registrar movimiento
+    </button>
+  }
 </div>
 
 <div class="filters-bar">
@@ -88,7 +90,9 @@
           <th>Tipo</th>
           <th>Monto</th>
           <th>Descripción</th>
-          <th class="data-table__actions"></th>
+          @if (isAdmin()) {
+            <th class="data-table__actions"></th>
+          }
         </tr>
       </thead>
       <tbody>
@@ -109,38 +113,45 @@
               {{ movimiento.monto | number: '1.2-2' }}
             </td>
             <td>{{ movimiento.descripcion || '—' }}</td>
-            <td class="data-table__actions">
-              <div class="data-table__action-group">
-                <button
-                  type="button"
-                  class="data-table__edit"
-                  (click)="openEditModal(movimiento)"
-                  aria-label="Editar movimiento"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path
-                      d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  class="data-table__delete"
-                  (click)="deleteMovimiento(movimiento)"
-                  aria-label="Eliminar movimiento"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path
-                      d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </td>
+            @if (isAdmin()) {
+              <td class="data-table__actions">
+                <div class="data-table__action-group">
+                  <button
+                    type="button"
+                    class="data-table__edit"
+                    (click)="openEditModal(movimiento)"
+                    aria-label="Editar movimiento"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path
+                        d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="data-table__delete"
+                    [disabled]="deletingId() === movimiento.id"
+                    (click)="deleteMovimiento(movimiento)"
+                    aria-label="Eliminar movimiento"
+                  >
+                    @if (deletingId() === movimiento.id) {
+                      <span class="spinner spinner--dark"></span>
+                    } @else {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                          d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    }
+                  </button>
+                </div>
+              </td>
+            }
           </tr>
         }
       </tbody>

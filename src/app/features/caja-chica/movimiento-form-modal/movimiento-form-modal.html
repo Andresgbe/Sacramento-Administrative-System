@@ -49,6 +49,9 @@
       <div class="modal__actions">
         <button type="button" class="btn btn--secondary" (click)="closed.emit()">Cancelar</button>
         <button type="submit" class="btn btn--primary" [disabled]="saving">
+          @if (saving) {
+            <span class="spinner"></span>
+          }
           {{ saving ? 'Guardando…' : movimiento ? 'Guardar cambios' : 'Registrar movimiento' }}
         </button>
       </div>

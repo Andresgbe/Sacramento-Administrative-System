@@ -1,54 +1,56 @@
 <div class="egresos-page__header">
-  <div class="egresos-tabs">
-    <button
-      type="button"
-      class="egresos-tab"
-      [class.egresos-tab--active]="filtro() === 'todos'"
-      (click)="setFiltro('todos')"
-    >
-      Total
-    </button>
-    <button
-      type="button"
-      class="egresos-tab"
-      [class.egresos-tab--active]="filtro() === 'administrativo'"
-      (click)="setFiltro('administrativo')"
-    >
-      Gastos administrativos
-    </button>
-    <button
-      type="button"
-      class="egresos-tab"
-      [class.egresos-tab--active]="filtro() === 'operativo'"
-      (click)="setFiltro('operativo')"
-    >
-      Gastos operativos
-    </button>
+  <div class="egresos-total">
+    <span class="egresos-total__label">
+      @switch (filtro()) {
+        @case ('administrativo') {
+          Total gastos administrativos
+        }
+        @case ('operativo') {
+          Total gastos operativos
+        }
+        @default {
+          Total general (administrativos + operativos)
+        }
+      }
+    </span>
+    <span class="egresos-total__value">$ {{ total() | number: '1.2-2' }}</span>
   </div>
 
-  <button type="button" class="btn btn--primary" (click)="openModal()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M12 5v14M5 12h14" stroke-linecap="round" />
-    </svg>
-    Registrar gasto
-  </button>
+  @if (isAdmin()) {
+    <button type="button" class="btn btn--primary" (click)="openModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+      </svg>
+      Registrar gasto
+    </button>
+  }
 </div>
 
-<div class="egresos-total">
-  <span class="egresos-total__label">
-    @switch (filtro()) {
-      @case ('administrativo') {
-        Total gastos administrativos
-      }
-      @case ('operativo') {
-        Total gastos operativos
-      }
-      @default {
-        Total general (administrativos + operativos)
-      }
-    }
-  </span>
-  <span class="egresos-total__value">$ {{ total() | number: '1.2-2' }}</span>
+<div class="egresos-tabs">
+  <button
+    type="button"
+    class="egresos-tab"
+    [class.egresos-tab--active]="filtro() === 'todos'"
+    (click)="setFiltro('todos')"
+  >
+    Total
+  </button>
+  <button
+    type="button"
+    class="egresos-tab"
+    [class.egresos-tab--active]="filtro() === 'administrativo'"
+    (click)="setFiltro('administrativo')"
+  >
+    Gastos administrativos
+  </button>
+  <button
+    type="button"
+    class="egresos-tab"
+    [class.egresos-tab--active]="filtro() === 'operativo'"
+    (click)="setFiltro('operativo')"
+  >
+    Gastos operativos
+  </button>
 </div>
 
 <div class="filters-bar">
@@ -127,7 +129,9 @@
           <th>Categoría</th>
           <th>Monto</th>
           <th>Descripción</th>
-          <th class="data-table__actions"></th>
+          @if (isAdmin()) {
+            <th class="data-table__actions"></th>
+          }
         </tr>
       </thead>
       <tbody>
@@ -141,38 +145,45 @@
             </td>
             <td>$ {{ egreso.monto | number: '1.2-2' }}</td>
             <td>{{ egreso.descripcion || '—' }}</td>
-            <td class="data-table__actions">
-              <div class="data-table__action-group">
-                <button
-                  type="button"
-                  class="data-table__edit"
-                  (click)="openEditModal(egreso)"
-                  aria-label="Editar gasto"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path
-                      d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  class="data-table__delete"
-                  (click)="deleteEgreso(egreso)"
-                  aria-label="Eliminar gasto"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path
-                      d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </td>
+            @if (isAdmin()) {
+              <td class="data-table__actions">
+                <div class="data-table__action-group">
+                  <button
+                    type="button"
+                    class="data-table__edit"
+                    (click)="openEditModal(egreso)"
+                    aria-label="Editar gasto"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path
+                        d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="data-table__delete"
+                    [disabled]="deletingId() === egreso.id"
+                    (click)="deleteEgreso(egreso)"
+                    aria-label="Eliminar gasto"
+                  >
+                    @if (deletingId() === egreso.id) {
+                      <span class="spinner spinner--dark"></span>
+                    } @else {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                          d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    }
+                  </button>
+                </div>
+              </td>
+            }
           </tr>
         }
       </tbody>

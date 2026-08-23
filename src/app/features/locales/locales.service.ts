@@ -50,6 +50,7 @@ export class LocalesService {
     const { data, error } = await this.supabase
       .from('locales')
       .select('*')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -141,7 +142,13 @@ export class LocalesService {
   }
 
   async delete(id: string): Promise<{ error: string | null }> {
-    const { error } = await this.supabase.from('locales').delete().eq('id', id);
+    // Soft delete: pagos.local_id is `on delete restrict`, so a local with
+    // payment history can't be hard-deleted — and shouldn't be, since past
+    // pagos need to keep showing the local's name.
+    const { error } = await this.supabase
+      .from('locales')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id);
 
     if (error) {
       return { error: error.message };

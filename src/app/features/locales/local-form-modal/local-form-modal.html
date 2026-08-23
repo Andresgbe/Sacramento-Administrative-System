@@ -10,14 +10,28 @@
     </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()" class="modal__form">
-      <label class="field">
+      <label
+        class="field"
+        [class.field--invalid]="form.controls.numeroLocal.invalid && form.controls.numeroLocal.touched"
+      >
         <span>Número de local</span>
         <input type="text" formControlName="numeroLocal" placeholder="Local 12" />
+        @if (form.controls.numeroLocal.invalid && form.controls.numeroLocal.touched) {
+          <span class="field__error">Este campo es obligatorio.</span>
+        }
       </label>
 
-      <label class="field">
+      <label
+        class="field"
+        [class.field--invalid]="
+          form.controls.nombreComercial.invalid && form.controls.nombreComercial.touched
+        "
+      >
         <span>Nombre comercial</span>
         <input type="text" formControlName="nombreComercial" placeholder="Panadería Central" />
+        @if (form.controls.nombreComercial.invalid && form.controls.nombreComercial.touched) {
+          <span class="field__error">Este campo es obligatorio.</span>
+        }
       </label>
 
       <div class="field">
@@ -164,6 +178,9 @@
       <div class="modal__actions">
         <button type="button" class="btn btn--secondary" (click)="closed.emit()">Cancelar</button>
         <button type="submit" class="btn btn--primary" [disabled]="saving">
+          @if (saving) {
+            <span class="spinner"></span>
+          }
           {{ saving ? 'Guardando…' : 'Guardar local' }}
         </button>
       </div>

@@ -96,6 +96,17 @@
   }
 }
 
+.field--invalid input,
+.field--invalid select {
+  border-color: var(--color-danger);
+}
+
+.field__error {
+  color: var(--color-danger);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
 .field-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

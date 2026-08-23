@@ -2,9 +2,11 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CategoriaEgreso, Egreso } from '../../../core/models/egreso.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { EgresoFormModal, EgresoFormPayload } from '../egreso-form-modal/egreso-form-modal';
 import { EgresosService } from '../egresos.service';
 
@@ -31,6 +33,10 @@ function currentMonthIso(): string {
 export class EgresosPage implements OnInit {
   private readonly egresosService = inject(EgresosService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly toastService = inject(ToastService);
+  private readonly authService = inject(AuthService);
+
+  protected readonly isAdmin = this.authService.isAdmin;
 
   protected readonly isLoading = this.egresosService.isLoading;
   protected readonly loadError = this.egresosService.loadError;
@@ -91,6 +97,7 @@ export class EgresosPage implements OnInit {
   protected readonly editingEgreso = signal<Egreso | null>(null);
   protected readonly saving = signal(false);
   protected readonly saveError = signal<string | null>(null);
+  protected readonly deletingId = signal<string | null>(null);
 
   ngOnInit(): void {
     this.egresosService.load();
@@ -161,6 +168,7 @@ export class EgresosPage implements OnInit {
     }
 
     this.closeModal();
+    this.toastService.success(editing ? 'Gasto actualizado.' : 'Gasto registrado.');
   }
 
   protected async deleteEgreso(egreso: Egreso): Promise<void> {
@@ -175,10 +183,15 @@ export class EgresosPage implements OnInit {
       return;
     }
 
+    this.deletingId.set(egreso.id);
     const { error } = await this.egresosService.delete(egreso.id);
+    this.deletingId.set(null);
 
     if (error) {
-      this.saveError.set(error);
+      this.toastService.error(error);
+      return;
     }
+
+    this.toastService.success('Gasto eliminado.');
   }
 }

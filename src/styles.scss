@@ -70,6 +70,32 @@ button {
   }
 }
 
+// Reusable loading spinner — drop `<span class="spinner"></span>` inside any
+// .btn (or standalone) while an operation is in flight. Defaults to a light
+// ring for use on filled (primary/danger) buttons; add `spinner--dark` on
+// light-background buttons (secondary/ghost) so it stays visible.
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgb(255 255 255 / 40%);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+.spinner--dark {
+  border-color: rgb(17 24 39 / 15%);
+  border-top-color: var(--color-accent);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .btn--primary {
   background: var(--color-accent);
   color: #ffffff;
