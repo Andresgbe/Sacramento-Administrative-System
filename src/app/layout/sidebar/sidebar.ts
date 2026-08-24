@@ -6,7 +6,7 @@ const COLLAPSED_STORAGE_KEY = 'sidebar-collapsed';
 
 interface NavItem {
   label: string;
-  icon: 'dashboard' | 'store' | 'receipt' | 'expenses' | 'wallet' | 'calculator' | 'users';
+  icon: 'dashboard' | 'store' | 'receipt' | 'expenses' | 'wallet' | 'calculator' | 'reports' | 'users';
   route: string;
 }
 
@@ -39,6 +39,7 @@ export class Sidebar {
     { label: 'Egresos', icon: 'expenses', route: '/egresos' },
     { label: 'Caja chica', icon: 'wallet', route: '/caja-chica' },
     { label: 'Calculadora', icon: 'calculator', route: '/calculadora' },
+    { label: 'Reportes', icon: 'reports', route: '/reportes' },
   ];
 
   protected readonly navItems = computed<NavItem[]>(() =>

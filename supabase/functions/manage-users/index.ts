@@ -96,26 +96,22 @@ Deno.serve(async (req: Request) => {
           return jsonResponse({ error: 'Faltan datos del subadmin.' });
         }
 
+        // The `on_auth_user_created` DB trigger (handle_new_user) inserts the
+        // matching public.usuarios row itself, reading nombre_completo/rol from
+        // user_metadata. Do not insert into usuarios here too — that raced
+        // against the trigger and hit "usuarios_pkey" duplicate key errors.
         const { data: created, error: createError } = await adminClient.auth.admin.createUser({
           email: body.email,
           password: body.password,
           email_confirm: true,
+          user_metadata: {
+            nombre_completo: body.nombreCompleto,
+            rol: 'subadmin',
+          },
         });
 
         if (createError || !created.user) {
           return jsonResponse({ error: createError?.message ?? 'No se pudo crear el usuario.' });
-        }
-
-        const { error: insertError } = await adminClient.from('usuarios').insert({
-          id: created.user.id,
-          nombre_completo: body.nombreCompleto,
-          rol: 'subadmin',
-        });
-
-        if (insertError) {
-          // Roll back the auth user so we don't leave an orphaned login with no profile.
-          await adminClient.auth.admin.deleteUser(created.user.id);
-          return jsonResponse({ error: insertError.message });
         }
 
         return jsonResponse({ error: null });

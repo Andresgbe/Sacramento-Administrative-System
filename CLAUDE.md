@@ -133,8 +133,8 @@ not in the root of app/.
   - **Dashboard**: fully live — caja chica balance, Locales activos, Egresos
     del mes, Ingresos del mes (all real, computed for the current calendar
     month), "Locales por estado de pago" pie chart, "Últimos pagos"/"Últimos
-    egresos" panels. Still mock: the "Ingresos mensuales" bar chart (+ its
-    breakdown list) — hardcoded 6-month sample data, not wired to real pagos
+    egresos" panels, and the "Ingresos mensuales" bar chart (+ its breakdown
+    list) — last 6 calendar months, summed from real pagos
   - **Locales**: full CRUD incl. delete (gear icon → dropdown menu on the
     detail page, `ConfirmDialogService` confirmation, admin-only via RLS),
     image upload to Storage, local detail page (editable, shows payment
@@ -157,7 +157,7 @@ not in the root of app/.
 - Sidebar is collapsible on desktop (chevron toggle below the logo, icon-only
   rail at 76px, state persisted in `localStorage`); unchanged on mobile
   (<900px), which still uses the hamburger/overlay pattern
-- Next steps: wire the "Ingresos mensuales" chart to real data, role-based UI
-  restrictions for subadmin, delete support for pagos/egresos/caja_chica
-  (RLS already allows it — only the UI is missing, follow the locales gear-menu
-  pattern), `reportes` module, `servicios_pagos` and `remodelaciones` tables
+- Next steps: role-based UI restrictions for subadmin, delete support for
+  pagos/egresos/caja_chica (RLS already allows it — only the UI is missing,
+  follow the locales gear-menu pattern), `reportes` module, `servicios_pagos`
+  and `remodelaciones` tables
