@@ -86,14 +86,31 @@ export class DashboardPage implements OnInit {
     ];
   });
 
-  protected readonly ingresosMensuales: BarDatum[] = [
-    { label: 'Mar', value: 3200 },
-    { label: 'Abr', value: 3450 },
-    { label: 'May', value: 3100 },
-    { label: 'Jun', value: 3800 },
-    { label: 'Jul', value: 3950 },
-    { label: 'Ago', value: 4120 },
+  private static readonly monthAbbr = [
+    'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
   ];
+
+  // Live: last 6 calendar months' income, summed from real pagos.
+  protected readonly ingresosMensuales = computed<BarDatum[]>(() => {
+    const pagos = this.pagosService.all();
+    const now = new Date();
+
+    const months: { key: string; label: string }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+        label: DashboardPage.monthAbbr[d.getMonth()],
+      });
+    }
+
+    return months.map(({ key, label }) => ({
+      label,
+      value: pagos
+        .filter((pago) => pago.fecha.startsWith(key))
+        .reduce((sum, pago) => sum + pago.monto, 0),
+    }));
+  });
 
   ngOnInit(): void {
     this.localesService.load();

@@ -65,6 +65,14 @@ export const routes: Routes = [
         data: { title: 'Caja chica', subtitle: 'Control de caja chica' },
       },
       {
+        path: 'reportes',
+        loadComponent: () =>
+          import('./features/reportes/reportes-page/reportes-page').then(
+            (m) => m.ReportesPage,
+          ),
+        data: { title: 'Reportes', subtitle: 'Generación de reportes' },
+      },
+      {
         path: 'usuarios',
         canActivate: [adminGuard],
         loadComponent: () =>
