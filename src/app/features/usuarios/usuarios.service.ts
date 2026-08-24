@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Usuario } from '../../core/models/usuario.model';
+import { Usuario, UserRol } from '../../core/models/usuario.model';
 import { SupabaseService } from '../../core/services/supabase.service';
 
 @Injectable({ providedIn: 'root' })
@@ -68,6 +68,18 @@ export class UsuariosService {
   async updateProfile(userId: string, nombreCompleto: string): Promise<{ error: string | null }> {
     const { data, error } = await this.supabase.functions.invoke('manage-users', {
       body: { action: 'update-profile', userId, nombreCompleto },
+    });
+
+    if (error) return { error: error.message };
+    if (data?.error) return { error: data.error };
+
+    await this.load();
+    return { error: null };
+  }
+
+  async updateRole(userId: string, rol: UserRol): Promise<{ error: string | null }> {
+    const { data, error } = await this.supabase.functions.invoke('manage-users', {
+      body: { action: 'update-role', userId, rol },
     });
 
     if (error) return { error: error.message };

@@ -1,9 +1,11 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Usuario } from '../../../core/models/usuario.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { PasswordFormModal } from '../password-form-modal/password-form-modal';
 import { UsuarioFormModal, UsuarioFormPayload } from '../usuario-form-modal/usuario-form-modal';
 import { UsuariosService } from '../usuarios.service';
+import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
 import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
@@ -14,11 +16,19 @@ import { ToastService } from '../../../shared/services/toast.service';
 })
 export class UsuariosPage implements OnInit {
   private readonly usuariosService = inject(UsuariosService);
+  private readonly authService = inject(AuthService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly toastService = inject(ToastService);
 
   protected readonly usuarios = this.usuariosService.all;
   protected readonly isLoading = this.usuariosService.isLoading;
   protected readonly loadError = this.usuariosService.loadError;
+
+  protected readonly currentUserId = computed(
+    () => this.authService.currentSession()?.user.id ?? null,
+  );
+
+  protected readonly roleChangingId = signal<string | null>(null);
 
   protected readonly createModalOpen = signal(false);
   protected readonly saving = signal(false);
@@ -85,5 +95,31 @@ export class UsuariosPage implements OnInit {
 
     this.closePasswordModal();
     this.toastService.success('Contraseña actualizada.');
+  }
+
+  protected async onToggleRole(usuario: Usuario): Promise<void> {
+    const nextRol = usuario.rol === 'admin' ? 'subadmin' : 'admin';
+
+    const confirmed = await this.confirmDialog.confirm({
+      title: nextRol === 'admin' ? 'Convertir en admin' : 'Convertir en subadmin',
+      message: `¿Cambiar el rol de ${usuario.nombreCompleto} a ${nextRol === 'admin' ? 'Admin' : 'Subadmin'}?`,
+      confirmLabel: 'Cambiar rol',
+      danger: nextRol === 'subadmin',
+    });
+
+    if (!confirmed) return;
+
+    this.roleChangingId.set(usuario.id);
+
+    const { error } = await this.usuariosService.updateRole(usuario.id, nextRol);
+
+    this.roleChangingId.set(null);
+
+    if (error) {
+      this.toastService.error(error);
+      return;
+    }
+
+    this.toastService.success('Rol actualizado.');
   }
 }

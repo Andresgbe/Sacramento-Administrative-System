@@ -18,12 +18,13 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 
 interface RequestBody {
-  action: 'list' | 'create' | 'update-password' | 'update-profile';
+  action: 'list' | 'create' | 'update-password' | 'update-profile' | 'update-role';
   email?: string;
   password?: string;
   nombreCompleto?: string;
   userId?: string;
   newPassword?: string;
+  rol?: 'admin' | 'subadmin';
 }
 
 Deno.serve(async (req: Request) => {
@@ -161,6 +162,24 @@ Deno.serve(async (req: Request) => {
           .eq('id', body.userId);
 
         if (updateError) return jsonResponse({ error: updateError.message });
+        return jsonResponse({ error: null });
+      }
+
+      case 'update-role': {
+        if (!body.userId || (body.rol !== 'admin' && body.rol !== 'subadmin')) {
+          return jsonResponse({ error: 'Faltan datos para cambiar el rol.' });
+        }
+
+        if (body.userId === userData.user.id) {
+          return jsonResponse({ error: 'No puedes cambiar tu propio rol.' });
+        }
+
+        const { error: updateRoleError } = await adminClient
+          .from('usuarios')
+          .update({ rol: body.rol })
+          .eq('id', body.userId);
+
+        if (updateRoleError) return jsonResponse({ error: updateRoleError.message });
         return jsonResponse({ error: null });
       }
 

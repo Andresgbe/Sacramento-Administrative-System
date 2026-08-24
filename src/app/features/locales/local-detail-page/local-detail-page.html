@@ -178,6 +178,7 @@
         <table class="data-table">
           <thead>
             <tr>
+              <th>ID</th>
               <th>Fecha</th>
               <th>Monto</th>
               <th>Tasa</th>
@@ -187,6 +188,7 @@
           <tbody>
             @for (pago of pagosDelLocal(); track pago.id) {
               <tr>
+                <td>{{ pago.numero }}</td>
                 <td>{{ pago.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
                 <td>$ {{ pago.monto | number: '1.2-2' }}</td>
                 <td>{{ tasaLabel[pago.tipoTasa] }}</td>

@@ -4,6 +4,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 
 interface MovimientoRow {
   id: string;
+  numero: number;
   fecha: string;
   tipo: CajaChicaTipo;
   monto: number;
@@ -14,6 +15,7 @@ interface MovimientoRow {
 function fromRow(row: MovimientoRow): MovimientoCajaChica {
   return {
     id: row.id,
+    numero: row.numero,
     fecha: row.fecha,
     tipo: row.tipo,
     monto: row.monto,

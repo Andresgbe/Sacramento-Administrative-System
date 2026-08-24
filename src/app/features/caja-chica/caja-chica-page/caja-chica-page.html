@@ -86,6 +86,7 @@
     <table class="data-table">
       <thead>
         <tr>
+          <th>ID</th>
           <th>Fecha</th>
           <th>Tipo</th>
           <th>Monto</th>
@@ -98,6 +99,7 @@
       <tbody>
         @for (movimiento of movimientosFiltrados(); track movimiento.id) {
           <tr>
+            <td>{{ movimiento.numero }}</td>
             <td>{{ movimiento.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
             <td>
               <span class="caja-chica-badge caja-chica-badge--{{ movimiento.tipo }}">

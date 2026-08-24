@@ -33,7 +33,7 @@
         <button type="button" class="topbar__menu-item" (click)="closeMenu()">
           Mi información
         </button>
-        <button type="button" class="topbar__menu-item" (click)="closeMenu()">
+        <button type="button" class="topbar__menu-item" (click)="openPasswordModal()">
           Cambiar contraseña
         </button>
         <button
@@ -47,3 +47,12 @@
     }
   </div>
 </header>
+
+@if (passwordModalOpen()) {
+  <app-change-password-modal
+    [saving]="passwordSaving()"
+    [errorMessage]="passwordError()"
+    (closed)="closePasswordModal()"
+    (saved)="onPasswordSaved($event)"
+  />
+}

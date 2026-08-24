@@ -11,6 +11,7 @@ export interface PagoFormPayload {
   monto: number;
   tipoTasa: TipoTasa;
   descripcion: string | null;
+  comprobanteFile: File | null;
 }
 
 // `toISOString()` reports UTC, which can roll over to tomorrow's date for
@@ -38,6 +39,12 @@ export class PagoFormModal implements OnInit {
   @Output() saved = new EventEmitter<PagoFormPayload>();
 
   private readonly fb = inject(FormBuilder);
+
+  protected comprobanteFile: File | null = null;
+
+  protected get comprobanteDisplayName(): string | null {
+    return this.comprobanteFile?.name ?? this.pago?.comprobanteNombre ?? null;
+  }
 
   private mouseDownOnBackdrop = false;
 
@@ -72,6 +79,15 @@ export class PagoFormModal implements OnInit {
     }
   }
 
+  protected onComprobanteSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.comprobanteFile = input.files?.[0] ?? null;
+  }
+
+  protected removeComprobante(): void {
+    this.comprobanteFile = null;
+  }
+
   protected submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -85,6 +101,7 @@ export class PagoFormModal implements OnInit {
       monto: value.monto,
       tipoTasa: value.tipoTasa,
       descripcion: value.descripcion || null,
+      comprobanteFile: this.comprobanteFile,
     });
   }
 }

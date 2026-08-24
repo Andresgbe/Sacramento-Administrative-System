@@ -33,9 +33,28 @@
             <td>{{ usuario.nombreCompleto }}</td>
             <td>{{ usuario.email }}</td>
             <td>
-              <span class="usuarios-badge usuarios-badge--{{ usuario.rol }}">
-                {{ usuario.rol === 'admin' ? 'Admin' : 'Subadmin' }}
-              </span>
+              <div class="usuarios-role-cell">
+                <span class="usuarios-badge usuarios-badge--{{ usuario.rol }}">
+                  {{ usuario.rol === 'admin' ? 'Admin' : 'Subadmin' }}
+                </span>
+                @if (usuario.id !== currentUserId()) {
+                  <button
+                    type="button"
+                    class="usuarios-role-toggle"
+                    [disabled]="roleChangingId() === usuario.id"
+                    [title]="usuario.rol === 'admin' ? 'Cambiar a subadmin' : 'Cambiar a admin'"
+                    (click)="onToggleRole(usuario)"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path
+                        d="M17 3 21 7l-4 4M21 7H9a4 4 0 0 0-4 4M7 21l-4-4 4-4M3 17h12a4 4 0 0 0 4-4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                }
+              </div>
             </td>
             <td>{{ usuario.createdAt | date: 'dd/MM/yyyy':'UTC' }}</td>
             <td class="usuarios-table__actions">

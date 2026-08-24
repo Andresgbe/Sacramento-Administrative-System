@@ -4,6 +4,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 
 interface EgresoRow {
   id: string;
+  numero: number;
   fecha: string;
   monto: number;
   categoria: CategoriaEgreso;
@@ -14,6 +15,7 @@ interface EgresoRow {
 function fromRow(row: EgresoRow): Egreso {
   return {
     id: row.id,
+    numero: row.numero,
     fecha: row.fecha,
     monto: row.monto,
     categoria: row.categoria,
