@@ -55,7 +55,7 @@ export class LocalDetailPage implements OnInit {
   protected readonly tasaLabel: Record<TipoTasa, string> = {
     BCV: 'BCV',
     EUR: 'Euro',
-    USD: 'Dólar',
+    USD: 'USDT/Cash',
     otra: 'Otra',
   };
 

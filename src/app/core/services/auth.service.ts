@@ -71,4 +71,21 @@ export class AuthService {
   async signOut(): Promise<void> {
     await this.supabase.auth.signOut();
   }
+
+  async updateOwnPassword(
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ error: string | null }> {
+    const email = this.session()?.user.email;
+    if (!email) return { error: 'No se pudo verificar la sesión.' };
+
+    const { error: reauthError } = await this.supabase.auth.signInWithPassword({
+      email,
+      password: currentPassword,
+    });
+    if (reauthError) return { error: 'La contraseña actual es incorrecta.' };
+
+    const { error } = await this.supabase.auth.updateUser({ password: newPassword });
+    return { error: error?.message ?? null };
+  }
 }

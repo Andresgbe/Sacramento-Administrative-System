@@ -125,6 +125,7 @@
     <table class="data-table">
       <thead>
         <tr>
+          <th>ID</th>
           <th>Fecha</th>
           <th>Categoría</th>
           <th>Monto</th>
@@ -137,6 +138,7 @@
       <tbody>
         @for (egreso of egresosFiltrados(); track egreso.id) {
           <tr>
+            <td>{{ egreso.numero }}</td>
             <td>{{ egreso.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
             <td>
               <span class="egresos-badge egresos-badge--{{ egreso.categoria }}">

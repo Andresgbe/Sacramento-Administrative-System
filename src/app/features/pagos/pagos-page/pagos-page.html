@@ -116,11 +116,13 @@
     <table class="data-table pagos-table">
       <thead>
         <tr>
+          <th>ID</th>
           <th>Fecha</th>
           <th>Local</th>
           <th>Monto</th>
           <th>Tasa</th>
           <th>Descripción</th>
+          <th>Comprobante</th>
           @if (isAdmin()) {
             <th class="data-table__actions"></th>
           }
@@ -129,11 +131,25 @@
       <tbody>
         @for (pago of pagosFiltrados(); track pago.id) {
           <tr>
+            <td>{{ pago.numero }}</td>
             <td>{{ pago.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
             <td>{{ pago.localNombre }}</td>
             <td>$ {{ pago.monto | number: '1.2-2' }}</td>
             <td>{{ tasaLabel[pago.tipoTasa] }}</td>
             <td>{{ pago.descripcion || '—' }}</td>
+            <td>
+              @if (pago.comprobanteRuta) {
+                <button
+                  type="button"
+                  class="pagos-comprobante-link"
+                  (click)="openComprobante(pago)"
+                >
+                  Ver comprobante
+                </button>
+              } @else {
+                —
+              }
+            </td>
             @if (isAdmin()) {
               <td class="data-table__actions">
                 <div class="data-table__action-group">
@@ -188,5 +204,15 @@
     [pago]="editingPago()"
     (closed)="closeModal()"
     (saved)="onPagoSaved($event)"
+  />
+}
+
+@if (comprobanteTarget(); as target) {
+  <app-comprobante-preview-modal
+    [nombreArchivo]="target.comprobanteNombre || 'Comprobante'"
+    [url]="comprobanteUrl()"
+    [loading]="comprobanteLoading()"
+    [errorMessage]="comprobanteError()"
+    (closed)="closeComprobante()"
   />
 }

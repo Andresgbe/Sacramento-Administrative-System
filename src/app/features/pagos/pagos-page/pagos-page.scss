@@ -22,6 +22,20 @@
   min-width: 640px;
 }
 
+.pagos-comprobante-link {
+  border: none;
+  background: none;
+  color: var(--color-accent);
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 .pagos-local-filter {
   min-width: 200px;
 }

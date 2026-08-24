@@ -8,6 +8,7 @@ import { SelectOnFocusDirective } from '../../../shared/directives/select-on-foc
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { LocalesService } from '../../locales/locales.service';
+import { ComprobantePreviewModal } from '../comprobante-preview-modal/comprobante-preview-modal';
 import { PagoFormModal, PagoFormPayload } from '../pago-form-modal/pago-form-modal';
 import { PagosService } from '../pagos.service';
 
@@ -23,6 +24,7 @@ function currentMonthIso(): string {
     DatePipe,
     FormsModule,
     PagoFormModal,
+    ComprobantePreviewModal,
     SelectOnFocusDirective,
     PositiveDecimalDirective,
   ],
@@ -47,7 +49,7 @@ export class PagosPage implements OnInit {
   protected readonly tasaLabel: Record<TipoTasa, string> = {
     BCV: 'BCV',
     EUR: 'Euro',
-    USD: 'Dólar',
+    USD: 'USDT/Cash',
     otra: 'Otra',
   };
 
@@ -56,6 +58,11 @@ export class PagosPage implements OnInit {
   protected readonly saving = signal(false);
   protected readonly saveError = signal<string | null>(null);
   protected readonly deletingId = signal<string | null>(null);
+
+  protected readonly comprobanteTarget = signal<Pago | null>(null);
+  protected readonly comprobanteUrl = signal<string | null>(null);
+  protected readonly comprobanteLoading = signal(false);
+  protected readonly comprobanteError = signal<string | null>(null);
 
   protected readonly searchInput = signal('');
   protected readonly appliedSearch = signal('');
@@ -237,5 +244,29 @@ export class PagosPage implements OnInit {
     }
 
     this.toastService.success('Pago eliminado.');
+  }
+
+  protected async openComprobante(pago: Pago): Promise<void> {
+    if (!pago.comprobanteRuta) return;
+
+    this.comprobanteTarget.set(pago);
+    this.comprobanteUrl.set(null);
+    this.comprobanteError.set(null);
+    this.comprobanteLoading.set(true);
+
+    const { url, error } = await this.pagosService.getComprobanteUrl(pago.comprobanteRuta);
+
+    this.comprobanteLoading.set(false);
+
+    if (error) {
+      this.comprobanteError.set(error);
+      return;
+    }
+
+    this.comprobanteUrl.set(url);
+  }
+
+  protected closeComprobante(): void {
+    this.comprobanteTarget.set(null);
   }
 }

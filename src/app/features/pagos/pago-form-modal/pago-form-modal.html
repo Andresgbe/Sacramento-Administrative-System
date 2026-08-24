@@ -10,7 +10,10 @@
     </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()" class="modal__form">
-      <label class="field">
+      <label
+        class="field"
+        [class.field--invalid]="form.controls.localId.invalid && form.controls.localId.touched"
+      >
         <span>Local</span>
         <select formControlName="localId">
           <option value="" disabled>Selecciona un local</option>
@@ -18,6 +21,9 @@
             <option [value]="local.id">{{ local.nombreComercial }}</option>
           }
         </select>
+        @if (form.controls.localId.invalid && form.controls.localId.touched) {
+          <span class="field__error">Debes seleccionar un local.</span>
+        }
       </label>
 
       <div class="field-row">
@@ -26,7 +32,10 @@
           <input type="date" formControlName="fecha" />
         </label>
 
-        <label class="field">
+        <label
+          class="field"
+          [class.field--invalid]="form.controls.monto.invalid && form.controls.monto.touched"
+        >
           <span>Monto (USD)</span>
           <input
             type="number"
@@ -36,6 +45,9 @@
             appSelectOnFocus
             appPositiveDecimal
           />
+          @if (form.controls.monto.invalid && form.controls.monto.touched) {
+            <span class="field__error">El monto no puede estar vacío.</span>
+          }
         </label>
       </div>
 
@@ -44,7 +56,7 @@
         <select formControlName="tipoTasa">
           <option value="BCV">BCV</option>
           <option value="EUR">Euro</option>
-          <option value="USD">Dólar</option>
+          <option value="USD">USDT/Cash</option>
           <option value="otra">Otra</option>
         </select>
       </label>
@@ -53,6 +65,40 @@
         <span>Descripción</span>
         <textarea formControlName="descripcion" placeholder="Opcional" rows="4"></textarea>
       </label>
+
+      <div class="field">
+        <span>Comprobante de pago</span>
+        @if (comprobanteDisplayName) {
+          <div class="file-picker__selected">
+            <span class="file-picker__name">{{ comprobanteDisplayName }}</span>
+            @if (comprobanteFile) {
+              <button type="button" class="file-picker__remove" (click)="removeComprobante()">
+                Quitar
+              </button>
+            } @else {
+              <label class="file-picker__remove">
+                Reemplazar
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  (change)="onComprobanteSelected($event)"
+                  hidden
+                />
+              </label>
+            }
+          </div>
+        } @else {
+          <label class="file-picker__dropzone">
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              (change)="onComprobanteSelected($event)"
+              hidden
+            />
+            Subir comprobante
+          </label>
+        }
+      </div>
 
       @if (errorMessage) {
         <p class="modal__error">{{ errorMessage }}</p>
