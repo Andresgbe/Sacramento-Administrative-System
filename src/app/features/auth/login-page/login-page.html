@@ -22,14 +22,5 @@
     <button type="submit" class="btn btn--primary login__submit" [disabled]="submitting()">
       {{ submitting() ? 'Ingresando…' : 'Ingresar' }}
     </button>
-
-    <button
-      type="button"
-      class="btn btn--secondary login__quick"
-      [disabled]="submitting()"
-      (click)="quickLogin()"
-    >
-      Acceso rápido
-    </button>
   </form>
 </div>
