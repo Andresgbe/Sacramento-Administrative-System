@@ -40,7 +40,7 @@ export const routes: Routes = [
         path: 'pagos',
         loadComponent: () =>
           import('./features/pagos/pagos-page/pagos-page').then((m) => m.PagosPage),
-        data: { title: 'Pagos de alquiler', subtitle: 'Reporte de pagos de alquiler' },
+        data: { title: 'Reporte de pagos', subtitle: 'Reporte de pagos' },
       },
       {
         path: 'calculadora',

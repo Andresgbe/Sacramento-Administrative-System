@@ -53,7 +53,7 @@ export class DashboardPage implements OnInit {
         value: this.formatUsd(this.cajaChicaService.balance()),
         tone: 'default',
       },
-      { label: 'Locales activos', value: `${localesActivos}`, tone: 'default' },
+      { label: 'Empresas activas', value: `${localesActivos}`, tone: 'default' },
       { label: 'Egresos del mes', value: this.formatUsd(egresosDelMes), tone: 'danger' },
       { label: 'Ingresos del mes', value: this.formatUsd(ingresosDelMes), tone: 'default' },
     ];
