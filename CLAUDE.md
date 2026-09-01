@@ -1,7 +1,7 @@
 # CC Sacramento
 
 ## Project
-- Name: CC Sacramento (Centro Comercial Sacramento, Carrizal, Los Teques, Venezuela)
+- Name: CC Sacramento (Centro Comercial Sacramento, Carrizal, Venezuela)
 - Full-stack administrative system to replace spreadsheet-based management
 - Access roles: admin (full control) and subadmin (read and register, no delete/configure)
 
@@ -143,7 +143,7 @@ not in the root of app/.
     upload under "Datos avanzados" is a separate scanned-document upload in
     `documentos`), and "Datos avanzados" to upload contrato/RIF/otro documents
     to a private Storage bucket
-  - **Pagos de alquiler**: transactions with tipo de tasa (BCV/EUR/USD/otra);
+  - **Reporte de pagos**: transactions with tipo de tasa (BCV/EUR/USD/otra);
     full edit support via the same modal in edit-mode (prefilled, "Guardar
     cambios"), same edit-icon pattern as Egresos/Caja chica
   - **Egresos**: transactions split into administrativo / operativo, plus a
