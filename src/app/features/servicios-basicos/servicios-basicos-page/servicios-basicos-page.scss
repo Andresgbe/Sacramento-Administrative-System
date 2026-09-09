@@ -1,0 +1,114 @@
+.servicios-page__header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.servicios-page__status {
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  text-align: center;
+
+  &--error {
+    border-color: rgb(185 28 28 / 30%);
+    color: var(--color-danger);
+  }
+}
+
+.data-table.servicios-table {
+  min-width: 640px;
+}
+
+.servicios-table__periodo {
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+.servicios-sin-fotos {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+// A month can carry several pages of the same bill, so these stack rather
+// than sitting in one long row that would stretch the column.
+.servicios-fotos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.servicios-foto {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 220px;
+}
+
+.servicios-foto__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 8px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+  }
+
+  &:hover {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+
+    svg {
+      color: var(--color-accent);
+    }
+  }
+}
+
+.servicios-foto__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  &:hover {
+    background: rgb(185 28 28 / 10%);
+    color: var(--color-danger);
+  }
+}

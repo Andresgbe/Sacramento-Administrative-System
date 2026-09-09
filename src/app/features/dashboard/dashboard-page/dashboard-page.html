@@ -14,7 +14,7 @@
     <div class="panel__header">
       <h2>Locales por estado de pago</h2>
     </div>
-     <app-pie-chart [segments]="localesPorPago()" />
+    <app-pie-chart [segments]="localesPorPago()" />
   </div>
 
   <div class="panel">
@@ -47,15 +47,15 @@
         <thead>
           <tr>
             <th>Fecha</th>
-            <th>Local</th>
+            <th>Empresa</th>
             <th class="panel__table-amount">Monto</th>
           </tr>
         </thead>
         <tbody>
           @for (payment of recentPayments(); track payment.id) {
             <tr>
-              <td>{{ payment.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
-              <td>{{ payment.localNombre }}</td>
+              <td>{{ payment.fecha | date: 'dd/MM/yyyy' : 'UTC' }}</td>
+              <td>{{ payment.empresaNombre }}</td>
               <td class="panel__table-amount">$ {{ payment.monto | number: '1.2-2' }}</td>
             </tr>
           }
@@ -83,7 +83,7 @@
         <tbody>
           @for (egreso of recentEgresos(); track egreso.id) {
             <tr>
-              <td>{{ egreso.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
+              <td>{{ egreso.fecha | date: 'dd/MM/yyyy' : 'UTC' }}</td>
               <td>{{ categoriaEgresoLabel[egreso.categoria] }}</td>
               <td class="panel__table-amount">$ {{ egreso.monto | number: '1.2-2' }}</td>
             </tr>

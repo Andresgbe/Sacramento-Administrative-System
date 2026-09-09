@@ -1,11 +1,13 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Pago, TipoTasa } from '../../core/models/pago.model';
+import { Pago, PagoConcepto, TipoTasa, esConceptoPorLocal } from '../../core/models/pago.model';
 import { SupabaseService } from '../../core/services/supabase.service';
 
 interface PagoRow {
   id: string;
   numero: number;
-  local_id: string;
+  concepto: PagoConcepto;
+  empresa_id: string;
+  local_id: string | null;
   fecha: string;
   monto: number;
   tipo_tasa: TipoTasa;
@@ -13,15 +15,46 @@ interface PagoRow {
   comprobante_ruta: string | null;
   comprobante_nombre: string | null;
   created_at: string;
-  locales: { nombre_comercial: string } | null;
+  empresas: { nombre_comercial: string } | null;
+  locales: { numero_local: string } | null;
+}
+
+const SELECT_WITH_REFS = '*, empresas(nombre_comercial), locales(numero_local)';
+
+export interface PagoInput {
+  concepto: PagoConcepto;
+  empresaId: string;
+  localId: string | null;
+  fecha: string;
+  monto: number;
+  tipoTasa: TipoTasa;
+  descripcion: string | null;
+  comprobanteFile: File | null;
+}
+
+function toRow(pago: PagoInput) {
+  return {
+    concepto: pago.concepto,
+    empresa_id: pago.empresaId,
+    // The DB rejects a local on an empresa-wide concept, so this normalises
+    // rather than trusting the form to have cleared it.
+    local_id: esConceptoPorLocal(pago.concepto) ? pago.localId : null,
+    fecha: pago.fecha,
+    monto: pago.monto,
+    tipo_tasa: pago.tipoTasa,
+    descripcion: pago.descripcion,
+  };
 }
 
 function fromRow(row: PagoRow): Pago {
   return {
     id: row.id,
     numero: row.numero,
+    concepto: row.concepto,
+    empresaId: row.empresa_id,
+    empresaNombre: row.empresas?.nombre_comercial ?? '',
     localId: row.local_id,
-    localNombre: row.locales?.nombre_comercial ?? '',
+    localNumero: row.locales?.numero_local ?? null,
     fecha: row.fecha,
     monto: row.monto,
     tipoTasa: row.tipo_tasa,
@@ -51,7 +84,7 @@ export class PagosService {
 
     const { data, error } = await this.supabase
       .from('pagos')
-      .select('*, locales(nombre_comercial)')
+      .select(SELECT_WITH_REFS)
       .order('fecha', { ascending: false });
 
     if (error) {
@@ -64,23 +97,10 @@ export class PagosService {
     this.loading.set(false);
   }
 
-  async add(pago: {
-    localId: string;
-    fecha: string;
-    monto: number;
-    tipoTasa: TipoTasa;
-    descripcion: string | null;
-    comprobanteFile: File | null;
-  }): Promise<{ error: string | null }> {
+  async add(pago: PagoInput): Promise<{ error: string | null }> {
     const { data, error } = await this.supabase
       .from('pagos')
-      .insert({
-        local_id: pago.localId,
-        fecha: pago.fecha,
-        monto: pago.monto,
-        tipo_tasa: pago.tipoTasa,
-        descripcion: pago.descripcion,
-      })
+      .insert(toRow(pago))
       .select('id')
       .single();
 
@@ -99,27 +119,8 @@ export class PagosService {
     return { error: null };
   }
 
-  async update(
-    id: string,
-    pago: {
-      localId: string;
-      fecha: string;
-      monto: number;
-      tipoTasa: TipoTasa;
-      descripcion: string | null;
-      comprobanteFile: File | null;
-    },
-  ): Promise<{ error: string | null }> {
-    const { error } = await this.supabase
-      .from('pagos')
-      .update({
-        local_id: pago.localId,
-        fecha: pago.fecha,
-        monto: pago.monto,
-        tipo_tasa: pago.tipoTasa,
-        descripcion: pago.descripcion,
-      })
-      .eq('id', id);
+  async update(id: string, pago: PagoInput): Promise<{ error: string | null }> {
+    const { error } = await this.supabase.from('pagos').update(toRow(pago)).eq('id', id);
 
     if (error) {
       return { error: error.message };
@@ -136,10 +137,7 @@ export class PagosService {
     return { error: null };
   }
 
-  private async uploadComprobante(
-    pagoId: string,
-    file: File,
-  ): Promise<{ error: string | null }> {
+  private async uploadComprobante(pagoId: string, file: File): Promise<{ error: string | null }> {
     const extension = file.name.split('.').pop();
     const path = `pagos/${pagoId}/${crypto.randomUUID()}.${extension}`;
 
@@ -191,8 +189,11 @@ export class PagosService {
   }
 
   /**
-   * Whole months elapsed since the local's most recent payment (0 = paid
-   * this month). Returns null if the local has never made a payment.
+   * Whole months elapsed since the local's most recent CANON payment (0 = paid
+   * this month). Returns null if the local has never paid rent.
+   *
+   * Only canon counts: a company can be up to date on its water bill and still
+   * owe rent, so counting every concept would mark it as al día.
    *
    * Computed from "YYYY-MM" parts rather than `Date` arithmetic — `fecha` is
    * a date-only string (no time), so parsing it with `new Date()` reads it
@@ -200,7 +201,9 @@ export class PagosService {
    * to a negative-offset local timezone (e.g. Venezuela, UTC-4).
    */
   monthsSinceLastPayment(localId: string): number | null {
-    const pagosDelLocal = this.pagos().filter((pago) => pago.localId === localId);
+    const pagosDelLocal = this.pagos().filter(
+      (pago) => pago.concepto === 'canon' && pago.localId === localId,
+    );
 
     if (pagosDelLocal.length === 0) {
       return null;

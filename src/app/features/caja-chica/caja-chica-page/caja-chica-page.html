@@ -25,7 +25,12 @@
         (ngModelChange)="setSearchInput($event)"
         (keydown.enter)="applySearch()"
       />
-      <button type="button" class="filters-search__button" (click)="applySearch()" aria-label="Buscar">
+      <button
+        type="button"
+        class="filters-search__button"
+        (click)="applySearch()"
+        aria-label="Buscar"
+      >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="7" />
           <path d="m20 20-3.5-3.5" stroke-linecap="round" />
@@ -34,10 +39,13 @@
     </div>
   </div>
 
-  <label class="filters-field">
-    <span>Mes</span>
-    <input type="month" [ngModel]="month()" (ngModelChange)="setMonth($event)" />
-  </label>
+  <app-period-filter
+    [anio]="anio()"
+    [mes]="mes()"
+    [anios]="aniosDisponibles()"
+    (anioChange)="setAnio($event)"
+    (mesChange)="setMes($event)"
+  />
 
   <div class="filters-field">
     <span>Monto</span>
@@ -66,11 +74,17 @@
     </div>
   </div>
 
-  @if (hasActiveFilters()) {
-    <button type="button" class="filters-clear" (click)="clearAllFilters()">
-      Limpiar filtros
-    </button>
-  }
+  <button
+    type="button"
+    class="filters-clear"
+    [disabled]="!hasActiveFilters()"
+    (click)="clearAllFilters()"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+    </svg>
+    Limpiar filtros
+  </button>
 </div>
 
 @if (isLoading()) {
@@ -100,7 +114,7 @@
         @for (movimiento of movimientosFiltrados(); track movimiento.id) {
           <tr>
             <td>{{ movimiento.numero }}</td>
-            <td>{{ movimiento.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
+            <td>{{ movimiento.fecha | date: 'dd/MM/yyyy' : 'UTC' }}</td>
             <td>
               <span class="caja-chica-badge caja-chica-badge--{{ movimiento.tipo }}">
                 {{ tipoLabel[movimiento.tipo] }}

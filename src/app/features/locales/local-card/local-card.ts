@@ -1,7 +1,8 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Local, LocalEstado } from '../../../core/models/local.model';
+import { EmpresaEstado } from '../../../core/models/empresa.model';
+import { Local } from '../../../core/models/local.model';
 
 export type PagoStatus = 'al-dia' | 'debe';
 
@@ -15,7 +16,7 @@ export class LocalCard {
   @Input({ required: true }) local!: Local;
   @Input({ required: true }) pagoStatus!: PagoStatus;
 
-  protected readonly estadoLabel: Record<LocalEstado, string> = {
+  protected readonly estadoLabel: Record<EmpresaEstado, string> = {
     activo: 'Activo',
     inactivo: 'Inactivo',
     vencido: 'Vencido',

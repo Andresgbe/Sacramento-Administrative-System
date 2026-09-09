@@ -1,35 +1,155 @@
-@if (isAdmin()) {
-  <div class="locales-page__header">
-    <button type="button" class="btn btn--primary" (click)="openModal()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 5v14M5 12h14" stroke-linecap="round" />
-      </svg>
-      Agregar local
-    </button>
-  </div>
-}
+<app-tabs [tabs]="tabItems" [active]="tab()" (selected)="setTab($event)" />
 
-@if (isLoading()) {
-  <p class="locales-page__status">Cargando locales…</p>
-} @else if (loadError()) {
-  <p class="locales-page__status locales-page__status--error">
-    No se pudieron cargar los locales: {{ loadError() }}
-  </p>
-} @else if (locales().length === 0) {
-  <p class="locales-page__status">Todavía no hay locales registrados.</p>
+@if (tab() === 'locales') {
+  @if (isAdmin()) {
+    <div class="locales-page__header">
+      <button type="button" class="btn btn--primary" (click)="openLocalModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+        </svg>
+        Agregar local
+      </button>
+    </div>
+  }
+
+  @if (isLoading()) {
+    <p class="locales-page__status">Cargando locales…</p>
+  } @else if (loadError()) {
+    <p class="locales-page__status locales-page__status--error">
+      No se pudieron cargar los locales: {{ loadError() }}
+    </p>
+  } @else if (locales().length === 0) {
+    <p class="locales-page__status">Todavía no hay locales registrados.</p>
+  } @else {
+    <div class="locales-grid">
+      @for (local of locales(); track local.id) {
+        <app-local-card [local]="local" [pagoStatus]="pagoStatus(local.id)" />
+      }
+    </div>
+  }
 } @else {
-  <div class="locales-grid">
-    @for (local of locales(); track local.id) {
-      <app-local-card [local]="local" [pagoStatus]="pagoStatus(local.id)" />
-    }
-  </div>
+  @if (isAdmin()) {
+    <div class="locales-page__header">
+      <button type="button" class="btn btn--primary" (click)="openEmpresaModal(null)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+        </svg>
+        Agregar empresa
+      </button>
+    </div>
+  }
+
+  @if (empresasLoading()) {
+    <p class="locales-page__status">Cargando empresas…</p>
+  } @else if (empresasError()) {
+    <p class="locales-page__status locales-page__status--error">
+      No se pudieron cargar las empresas: {{ empresasError() }}
+    </p>
+  } @else if (empresas().length === 0) {
+    <p class="locales-page__status">Todavía no hay empresas registradas.</p>
+  } @else {
+    <div class="data-table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Empresa</th>
+            <th>RIF</th>
+            <th>Estado</th>
+            <th>Locales</th>
+            @if (isAdmin()) {
+              <th class="data-table__actions"></th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (empresa of empresas(); track empresa.id) {
+            <tr>
+              <td>
+                <div class="empresa-cell">
+                  @if (empresa.imagenUrl) {
+                    <img
+                      class="empresa-cell__logo"
+                      [src]="empresa.imagenUrl"
+                      [alt]="empresa.nombreComercial"
+                      loading="lazy"
+                    />
+                  }
+                  <span>{{ empresa.nombreComercial }}</span>
+                  @if (empresa.esPropietaria) {
+                    <span class="empresa-owner">Propietaria</span>
+                  }
+                </div>
+              </td>
+              <td>{{ empresa.rif || '—' }}</td>
+              <td>
+                <span class="empresa-badge empresa-badge--{{ empresa.estado }}">
+                  {{ estadoLabel[empresa.estado] }}
+                </span>
+              </td>
+              <td>{{ localesCount(empresa.id) }}</td>
+              @if (isAdmin()) {
+                <td class="data-table__actions">
+                  <div class="data-table__action-group">
+                    <button
+                      type="button"
+                      class="data-table__edit"
+                      (click)="openEmpresaModal(empresa)"
+                      aria-label="Editar empresa"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                          d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="data-table__delete"
+                      [disabled]="deletingEmpresaId() === empresa.id"
+                      (click)="deleteEmpresa(empresa)"
+                      aria-label="Eliminar empresa"
+                    >
+                      @if (deletingEmpresaId() === empresa.id) {
+                        <span class="spinner spinner--dark"></span>
+                      } @else {
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path
+                            d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      }
+                    </button>
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
 }
 
-@if (modalOpen()) {
+@if (localModalOpen()) {
   <app-local-form-modal
+    [empresas]="empresas()"
     [saving]="saving()"
     [errorMessage]="saveError()"
-    (closed)="closeModal()"
+    (closed)="closeLocalModal()"
     (saved)="onLocalSaved($event)"
+  />
+}
+
+@if (empresaModalOpen()) {
+  <app-empresa-form-modal
+    [empresa]="empresaBeingEdited()"
+    [saving]="saving()"
+    [errorMessage]="saveError()"
+    (closed)="closeEmpresaModal()"
+    (saved)="onEmpresaSaved($event)"
   />
 }

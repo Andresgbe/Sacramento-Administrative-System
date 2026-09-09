@@ -96,45 +96,52 @@ button {
   }
 }
 
+// Tinted button system: soft fills in each button's own intent colour, with
+// exactly one solid fill — the primary. It extends the tinted circles the
+// table's edit/delete icons already use instead of running a second
+// vocabulary next to them. No coloured drop shadows anywhere.
 .btn--primary {
   background: var(--color-accent);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgb(249 115 22 / 30%);
 
   &:hover {
     background: var(--color-accent-hover);
-    box-shadow: 0 4px 14px rgb(249 115 22 / 40%);
   }
 }
 
+// The tint alone read as a disabled block on white modal surfaces, so this
+// keeps a border — it's what makes "Cancelar" legible as a control.
 .btn--secondary {
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
+  border-color: rgb(17 24 39 / 12%);
+
+  &:hover {
+    background: var(--color-border);
+    border-color: rgb(17 24 39 / 22%);
+  }
+}
+
+.btn--ghost {
   background: var(--color-surface);
   color: var(--color-text-primary);
   border-color: var(--color-border);
 
   &:hover {
-    background: var(--color-bg);
+    background: var(--color-surface-muted);
+    border-color: rgb(17 24 39 / 22%);
   }
 }
 
-.btn--ghost {
-  background: none;
-  color: var(--color-text-secondary);
-
-  &:hover {
-    background: var(--color-bg);
-    color: var(--color-text-primary);
-  }
-}
-
+// Stays solid, unlike the tinted "Eliminar" in the design set: this class is
+// only ever the confirm button of the destructive confirm dialog, where the
+// final action should carry the most weight on the screen.
 .btn--danger {
   background: var(--color-danger);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgb(185 28 28 / 30%);
 
   &:hover {
     background: #991b1b;
-    box-shadow: 0 4px 14px rgb(185 28 28 / 40%);
   }
 }
 
@@ -231,15 +238,57 @@ button {
   }
 }
 
+// Payment-concept chip, shared by Reporte de pagos and Servicios básicos.
+// Canon is the mall's own income; the other three are utilities it collects
+// and passes through, so they share a cooler family.
+.concepto-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  &--canon {
+    background: rgb(249 115 22 / 12%);
+    color: var(--color-accent);
+  }
+
+  &--condominio {
+    background: rgb(100 116 139 / 14%);
+    color: var(--color-neutral);
+  }
+
+  &--corpoelec {
+    background: rgb(202 138 4 / 14%);
+    color: #a16207;
+  }
+
+  &--hidrocapital {
+    background: rgb(2 132 199 / 12%);
+    color: #0369a1;
+  }
+}
+
 // Shared filter-bar styles, used across the transaction report pages
 // (pagos, egresos, caja chica) — a search box + date/amount/etc. inputs
 // above the .data-table.
+// Grid rather than flex-wrap: wrapped flex items keep their own widths and
+// leave ragged gaps, which is what made the bar look tangled on narrow
+// screens. auto-fit gives every field the same width and drops cleanly to one
+// column on a phone; min() keeps the track from overflowing below 190px.
 .filters-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  align-items: end;
+  gap: 14px 16px;
   margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
 }
 
 .filters-field {
@@ -272,9 +321,10 @@ button {
   }
 }
 
+// Search earns twice the width where there is room; grid clamps the span back
+// to 1 when the bar collapses to a single column.
 .filters-field--search {
-  flex: 1;
-  min-width: 200px;
+  grid-column: span 2;
 }
 
 .filters-search {
@@ -317,21 +367,55 @@ button {
   gap: 8px;
 
   input {
-    width: 100px;
+    width: 100%;
+    min-width: 0;
   }
 }
 
 .filters-clear {
-  border: none;
-  background: none;
-  color: var(--color-text-secondary);
-  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  align-self: end;
+  gap: 6px;
+  padding: 9px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  // Filled, not a bare text link: on the white filter card a transparent
+  // button with muted text disappeared and didn't read as clickable.
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 0.825rem;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
-  padding: 9px 4px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 
-  &:hover {
-    color: var(--color-accent);
+  svg {
+    width: 14px;
+    height: 14px;
+    color: var(--color-text-muted);
+    transition: color 0.15s ease;
+  }
+
+  // Always rendered, never conditionally: hiding it once the last filter
+  // cleared made the button look like it deleted itself, and reflowed the grid.
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &:not(:disabled):hover {
+    background: rgb(185 28 28 / 8%);
+    border-color: rgb(185 28 28 / 30%);
+    color: var(--color-danger);
+
+    svg {
+      color: var(--color-danger);
+    }
   }
 }
-

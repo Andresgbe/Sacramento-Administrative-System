@@ -1,4 +1,8 @@
-<div class="modal-backdrop" (mousedown)="onBackdropMouseDown($event)" (click)="onBackdropClick($event)">
+<div
+  class="modal-backdrop"
+  (mousedown)="onBackdropMouseDown($event)"
+  (click)="onBackdropClick($event)"
+>
   <div class="modal">
     <div class="modal__header">
       <h2>Comprobante de pago</h2>
@@ -22,9 +26,7 @@
         } @else if (isPdf) {
           <iframe [src]="safePdfUrl" title="Comprobante de pago"></iframe>
         } @else {
-          <p class="modal__status">
-            No hay vista previa disponible para este tipo de archivo.
-          </p>
+          <p class="modal__status">No hay vista previa disponible para este tipo de archivo.</p>
         }
       }
     </div>
@@ -32,7 +34,13 @@
     <div class="modal__actions">
       <button type="button" class="btn btn--secondary" (click)="closed.emit()">Cerrar</button>
       @if (url) {
-        <a class="btn btn--primary" [href]="url" [download]="nombreArchivo" target="_blank" rel="noopener">
+        <a
+          class="btn btn--primary"
+          [href]="url"
+          [download]="nombreArchivo"
+          target="_blank"
+          rel="noopener"
+        >
           Descargar
         </a>
       }

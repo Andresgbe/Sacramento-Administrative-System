@@ -1,0 +1,14 @@
+<div class="tabs" role="tablist">
+  @for (tab of tabs(); track tab.id) {
+    <button
+      type="button"
+      role="tab"
+      class="tabs__tab"
+      [class.tabs__tab--active]="tab.id === active()"
+      [attr.aria-selected]="tab.id === active()"
+      (click)="selected.emit(tab.id)"
+    >
+      {{ tab.label }}
+    </button>
+  }
+</div>

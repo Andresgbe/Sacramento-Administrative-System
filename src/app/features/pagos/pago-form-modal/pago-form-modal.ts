@@ -1,12 +1,30 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Empresa } from '../../../core/models/empresa.model';
 import { Local } from '../../../core/models/local.model';
-import { Pago, TipoTasa } from '../../../core/models/pago.model';
+import {
+  CONCEPTO_LABEL,
+  Pago,
+  PagoConcepto,
+  TipoTasa,
+  esConceptoPorLocal,
+} from '../../../core/models/pago.model';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 
 export interface PagoFormPayload {
-  localId: string;
+  concepto: PagoConcepto;
+  empresaId: string;
+  localId: string | null;
   fecha: string;
   monto: number;
   tipoTasa: TipoTasa;
@@ -31,6 +49,7 @@ function todayLocalIso(): string {
 })
 export class PagoFormModal implements OnInit {
   @Input({ required: true }) locales: Local[] = [];
+  @Input({ required: true }) empresas: Empresa[] = [];
   @Input() saving = false;
   @Input() errorMessage: string | null = null;
   @Input() pago: Pago | null = null;
@@ -59,8 +78,34 @@ export class PagoFormModal implements OnInit {
     this.mouseDownOnBackdrop = false;
   }
 
+  protected readonly conceptos = Object.keys(CONCEPTO_LABEL) as PagoConcepto[];
+  protected readonly conceptoLabel = CONCEPTO_LABEL;
+
+  protected readonly concepto = signal<PagoConcepto>('canon');
+  protected readonly empresaId = signal('');
+
+  /** Only per-unit concepts (canon) ask for a local, and only among the ones
+   *  the chosen empresa actually rents. */
+  protected readonly pideLocal = computed(() => esConceptoPorLocal(this.concepto()));
+
+  protected readonly localesDeEmpresa = computed(() =>
+    this.locales.filter((local) => local.empresaId === this.empresaId()),
+  );
+
+  /** The owning company takes a share of the service bills, but pays neither
+   *  rent to itself nor condominio, so it is offered only for those two. */
+  protected readonly empresasDisponibles = computed(() => {
+    const concepto = this.concepto();
+    if (concepto === 'corpoelec' || concepto === 'hidrocapital') {
+      return this.empresas;
+    }
+    return this.empresas.filter((empresa) => !empresa.esPropietaria);
+  });
+
   protected readonly form = this.fb.nonNullable.group({
-    localId: ['', Validators.required],
+    concepto: ['canon' as PagoConcepto, Validators.required],
+    empresaId: ['', Validators.required],
+    localId: [''],
     fecha: [todayLocalIso(), Validators.required],
     monto: [0, [Validators.required, Validators.min(0.01)]],
     tipoTasa: ['BCV' as TipoTasa, Validators.required],
@@ -70,13 +115,41 @@ export class PagoFormModal implements OnInit {
   ngOnInit(): void {
     if (this.pago) {
       this.form.patchValue({
-        localId: this.pago.localId,
+        concepto: this.pago.concepto,
+        empresaId: this.pago.empresaId,
+        localId: this.pago.localId ?? '',
         fecha: this.pago.fecha,
         monto: this.pago.monto,
         tipoTasa: this.pago.tipoTasa,
         descripcion: this.pago.descripcion ?? '',
       });
+      this.concepto.set(this.pago.concepto);
+      this.empresaId.set(this.pago.empresaId);
     }
+
+    this.syncLocalValidator();
+  }
+
+  protected onConceptoChange(value: string): void {
+    this.concepto.set(value as PagoConcepto);
+    this.syncLocalValidator();
+  }
+
+  protected onEmpresaChange(value: string): void {
+    this.empresaId.set(value);
+    // The previously picked local may belong to a different empresa.
+    this.form.controls.localId.setValue('');
+  }
+
+  private syncLocalValidator(): void {
+    const control = this.form.controls.localId;
+    if (this.pideLocal()) {
+      control.addValidators(Validators.required);
+    } else {
+      control.removeValidators(Validators.required);
+      control.setValue('');
+    }
+    control.updateValueAndValidity();
   }
 
   protected onComprobanteSelected(event: Event): void {
@@ -96,7 +169,9 @@ export class PagoFormModal implements OnInit {
 
     const value = this.form.getRawValue();
     this.saved.emit({
-      localId: value.localId,
+      concepto: value.concepto,
+      empresaId: value.empresaId,
+      localId: value.localId || null,
       fecha: value.fecha,
       monto: value.monto,
       tipoTasa: value.tipoTasa,

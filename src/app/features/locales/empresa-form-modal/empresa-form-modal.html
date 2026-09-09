@@ -1,0 +1,159 @@
+<div
+  class="modal-backdrop"
+  (mousedown)="onBackdropMouseDown($event)"
+  (click)="onBackdropClick($event)"
+>
+  <div class="modal">
+    <div class="modal__header">
+      <h2>{{ empresa ? 'Editar empresa' : 'Agregar empresa' }}</h2>
+      <button type="button" class="modal__close" (click)="closed.emit()" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="modal__form">
+      <label
+        class="field"
+        [class.field--invalid]="
+          form.controls.nombreComercial.invalid && form.controls.nombreComercial.touched
+        "
+      >
+        <span>Nombre comercial</span>
+        <input type="text" formControlName="nombreComercial" placeholder="Panadería Central" />
+        @if (form.controls.nombreComercial.invalid && form.controls.nombreComercial.touched) {
+          <span class="field__error">Este campo es obligatorio.</span>
+        }
+      </label>
+
+      <div class="field">
+        <span>Logo</span>
+        @if (imagePreviewUrl) {
+          <div class="image-picker__preview">
+            <img [src]="imagePreviewUrl" alt="Vista previa" />
+            <button type="button" class="image-picker__remove" (click)="removeImage()">
+              Quitar
+            </button>
+          </div>
+        } @else {
+          <label class="image-picker__dropzone">
+            <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 16V4m0 0-4 4m4-4 4 4" stroke-linecap="round" stroke-linejoin="round" />
+              <path
+                d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span>Subir logo desde tu computadora</span>
+          </label>
+        }
+      </div>
+
+      <div class="field-row">
+        <label class="field">
+          <span>RIF</span>
+          <input type="text" formControlName="rif" placeholder="J-12345678-9" />
+        </label>
+
+        <label class="field">
+          <span>Estado</span>
+          <select formControlName="estado">
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+            <option value="vencido">Vencido</option>
+          </select>
+        </label>
+      </div>
+
+      <button type="button" class="advanced-toggle" (click)="toggleAdvanced()">
+        <svg
+          class="advanced-toggle__chevron"
+          [class.advanced-toggle__chevron--open]="showAdvanced()"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="m9 6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Datos avanzados
+      </button>
+
+      @if (showAdvanced()) {
+        <div class="advanced-section">
+          <p class="advanced-section__hint">
+            Opcional — contrato, RIF u otros documentos de la empresa.
+          </p>
+
+          <div class="field">
+            <span>Contrato</span>
+            @if (contratoFile) {
+              <div class="file-picker__selected">
+                <span class="file-picker__name">{{ contratoFile.name }}</span>
+                <button type="button" class="file-picker__remove" (click)="removeContrato()">
+                  Quitar
+                </button>
+              </div>
+            } @else {
+              <label class="file-picker__dropzone">
+                <input type="file" (change)="onContratoSelected($event)" hidden />
+                Subir archivo
+              </label>
+            }
+          </div>
+
+          <div class="field">
+            <span>RIF</span>
+            @if (rifFile) {
+              <div class="file-picker__selected">
+                <span class="file-picker__name">{{ rifFile.name }}</span>
+                <button type="button" class="file-picker__remove" (click)="removeRif()">
+                  Quitar
+                </button>
+              </div>
+            } @else {
+              <label class="file-picker__dropzone">
+                <input type="file" (change)="onRifSelected($event)" hidden />
+                Subir archivo
+              </label>
+            }
+          </div>
+
+          <div class="field">
+            <span>Otro documento</span>
+            @if (otroFile) {
+              <div class="file-picker__selected">
+                <span class="file-picker__name">{{ otroFile.name }}</span>
+                <button type="button" class="file-picker__remove" (click)="removeOtro()">
+                  Quitar
+                </button>
+              </div>
+            } @else {
+              <label class="file-picker__dropzone">
+                <input type="file" (change)="onOtroSelected($event)" hidden />
+                Subir archivo
+              </label>
+            }
+          </div>
+        </div>
+      }
+
+      @if (errorMessage) {
+        <p class="modal__error">{{ errorMessage }}</p>
+      }
+
+      <div class="modal__actions">
+        <button type="button" class="btn btn--secondary" (click)="closed.emit()">Cancelar</button>
+        <button type="submit" class="btn btn--primary" [disabled]="saving">
+          @if (saving) {
+            <span class="spinner"></span>
+          }
+          {{ saving ? 'Guardando…' : empresa ? 'Guardar cambios' : 'Guardar empresa' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

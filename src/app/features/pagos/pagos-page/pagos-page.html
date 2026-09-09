@@ -1,13 +1,20 @@
-@if (isAdmin()) {
-  <div class="pagos-page__header">
+<div class="pagos-page__header">
+  <div class="pagos-total">
+    <span class="pagos-total__label">{{ totalLabel() }}</span>
+    <span class="pagos-total__value">$ {{ total() | number: '1.2-2' }}</span>
+  </div>
+
+  @if (isAdmin()) {
     <button type="button" class="btn btn--primary" (click)="openModal()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M12 5v14M5 12h14" stroke-linecap="round" />
       </svg>
       Registrar pago
     </button>
-  </div>
-}
+  }
+</div>
+
+<app-tabs [tabs]="conceptoTabs" [active]="concepto()" (selected)="setConcepto($event)" />
 
 <div class="filters-bar">
   <div class="filters-field filters-field--search">
@@ -20,7 +27,12 @@
         (ngModelChange)="setSearchInput($event)"
         (keydown.enter)="applySearch()"
       />
-      <button type="button" class="filters-search__button" (click)="applySearch()" aria-label="Buscar">
+      <button
+        type="button"
+        class="filters-search__button"
+        (click)="applySearch()"
+        aria-label="Buscar"
+      >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="7" />
           <path d="m20 20-3.5-3.5" stroke-linecap="round" />
@@ -29,10 +41,13 @@
     </div>
   </div>
 
-  <label class="filters-field">
-    <span>Mes</span>
-    <input type="month" [ngModel]="month()" (ngModelChange)="setMonth($event)" />
-  </label>
+  <app-period-filter
+    [anio]="anio()"
+    [mes]="mes()"
+    [anios]="aniosDisponibles()"
+    (anioChange)="setAnio($event)"
+    (mesChange)="setMes($event)"
+  />
 
   <div class="filters-field">
     <span>Monto</span>
@@ -61,44 +76,39 @@
     </div>
   </div>
 
-  <div class="filters-field pagos-local-filter">
-    <span>Local</span>
-    <div class="pagos-local-filter__control">
-      <button type="button" class="pagos-local-filter__trigger" (click)="toggleLocalMenu()">
-        {{ localFilterLabel() }}
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      </button>
-
-      @if (localMenuOpen()) {
-        <div class="pagos-local-filter__backdrop" (click)="closeLocalMenu()"></div>
-        <div class="pagos-local-filter__panel">
-          @for (local of locales(); track local.id) {
-            <label class="pagos-local-filter__option">
-              <input
-                type="checkbox"
-                [checked]="isLocalSelected(local.id)"
-                (change)="toggleLocalSelection(local.id)"
-              />
-              {{ local.nombreComercial }}
-            </label>
-          }
-          @if (selectedLocalIds().size > 0) {
-            <button type="button" class="pagos-local-filter__clear" (click)="clearLocalFilter()">
-              Limpiar selección
-            </button>
-          }
-        </div>
-      }
-    </div>
+  <div class="filters-field">
+    <span>Empresa</span>
+    <app-multi-select
+      [options]="empresaOptions()"
+      [selected]="selectedEmpresaIds()"
+      allLabel="Todas las empresas"
+      countLabel="empresas seleccionadas"
+      (selectionChange)="setSelectedEmpresaIds($event)"
+    />
   </div>
 
-  @if (hasActiveFilters()) {
-    <button type="button" class="filters-clear" (click)="clearAllFilters()">
-      Limpiar filtros
-    </button>
-  }
+  <div class="filters-field">
+    <span>Local</span>
+    <app-multi-select
+      [options]="localOptions()"
+      [selected]="selectedLocalIds()"
+      allLabel="Todos los locales"
+      countLabel="locales seleccionados"
+      (selectionChange)="setSelectedLocalIds($event)"
+    />
+  </div>
+
+  <button
+    type="button"
+    class="filters-clear"
+    [disabled]="!hasActiveFilters()"
+    (click)="clearAllFilters()"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+    </svg>
+    Limpiar filtros
+  </button>
 </div>
 
 @if (isLoading()) {
@@ -118,6 +128,8 @@
         <tr>
           <th>ID</th>
           <th>Fecha</th>
+          <th>Concepto</th>
+          <th>Empresa</th>
           <th>Local</th>
           <th>Monto</th>
           <th>Tasa</th>
@@ -132,8 +144,14 @@
         @for (pago of pagosFiltrados(); track pago.id) {
           <tr>
             <td>{{ pago.numero }}</td>
-            <td>{{ pago.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
-            <td>{{ pago.localNombre }}</td>
+            <td>{{ pago.fecha | date: 'dd/MM/yyyy' : 'UTC' }}</td>
+            <td>
+              <span class="concepto-badge concepto-badge--{{ pago.concepto }}">
+                {{ conceptoLabel[pago.concepto] }}
+              </span>
+            </td>
+            <td>{{ pago.empresaNombre }}</td>
+            <td>{{ pago.localNumero || '—' }}</td>
             <td>$ {{ pago.monto | number: '1.2-2' }}</td>
             <td>{{ tasaLabel[pago.tipoTasa] }}</td>
             <td>{{ pago.descripcion || '—' }}</td>
@@ -199,6 +217,7 @@
 @if (modalOpen()) {
   <app-pago-form-modal
     [locales]="locales()"
+    [empresas]="empresas()"
     [saving]="saving()"
     [errorMessage]="saveError()"
     [pago]="editingPago()"

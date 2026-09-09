@@ -61,9 +61,9 @@
 
   <div class="detail-layout">
     <div class="detail-image-panel">
-      @if (imagePreviewUrl) {
+      @if (local!.empresaImagenUrl) {
         <div class="detail-image">
-          <img [src]="imagePreviewUrl" [alt]="local!.nombreComercial" />
+          <img [src]="local!.empresaImagenUrl" [alt]="local!.empresaNombre" />
         </div>
       } @else {
         <div class="detail-image detail-image--placeholder">
@@ -79,23 +79,33 @@
         </div>
       }
 
-      @if (isAdmin()) {
-        <label class="btn btn--secondary detail-image__upload">
-          <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
-          Cambiar foto
-        </label>
-      }
-
       <span class="detail-pago-badge detail-pago-badge--{{ pagoStatus() }}">
         {{ pagoStatus() === 'al-dia' ? 'Al día' : 'No ha pagado alquiler' }}
       </span>
     </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()" class="detail-form">
+      <label
+        class="field"
+        [class.field--invalid]="form.controls.empresaId.invalid && form.controls.empresaId.touched"
+      >
+        <span>Empresa</span>
+        <select formControlName="empresaId">
+          @for (empresa of empresas(); track empresa.id) {
+            <option [value]="empresa.id">{{ empresa.nombreComercial }}</option>
+          }
+        </select>
+        @if (form.controls.empresaId.invalid && form.controls.empresaId.touched) {
+          <span class="field__error">Debes seleccionar una empresa.</span>
+        }
+      </label>
+
       <div class="field-row">
         <label
           class="field"
-          [class.field--invalid]="form.controls.numeroLocal.invalid && form.controls.numeroLocal.touched"
+          [class.field--invalid]="
+            form.controls.numeroLocal.invalid && form.controls.numeroLocal.touched
+          "
         >
           <span>Número de local</span>
           <input type="text" formControlName="numeroLocal" />
@@ -105,37 +115,8 @@
         </label>
 
         <label class="field">
-          <span>Estado</span>
-          <select formControlName="estado">
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
-            <option value="vencido">Vencido</option>
-          </select>
-        </label>
-      </div>
-
-      <label
-        class="field"
-        [class.field--invalid]="
-          form.controls.nombreComercial.invalid && form.controls.nombreComercial.touched
-        "
-      >
-        <span>Nombre comercial</span>
-        <input type="text" formControlName="nombreComercial" />
-        @if (form.controls.nombreComercial.invalid && form.controls.nombreComercial.touched) {
-          <span class="field__error">Este campo es obligatorio.</span>
-        }
-      </label>
-
-      <div class="field-row">
-        <label class="field">
           <span>Piso</span>
           <input type="text" formControlName="piso" placeholder="PB" />
-        </label>
-
-        <label class="field">
-          <span>RIF</span>
-          <input type="text" formControlName="rif" placeholder="J-12345678-9" />
         </label>
       </div>
 
@@ -189,7 +170,7 @@
             @for (pago of pagosDelLocal(); track pago.id) {
               <tr>
                 <td>{{ pago.numero }}</td>
-                <td>{{ pago.fecha | date: 'dd/MM/yyyy':'UTC' }}</td>
+                <td>{{ pago.fecha | date: 'dd/MM/yyyy' : 'UTC' }}</td>
                 <td>$ {{ pago.monto | number: '1.2-2' }}</td>
                 <td>{{ tasaLabel[pago.tipoTasa] }}</td>
                 <td>{{ pago.descripcion || '—' }}</td>

@@ -3,6 +3,14 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CategoriaEgreso, Egreso } from '../../../core/models/egreso.model';
 import { AuthService } from '../../../core/services/auth.service';
+import {
+  PeriodFilter,
+  availableYears,
+  currentMonth,
+  currentYear,
+  matchesPeriod,
+} from '../../../shared/components/period-filter/period-filter';
+import { TabItem, Tabs } from '../../../shared/components/tabs/tabs';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
@@ -11,11 +19,6 @@ import { EgresoFormModal, EgresoFormPayload } from '../egreso-form-modal/egreso-
 import { EgresosService } from '../egresos.service';
 
 type FiltroCategoria = CategoriaEgreso | 'todos';
-
-function currentMonthIso(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
 
 @Component({
   selector: 'app-egresos-page',
@@ -26,6 +29,8 @@ function currentMonthIso(): string {
     EgresoFormModal,
     SelectOnFocusDirective,
     PositiveDecimalDirective,
+    Tabs,
+    PeriodFilter,
   ],
   templateUrl: './egresos-page.html',
   styleUrl: './egresos-page.scss',
@@ -43,6 +48,12 @@ export class EgresosPage implements OnInit {
 
   protected readonly filtro = signal<FiltroCategoria>('todos');
 
+  protected readonly filtroTabs: TabItem<FiltroCategoria>[] = [
+    { id: 'todos', label: 'Total' },
+    { id: 'administrativo', label: 'Gastos administrativos' },
+    { id: 'operativo', label: 'Gastos operativos' },
+  ];
+
   protected readonly categoriaLabel: Record<CategoriaEgreso, string> = {
     administrativo: 'Administrativo',
     operativo: 'Operativo',
@@ -50,14 +61,21 @@ export class EgresosPage implements OnInit {
 
   protected readonly searchInput = signal('');
   protected readonly appliedSearch = signal('');
-  protected readonly month = signal(currentMonthIso());
+  protected readonly anio = signal(currentYear());
+  protected readonly mes = signal(currentMonth());
+
   protected readonly montoMin = signal<number | null>(null);
   protected readonly montoMax = signal<number | null>(null);
+
+  protected readonly aniosDisponibles = computed(() =>
+    availableYears(this.egresosService.all().map((egreso) => egreso.fecha)),
+  );
 
   protected readonly hasActiveFilters = computed(
     () =>
       this.appliedSearch() !== '' ||
-      this.month() !== '' ||
+      this.anio() !== '' ||
+      this.mes() !== '' ||
       this.montoMin() !== null ||
       this.montoMax() !== null,
   );
@@ -65,7 +83,8 @@ export class EgresosPage implements OnInit {
   protected readonly egresosFiltrados = computed(() => {
     const filtro = this.filtro();
     const term = this.appliedSearch();
-    const month = this.month();
+    const anio = this.anio();
+    const mes = this.mes();
     const min = this.montoMin();
     const max = this.montoMax();
 
@@ -76,7 +95,7 @@ export class EgresosPage implements OnInit {
       if (term && !(egreso.descripcion ?? '').toLowerCase().includes(term)) {
         return false;
       }
-      if (month && !egreso.fecha.startsWith(month)) {
+      if (!matchesPeriod(egreso.fecha, anio, mes)) {
         return false;
       }
       if (min !== null && egreso.monto < min) {
@@ -115,8 +134,12 @@ export class EgresosPage implements OnInit {
     this.appliedSearch.set(this.searchInput().trim().toLowerCase());
   }
 
-  protected setMonth(value: string): void {
-    this.month.set(value);
+  protected setAnio(value: string): void {
+    this.anio.set(value);
+  }
+
+  protected setMes(value: string): void {
+    this.mes.set(value);
   }
 
   protected setMontoMin(value: string): void {
@@ -130,7 +153,8 @@ export class EgresosPage implements OnInit {
   protected clearAllFilters(): void {
     this.searchInput.set('');
     this.appliedSearch.set('');
-    this.month.set('');
+    this.anio.set('');
+    this.mes.set('');
     this.montoMin.set(null);
     this.montoMax.set(null);
   }
