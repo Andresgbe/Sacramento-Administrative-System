@@ -68,6 +68,17 @@ export const routes: Routes = [
         data: { title: 'Reportes', subtitle: 'Generación de reportes' },
       },
       {
+        path: 'servicios-basicos',
+        loadComponent: () =>
+          import('./features/servicios-basicos/servicios-basicos-page/servicios-basicos-page').then(
+            (m) => m.ServiciosBasicosPage,
+          ),
+        data: {
+          title: 'Servicios básicos',
+          subtitle: 'Facturas mensuales de condominio, Corpoelec e Hidrocapital',
+        },
+      },
+      {
         path: 'usuarios',
         canActivate: [adminGuard],
         loadComponent: () =>

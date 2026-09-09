@@ -96,45 +96,52 @@ button {
   }
 }
 
+// Tinted button system: soft fills in each button's own intent colour, with
+// exactly one solid fill — the primary. It extends the tinted circles the
+// table's edit/delete icons already use instead of running a second
+// vocabulary next to them. No coloured drop shadows anywhere.
 .btn--primary {
   background: var(--color-accent);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgb(249 115 22 / 30%);
 
   &:hover {
     background: var(--color-accent-hover);
-    box-shadow: 0 4px 14px rgb(249 115 22 / 40%);
   }
 }
 
+// The tint alone read as a disabled block on white modal surfaces, so this
+// keeps a border — it's what makes "Cancelar" legible as a control.
 .btn--secondary {
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
+  border-color: rgb(17 24 39 / 12%);
+
+  &:hover {
+    background: var(--color-border);
+    border-color: rgb(17 24 39 / 22%);
+  }
+}
+
+.btn--ghost {
   background: var(--color-surface);
   color: var(--color-text-primary);
   border-color: var(--color-border);
 
   &:hover {
-    background: var(--color-bg);
+    background: var(--color-surface-muted);
+    border-color: rgb(17 24 39 / 22%);
   }
 }
 
-.btn--ghost {
-  background: none;
-  color: var(--color-text-secondary);
-
-  &:hover {
-    background: var(--color-bg);
-    color: var(--color-text-primary);
-  }
-}
-
+// Stays solid, unlike the tinted "Eliminar" in the design set: this class is
+// only ever the confirm button of the destructive confirm dialog, where the
+// final action should carry the most weight on the screen.
 .btn--danger {
   background: var(--color-danger);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgb(185 28 28 / 30%);
 
   &:hover {
     background: #991b1b;
-    box-shadow: 0 4px 14px rgb(185 28 28 / 40%);
   }
 }
 
@@ -228,6 +235,40 @@ button {
   &:hover {
     background: var(--color-danger);
     color: #ffffff;
+  }
+}
+
+// Payment-concept chip, shared by Reporte de pagos and Servicios básicos.
+// Canon is the mall's own income; the other three are utilities it collects
+// and passes through, so they share a cooler family.
+.concepto-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  &--canon {
+    background: rgb(249 115 22 / 12%);
+    color: var(--color-accent);
+  }
+
+  &--condominio {
+    background: rgb(100 116 139 / 14%);
+    color: var(--color-neutral);
+  }
+
+  &--corpoelec {
+    background: rgb(202 138 4 / 14%);
+    color: #a16207;
+  }
+
+  &--hidrocapital {
+    background: rgb(2 132 199 / 12%);
+    color: #0369a1;
   }
 }
 
@@ -361,7 +402,14 @@ button {
     transition: color 0.15s ease;
   }
 
-  &:hover {
+  // Always rendered, never conditionally: hiding it once the last filter
+  // cleared made the button look like it deleted itself, and reflowed the grid.
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &:not(:disabled):hover {
     background: rgb(185 28 28 / 8%);
     border-color: rgb(185 28 28 / 30%);
     color: var(--color-danger);

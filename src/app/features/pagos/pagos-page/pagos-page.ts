@@ -1,7 +1,7 @@
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Pago, TipoTasa } from '../../../core/models/pago.model';
+import { CONCEPTO_LABEL, Pago, PagoConcepto, TipoTasa } from '../../../core/models/pago.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
@@ -11,26 +11,19 @@ import {
   MultiSelect,
   MultiSelectOption,
 } from '../../../shared/components/multi-select/multi-select';
+import {
+  PeriodFilter,
+  availableYears,
+  currentMonth,
+  currentYear,
+  matchesPeriod,
+} from '../../../shared/components/period-filter/period-filter';
+import { TabItem, Tabs } from '../../../shared/components/tabs/tabs';
 import { EmpresasService } from '../../locales/empresas.service';
 import { LocalesService } from '../../locales/locales.service';
 import { ComprobantePreviewModal } from '../comprobante-preview-modal/comprobante-preview-modal';
 import { PagoFormModal, PagoFormPayload } from '../pago-form-modal/pago-form-modal';
 import { PagosService } from '../pagos.service';
-
-const MESES = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-].map((label, index) => ({ value: String(index + 1).padStart(2, '0'), label }));
 
 @Component({
   selector: 'app-pagos-page',
@@ -43,6 +36,8 @@ const MESES = [
     SelectOnFocusDirective,
     PositiveDecimalDirective,
     MultiSelect,
+    PeriodFilter,
+    Tabs,
   ],
   templateUrl: './pagos-page.html',
   styleUrl: './pagos-page.scss',
@@ -82,24 +77,30 @@ export class PagosPage implements OnInit {
   protected readonly comprobanteLoading = signal(false);
   protected readonly comprobanteError = signal<string | null>(null);
 
-  protected readonly meses = MESES;
+  protected readonly conceptoLabel = CONCEPTO_LABEL;
+
+  protected readonly concepto = signal<PagoConcepto | 'todos'>('todos');
+
+  protected readonly conceptoTabs: TabItem<PagoConcepto | 'todos'>[] = [
+    { id: 'todos', label: 'Todos' },
+    { id: 'canon', label: 'Canon' },
+    { id: 'condominio', label: 'Condominio' },
+    { id: 'corpoelec', label: 'Corpoelec' },
+    { id: 'hidrocapital', label: 'Hidrocapital' },
+  ];
 
   protected readonly searchInput = signal('');
   protected readonly appliedSearch = signal('');
-  protected readonly anio = signal(String(new Date().getFullYear()));
-  protected readonly mes = signal(String(new Date().getMonth() + 1).padStart(2, '0'));
+  protected readonly anio = signal(currentYear());
+  protected readonly mes = signal(currentMonth());
   protected readonly montoMin = signal<number | null>(null);
   protected readonly montoMax = signal<number | null>(null);
   protected readonly selectedLocalIds = signal<Set<string>>(new Set());
   protected readonly selectedEmpresaIds = signal<Set<string>>(new Set());
 
-  // Every year that actually has payments, plus the current one so the default
-  // selection is always offered even on an empty ledger.
-  protected readonly aniosDisponibles = computed(() => {
-    const years = new Set(this.pagos().map((pago) => pago.fecha.slice(0, 4)));
-    years.add(String(new Date().getFullYear()));
-    return [...years].sort((a, b) => b.localeCompare(a));
-  });
+  protected readonly aniosDisponibles = computed(() =>
+    availableYears(this.pagos().map((pago) => pago.fecha)),
+  );
 
   protected readonly empresaOptions = computed<MultiSelectOption[]>(() =>
     this.empresas().map((empresa) => ({ id: empresa.id, label: empresa.nombreComercial })),
@@ -124,6 +125,7 @@ export class PagosPage implements OnInit {
   );
 
   protected readonly pagosFiltrados = computed(() => {
+    const concepto = this.concepto();
     const term = this.appliedSearch();
     const anio = this.anio();
     const mes = this.mes();
@@ -133,19 +135,17 @@ export class PagosPage implements OnInit {
     const empresaIds = this.selectedEmpresaIds();
 
     return this.pagos().filter((pago) => {
+      if (concepto !== 'todos' && pago.concepto !== concepto) {
+        return false;
+      }
       if (
         term &&
-        !pago.localNombre.toLowerCase().includes(term) &&
+        !pago.empresaNombre.toLowerCase().includes(term) &&
         !(pago.descripcion ?? '').toLowerCase().includes(term)
       ) {
         return false;
       }
-      // Year and month are matched independently, so "todos los meses de 2026"
-      // and "todos los septiembres" are both expressible.
-      if (anio && pago.fecha.slice(0, 4) !== anio) {
-        return false;
-      }
-      if (mes && pago.fecha.slice(5, 7) !== mes) {
+      if (!matchesPeriod(pago.fecha, anio, mes)) {
         return false;
       }
       if (min !== null && pago.monto < min) {
@@ -157,12 +157,26 @@ export class PagosPage implements OnInit {
       if (empresaIds.size > 0 && !empresaIds.has(pago.empresaId)) {
         return false;
       }
-      if (localIds.size > 0 && !localIds.has(pago.localId)) {
+      // Empresa-wide concepts have no local, so a local filter excludes them.
+      if (localIds.size > 0 && (!pago.localId || !localIds.has(pago.localId))) {
         return false;
       }
       return true;
     });
   });
+
+  protected readonly total = computed(() =>
+    this.pagosFiltrados().reduce((sum, pago) => sum + pago.monto, 0),
+  );
+
+  protected readonly totalLabel = computed(() => {
+    const concepto = this.concepto();
+    return concepto === 'todos' ? 'Total cobrado' : `Total ${CONCEPTO_LABEL[concepto]}`;
+  });
+
+  protected setConcepto(concepto: PagoConcepto | 'todos'): void {
+    this.concepto.set(concepto);
+  }
 
   ngOnInit(): void {
     this.pagosService.load();
@@ -252,7 +266,7 @@ export class PagosPage implements OnInit {
   protected async deletePago(pago: Pago): Promise<void> {
     const confirmed = await this.confirmDialog.confirm({
       title: 'Eliminar pago',
-      message: `¿Estás seguro que deseas eliminar el pago de "${pago.localNombre}" por $ ${pago.monto.toFixed(2)}? Esta acción no se puede deshacer.`,
+      message: `¿Estás seguro que deseas eliminar el pago de ${CONCEPTO_LABEL[pago.concepto]} de "${pago.empresaNombre}" por $ ${pago.monto.toFixed(2)}? Esta acción no se puede deshacer.`,
       confirmLabel: 'Eliminar',
       danger: true,
     });

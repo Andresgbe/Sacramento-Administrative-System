@@ -8,6 +8,7 @@ interface EmpresaRow {
   rif: string | null;
   imagen_url: string | null;
   estado: EmpresaEstado;
+  es_propietaria: boolean;
   created_at: string;
 }
 
@@ -18,6 +19,7 @@ function fromRow(row: EmpresaRow): Empresa {
     rif: row.rif,
     imagenUrl: row.imagen_url,
     estado: row.estado,
+    esPropietaria: row.es_propietaria,
     createdAt: row.created_at,
   };
 }
@@ -72,7 +74,7 @@ export class EmpresasService {
   }
 
   async add(
-    empresa: Omit<Empresa, 'id' | 'createdAt'>,
+    empresa: Omit<Empresa, 'id' | 'createdAt' | 'esPropietaria'>,
   ): Promise<{ empresa: Empresa | null; error: string | null }> {
     const { data, error } = await this.supabase
       .from('empresas')
@@ -108,7 +110,7 @@ export class EmpresasService {
 
   async update(
     id: string,
-    changes: Omit<Empresa, 'id' | 'createdAt'>,
+    changes: Omit<Empresa, 'id' | 'createdAt' | 'esPropietaria'>,
   ): Promise<{ error: string | null }> {
     const { data, error } = await this.supabase
       .from('empresas')

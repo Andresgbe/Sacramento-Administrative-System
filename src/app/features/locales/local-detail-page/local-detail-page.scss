@@ -21,12 +21,15 @@
   margin-bottom: 20px;
 }
 
+// Surface and border come from .btn--ghost now; this only scales it up —
+// it's the sole way back out of the detail page, so it earns the extra size.
 .detail-back {
-  background: var(--color-surface);
-  border-color: var(--color-border);
+  padding: 12px 22px;
+  font-size: 0.95rem;
 
-  &:hover {
-    background: var(--color-bg);
+  svg {
+    width: 20px;
+    height: 20px;
   }
 }
 
@@ -35,13 +38,7 @@
 }
 
 .detail-menu__trigger {
-  background: var(--color-surface);
-  border-color: var(--color-border);
   padding: 10px;
-
-  &:hover {
-    background: var(--color-bg);
-  }
 }
 
 .detail-menu__backdrop {

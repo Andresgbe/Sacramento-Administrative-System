@@ -1,0 +1,91 @@
+<div
+  class="modal-backdrop"
+  (mousedown)="onBackdropMouseDown($event)"
+  (click)="onBackdropClick($event)"
+>
+  <div class="modal">
+    <div class="modal__header">
+      <h2>{{ factura ? 'Editar factura' : 'Registrar factura' }}</h2>
+      <button type="button" class="modal__close" (click)="closed.emit()" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="modal__form">
+      <label class="field">
+        <span>Servicio</span>
+        <select formControlName="concepto">
+          @for (c of conceptos; track c) {
+            <option [value]="c">{{ conceptoLabel[c] }}</option>
+          }
+        </select>
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span>Mes</span>
+          <select formControlName="mes">
+            @for (m of meses; track m.value) {
+              <option [value]="m.value">{{ m.label }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Año</span>
+          <select formControlName="anio">
+            @for (a of anios; track a) {
+              <option [value]="a">{{ a }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <div class="field">
+        <span>Fotos de la factura</span>
+
+        @if (factura && factura.fotos.length > 0) {
+          <p class="field__hint">
+            Ya tiene {{ factura.fotos.length }} foto(s). Las que agregues acá se suman.
+          </p>
+        }
+
+        @for (foto of fotos(); track foto.name + $index) {
+          <div class="file-picker__selected">
+            <span class="file-picker__name">{{ foto.name }}</span>
+            <button type="button" class="file-picker__remove" (click)="removeFoto($index)">
+              Quitar
+            </button>
+          </div>
+        }
+
+        <label class="file-picker__dropzone">
+          <input
+            type="file"
+            accept="image/*,.pdf"
+            multiple
+            (change)="onFotosSelected($event)"
+            hidden
+          />
+          Agregar fotos
+        </label>
+      </div>
+
+      @if (errorMessage) {
+        <p class="modal__error">{{ errorMessage }}</p>
+      }
+
+      <div class="modal__actions">
+        <button type="button" class="btn btn--secondary" (click)="closed.emit()">Cancelar</button>
+        <button type="submit" class="btn btn--primary" [disabled]="saving">
+          @if (saving) {
+            <span class="spinner"></span>
+          }
+          {{ saving ? 'Guardando…' : factura ? 'Guardar cambios' : 'Registrar factura' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

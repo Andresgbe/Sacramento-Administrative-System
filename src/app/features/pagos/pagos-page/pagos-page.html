@@ -1,13 +1,20 @@
-@if (isAdmin()) {
-  <div class="pagos-page__header">
+<div class="pagos-page__header">
+  <div class="pagos-total">
+    <span class="pagos-total__label">{{ totalLabel() }}</span>
+    <span class="pagos-total__value">$ {{ total() | number: '1.2-2' }}</span>
+  </div>
+
+  @if (isAdmin()) {
     <button type="button" class="btn btn--primary" (click)="openModal()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M12 5v14M5 12h14" stroke-linecap="round" />
       </svg>
       Registrar pago
     </button>
-  </div>
-}
+  }
+</div>
+
+<app-tabs [tabs]="conceptoTabs" [active]="concepto()" (selected)="setConcepto($event)" />
 
 <div class="filters-bar">
   <div class="filters-field filters-field--search">
@@ -34,25 +41,13 @@
     </div>
   </div>
 
-  <label class="filters-field">
-    <span>Año</span>
-    <select [ngModel]="anio()" (ngModelChange)="setAnio($event)">
-      <option value="">Todos</option>
-      @for (year of aniosDisponibles(); track year) {
-        <option [value]="year">{{ year }}</option>
-      }
-    </select>
-  </label>
-
-  <label class="filters-field">
-    <span>Mes</span>
-    <select [ngModel]="mes()" (ngModelChange)="setMes($event)">
-      <option value="">Todos</option>
-      @for (m of meses; track m.value) {
-        <option [value]="m.value">{{ m.label }}</option>
-      }
-    </select>
-  </label>
+  <app-period-filter
+    [anio]="anio()"
+    [mes]="mes()"
+    [anios]="aniosDisponibles()"
+    (anioChange)="setAnio($event)"
+    (mesChange)="setMes($event)"
+  />
 
   <div class="filters-field">
     <span>Monto</span>
@@ -103,14 +98,17 @@
     />
   </div>
 
-  @if (hasActiveFilters()) {
-    <button type="button" class="filters-clear" (click)="clearAllFilters()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
-      </svg>
-      Limpiar filtros
-    </button>
-  }
+  <button
+    type="button"
+    class="filters-clear"
+    [disabled]="!hasActiveFilters()"
+    (click)="clearAllFilters()"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+    </svg>
+    Limpiar filtros
+  </button>
 </div>
 
 @if (isLoading()) {
@@ -130,6 +128,8 @@
         <tr>
           <th>ID</th>
           <th>Fecha</th>
+          <th>Concepto</th>
+          <th>Empresa</th>
           <th>Local</th>
           <th>Monto</th>
           <th>Tasa</th>
@@ -145,7 +145,13 @@
           <tr>
             <td>{{ pago.numero }}</td>
             <td>{{ pago.fecha | date: 'dd/MM/yyyy' : 'UTC' }}</td>
-            <td>{{ pago.localNombre }}</td>
+            <td>
+              <span class="concepto-badge concepto-badge--{{ pago.concepto }}">
+                {{ conceptoLabel[pago.concepto] }}
+              </span>
+            </td>
+            <td>{{ pago.empresaNombre }}</td>
+            <td>{{ pago.localNumero || '—' }}</td>
             <td>$ {{ pago.monto | number: '1.2-2' }}</td>
             <td>{{ tasaLabel[pago.tipoTasa] }}</td>
             <td>{{ pago.descripcion || '—' }}</td>
@@ -211,6 +217,7 @@
 @if (modalOpen()) {
   <app-pago-form-modal
     [locales]="locales()"
+    [empresas]="empresas()"
     [saving]="saving()"
     [errorMessage]="saveError()"
     [pago]="editingPago()"

@@ -1,0 +1,166 @@
+<div class="servicios-page__header">
+  @if (isAdmin()) {
+    <button type="button" class="btn btn--primary" (click)="openModal(null)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+      </svg>
+      Registrar deuda
+    </button>
+  }
+</div>
+
+<app-tabs [tabs]="servicioTabs" [active]="servicio()" (selected)="setServicio($event)" />
+
+<div class="filters-bar">
+  <app-period-filter
+    [anio]="anio()"
+    [mes]="mes()"
+    [anios]="aniosDisponibles()"
+    (anioChange)="setAnio($event)"
+    (mesChange)="setMes($event)"
+  />
+
+  <button
+    type="button"
+    class="filters-clear"
+    [disabled]="!hasActiveFilters()"
+    (click)="clearAllFilters()"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+    </svg>
+    Limpiar filtros
+  </button>
+</div>
+
+@if (isLoading()) {
+  <p class="servicios-page__status">Cargando facturas…</p>
+} @else if (loadError()) {
+  <p class="servicios-page__status servicios-page__status--error">
+    No se pudieron cargar las facturas: {{ loadError() }}
+  </p>
+} @else if (facturasFiltradas().length === 0) {
+  <p class="servicios-page__status">Todavía no hay facturas registradas para este filtro.</p>
+} @else {
+  <div class="data-table-wrapper">
+    <table class="data-table servicios-table">
+      <thead>
+        <tr>
+          <th>Período</th>
+          <th>Servicio</th>
+          <th>Fotos</th>
+          @if (isAdmin()) {
+            <th class="data-table__actions"></th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (factura of facturasFiltradas(); track factura.id) {
+          <tr>
+            <td class="servicios-table__periodo">{{ periodoLabel(factura.periodo) }}</td>
+            <td>
+              <span class="concepto-badge concepto-badge--{{ factura.concepto }}">
+                {{ conceptoLabel[factura.concepto] }}
+              </span>
+            </td>
+            <td>
+              @if (factura.fotos.length === 0) {
+                <span class="servicios-sin-fotos">Sin fotos</span>
+              } @else {
+                <div class="servicios-fotos">
+                  @for (foto of factura.fotos; track foto.id) {
+                    <span class="servicios-foto">
+                      <button
+                        type="button"
+                        class="servicios-foto__open"
+                        [title]="foto.nombreArchivo"
+                        (click)="abrirFoto(foto)"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <rect x="3" y="4" width="18" height="16" rx="2" />
+                          <circle cx="9" cy="10" r="1.6" />
+                          <path
+                            d="m4 18 5-5 4 4 3-3 4 4"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                        {{ foto.nombreArchivo }}
+                      </button>
+                      @if (isAdmin()) {
+                        <button
+                          type="button"
+                          class="servicios-foto__remove"
+                          aria-label="Eliminar foto"
+                          (click)="deleteFoto(factura, foto)"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+                          </svg>
+                        </button>
+                      }
+                    </span>
+                  }
+                </div>
+              }
+            </td>
+            @if (isAdmin()) {
+              <td class="data-table__actions">
+                <div class="data-table__action-group">
+                  <button
+                    type="button"
+                    class="data-table__edit"
+                    (click)="openModal(factura)"
+                    aria-label="Editar factura"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path
+                        d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="data-table__delete"
+                    [disabled]="deletingId() === factura.id"
+                    (click)="deleteFactura(factura)"
+                    aria-label="Eliminar factura"
+                  >
+                    @if (deletingId() === factura.id) {
+                      <span class="spinner spinner--dark"></span>
+                    } @else {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                          d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    }
+                  </button>
+                </div>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (modalOpen()) {
+  <app-factura-form-modal
+    [factura]="editing()"
+    [saving]="saving()"
+    [errorMessage]="saveError()"
+    (closed)="closeModal()"
+    (saved)="onSaved($event)"
+  />
+}

@@ -75,6 +75,9 @@
                     />
                   }
                   <span>{{ empresa.nombreComercial }}</span>
+                  @if (empresa.esPropietaria) {
+                    <span class="empresa-owner">Propietaria</span>
+                  }
                 </div>
               </td>
               <td>{{ empresa.rif || '—' }}</td>

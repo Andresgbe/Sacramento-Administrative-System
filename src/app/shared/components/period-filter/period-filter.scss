@@ -1,0 +1,6 @@
+// The component renders two fields, not one. `display: contents` drops the
+// host out of the box tree so both land as direct children of `.filters-bar`'s
+// grid — otherwise they'd share a single cell.
+:host {
+  display: contents;
+}

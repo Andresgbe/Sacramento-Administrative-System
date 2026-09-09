@@ -20,6 +20,19 @@
   background: var(--color-surface);
 }
 
+// Marks the mall's owner apart from the tenants it sits next to in the list.
+.empresa-owner {
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .empresa-badge {
   display: inline-block;
   padding: 3px 10px;

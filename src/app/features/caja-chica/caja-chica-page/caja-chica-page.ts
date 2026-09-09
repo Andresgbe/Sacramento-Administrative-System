@@ -5,6 +5,13 @@ import { CajaChicaTipo, MovimientoCajaChica } from '../../../core/models/caja-ch
 import { AuthService } from '../../../core/services/auth.service';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
+import {
+  PeriodFilter,
+  availableYears,
+  currentMonth,
+  currentYear,
+  matchesPeriod,
+} from '../../../shared/components/period-filter/period-filter';
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import {
@@ -12,11 +19,6 @@ import {
   MovimientoFormPayload,
 } from '../movimiento-form-modal/movimiento-form-modal';
 import { CajaChicaService } from '../caja-chica.service';
-
-function currentMonthIso(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
 
 @Component({
   selector: 'app-caja-chica-page',
@@ -27,6 +29,7 @@ function currentMonthIso(): string {
     MovimientoFormModal,
     SelectOnFocusDirective,
     PositiveDecimalDirective,
+    PeriodFilter,
   ],
   templateUrl: './caja-chica-page.html',
   styleUrl: './caja-chica-page.scss',
@@ -50,21 +53,28 @@ export class CajaChicaPage implements OnInit {
 
   protected readonly searchInput = signal('');
   protected readonly appliedSearch = signal('');
-  protected readonly month = signal(currentMonthIso());
+  protected readonly anio = signal(currentYear());
+  protected readonly mes = signal(currentMonth());
   protected readonly montoMin = signal<number | null>(null);
   protected readonly montoMax = signal<number | null>(null);
+
+  protected readonly aniosDisponibles = computed(() =>
+    availableYears(this.cajaChicaService.all().map((movimiento) => movimiento.fecha)),
+  );
 
   protected readonly hasActiveFilters = computed(
     () =>
       this.appliedSearch() !== '' ||
-      this.month() !== '' ||
+      this.anio() !== '' ||
+      this.mes() !== '' ||
       this.montoMin() !== null ||
       this.montoMax() !== null,
   );
 
   protected readonly movimientosFiltrados = computed(() => {
     const term = this.appliedSearch();
-    const month = this.month();
+    const anio = this.anio();
+    const mes = this.mes();
     const min = this.montoMin();
     const max = this.montoMax();
 
@@ -72,7 +82,7 @@ export class CajaChicaPage implements OnInit {
       if (term && !(movimiento.descripcion ?? '').toLowerCase().includes(term)) {
         return false;
       }
-      if (month && !movimiento.fecha.startsWith(month)) {
+      if (!matchesPeriod(movimiento.fecha, anio, mes)) {
         return false;
       }
       if (min !== null && movimiento.monto < min) {
@@ -103,8 +113,12 @@ export class CajaChicaPage implements OnInit {
     this.appliedSearch.set(this.searchInput().trim().toLowerCase());
   }
 
-  protected setMonth(value: string): void {
-    this.month.set(value);
+  protected setAnio(value: string): void {
+    this.anio.set(value);
+  }
+
+  protected setMes(value: string): void {
+    this.mes.set(value);
   }
 
   protected setMontoMin(value: string): void {
@@ -118,7 +132,8 @@ export class CajaChicaPage implements OnInit {
   protected clearAllFilters(): void {
     this.searchInput.set('');
     this.appliedSearch.set('');
-    this.month.set('');
+    this.anio.set('');
+    this.mes.set('');
     this.montoMin.set(null);
     this.montoMax.set(null);
   }

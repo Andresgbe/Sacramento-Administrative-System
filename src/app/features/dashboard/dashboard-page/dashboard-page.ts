@@ -35,9 +35,10 @@ export class DashboardPage implements OnInit {
   };
 
   protected readonly stats = computed<DashboardStat[]>(() => {
+    // The owning company is not a tenant, so it never counts here.
     const empresasActivas = this.empresasService
       .all()
-      .filter((empresa) => empresa.estado === 'activo').length;
+      .filter((empresa) => empresa.estado === 'activo' && !empresa.esPropietaria).length;
 
     const now = new Date();
     const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
