@@ -1,0 +1,40 @@
+.tabs {
+  display: flex;
+  gap: 26px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+  // Long label sets (Egresos) scroll instead of wrapping — a wrapped row
+  // would sit above the container's border and lose its underline.
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.tabs__tab {
+  padding: 11px 2px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--color-text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover {
+    color: var(--color-text-primary);
+  }
+
+  &--active {
+    color: var(--color-text-primary);
+    border-bottom-color: var(--color-accent);
+  }
+}

@@ -234,12 +234,20 @@ button {
 // Shared filter-bar styles, used across the transaction report pages
 // (pagos, egresos, caja chica) — a search box + date/amount/etc. inputs
 // above the .data-table.
+// Grid rather than flex-wrap: wrapped flex items keep their own widths and
+// leave ragged gaps, which is what made the bar look tangled on narrow
+// screens. auto-fit gives every field the same width and drops cleanly to one
+// column on a phone; min() keeps the track from overflowing below 190px.
 .filters-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  align-items: end;
+  gap: 14px 16px;
   margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
 }
 
 .filters-field {
@@ -272,9 +280,10 @@ button {
   }
 }
 
+// Search earns twice the width where there is room; grid clamps the span back
+// to 1 when the bar collapses to a single column.
 .filters-field--search {
-  flex: 1;
-  min-width: 200px;
+  grid-column: span 2;
 }
 
 .filters-search {
@@ -317,21 +326,48 @@ button {
   gap: 8px;
 
   input {
-    width: 100px;
+    width: 100%;
+    min-width: 0;
   }
 }
 
 .filters-clear {
-  border: none;
-  background: none;
-  color: var(--color-text-secondary);
-  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  align-self: end;
+  gap: 6px;
+  padding: 9px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  // Filled, not a bare text link: on the white filter card a transparent
+  // button with muted text disappeared and didn't read as clickable.
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 0.825rem;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
-  padding: 9px 4px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    color: var(--color-text-muted);
+    transition: color 0.15s ease;
+  }
 
   &:hover {
-    color: var(--color-accent);
+    background: rgb(185 28 28 / 8%);
+    border-color: rgb(185 28 28 / 30%);
+    color: var(--color-danger);
+
+    svg {
+      color: var(--color-danger);
+    }
   }
 }
-

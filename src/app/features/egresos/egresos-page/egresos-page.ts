@@ -3,6 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CategoriaEgreso, Egreso } from '../../../core/models/egreso.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { TabItem, Tabs } from '../../../shared/components/tabs/tabs';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
@@ -26,6 +27,7 @@ function currentMonthIso(): string {
     EgresoFormModal,
     SelectOnFocusDirective,
     PositiveDecimalDirective,
+    Tabs,
   ],
   templateUrl: './egresos-page.html',
   styleUrl: './egresos-page.scss',
@@ -42,6 +44,12 @@ export class EgresosPage implements OnInit {
   protected readonly loadError = this.egresosService.loadError;
 
   protected readonly filtro = signal<FiltroCategoria>('todos');
+
+  protected readonly filtroTabs: TabItem<FiltroCategoria>[] = [
+    { id: 'todos', label: 'Total' },
+    { id: 'administrativo', label: 'Gastos administrativos' },
+    { id: 'operativo', label: 'Gastos operativos' },
+  ];
 
   protected readonly categoriaLabel: Record<CategoriaEgreso, string> = {
     administrativo: 'Administrativo',

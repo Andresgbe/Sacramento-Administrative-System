@@ -1,4 +1,8 @@
-<div class="modal-backdrop" (mousedown)="onBackdropMouseDown($event)" (click)="onBackdropClick($event)">
+<div
+  class="modal-backdrop"
+  (mousedown)="onBackdropMouseDown($event)"
+  (click)="onBackdropClick($event)"
+>
   <div class="modal">
     <div class="modal__header">
       <h2>{{ pago ? 'Editar pago' : 'Registrar pago' }}</h2>
@@ -18,7 +22,7 @@
         <select formControlName="localId">
           <option value="" disabled>Selecciona un local</option>
           @for (local of locales; track local.id) {
-            <option [value]="local.id">{{ local.nombreComercial }}</option>
+            <option [value]="local.id">{{ local.empresaNombre }} — {{ local.numeroLocal }}</option>
           }
         </select>
         @if (form.controls.localId.invalid && form.controls.localId.touched) {

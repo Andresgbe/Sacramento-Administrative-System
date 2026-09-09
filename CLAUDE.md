@@ -1,11 +1,13 @@
 # CC Sacramento
 
 ## Project
+
 - Name: CC Sacramento (Centro Comercial Sacramento, Carrizal, Venezuela)
 - Full-stack administrative system to replace spreadsheet-based management
 - Access roles: admin (full control) and subadmin (read and register, no delete/configure)
 
 ## Tech stack
+
 - Frontend: Angular (standalone components, latest stable version) + SCSS
 - Backend/Auth/DB: Supabase (Auth + PostgreSQL + RLS + Storage + Edge Functions)
 - No separate Node/Express backend — Supabase handles the entire backend
@@ -14,6 +16,7 @@
 - Exchange rates: BCV, USDT, EUR via Supabase Edge Functions
 
 ## Design system
+
 - Color palette: white, gray, and orange (#f97316) as accent color
   - Orange is used sparingly: primary button, input focus, logo icon
   - Avoid saturating the UI with orange — it's an accent, not a dominant color
@@ -25,9 +28,13 @@
   (the same building badge used in the sidebar/login), regenerated with Pillow —
   no white/checkerboard halo, transparent background
 
-### Shared UI utilities (in `src/styles.scss` — global, not component-scoped)
-Reuse these instead of duplicating table/button CSS per feature; every transaction
-list in the app already uses the shared table classes.
+### Shared UI utilities
+
+Reuse these instead of duplicating CSS per feature; every transaction list and
+every tab set in the app already uses them. Class-based entries live in
+`src/styles.scss` (global, not component-scoped); the rest are components,
+directives and services under `src/app/shared/`.
+
 - **`.btn` + `.btn--primary` / `.btn--secondary` / `.btn--ghost` / `.btn--danger`**
   — base button system.
 - **`.data-table-wrapper` / `.data-table` / `.data-table__amount` /
@@ -36,7 +43,7 @@ list in the app already uses the shared table classes.
   "Historial de pagos") the same look: white card wrapper, uppercase muted
   header, **light grey (`--color-surface-muted`) row background**, a right-hand
   action column with a circular pencil "edit" icon button, and left-aligned
-  amount cells (deliberately *not* right-aligned — a past attempt at
+  amount cells (deliberately _not_ right-aligned — a past attempt at
   right-aligning `Monto` looked mismatched against the other columns).
   Dashboard's two compact "Últimos pagos/egresos" panels are the one exception:
   they keep their own smaller padding (no `min-width`, would break the
@@ -52,26 +59,80 @@ list in the app already uses the shared table classes.
   — both applied to **every** currency "monto" input across the app (pagos,
   egresos, caja chica, locales' `montoAlquiler`, calculadora). Apply both to
   any new amount field.
+- **`<app-tabs>`** (`src/app/shared/components/tabs/`) — the app's ONE switch /
+  tab style. Underlined text tabs: no container, no pill, no background — the
+  active tab is `--color-text-primary` with a 2px `--color-accent` bottom
+  border, inactive ones are `--color-text-secondary`, sitting on a shared 1px
+  `--color-border` baseline. Chosen over the segmented-pill control it replaced,
+  which put a grey active pill on a white track and read as disabled.
+  Generic and presentational:
+  ```ts
+  protected readonly tabItems: TabItem<MiUnion>[] = [{ id: 'a', label: 'A' }];
+  ```
+  ```html
+  <app-tabs [tabs]="tabItems" [active]="tab()" (selected)="setTab($event)" />
+  ```
+  `T` is inferred from `tabs`, so `$event` keeps the caller's union type.
+  Used by Locales (Locales/Empresas) and Egresos (Total/administrativos/
+  operativos). **Every new switch or tab set uses this component** — never
+  hand-roll tab markup or a pill/segmented control in a feature's SCSS.
+- **`.filters-bar` / `.filters-field` / `.filters-field--search` /
+  `.filters-field__amount-row` / `.filters-clear`** — the filter card above
+  every report table (Pagos, Egresos, Caja chica). It's a white card whose
+  fields sit on a **CSS grid** (`repeat(auto-fit, minmax(min(190px, 100%), 1fr))`),
+  not flex-wrap: wrapped flex items kept their own widths and left ragged gaps,
+  which is what made the bar look tangled on phones. Search spans two columns
+  where there's room. Add a new filter as one more `.filters-field` — it lands
+  in the grid automatically, no width tuning needed.
+- **`<app-multi-select>`** (`src/app/shared/components/multi-select/`) — the
+  checkbox dropdown used for the Empresa and Local filters in Pagos. Takes
+  `options` (`{ id, label }[]`), the current `selected` `Set<string>`,
+  `allLabel` ("Todas las empresas") and `countLabel` ("empresas seleccionadas"),
+  and emits a **new** `Set` on `selectionChange` — never mutate the one passed
+  in, or the signal won't see the change. Reuse it for any future multi-value
+  filter instead of rebuilding a trigger + panel + backdrop.
 - **`ConfirmDialogService`** (`src/app/shared/services/confirm-dialog.service.ts`)
-  + `<app-confirm-dialog>` (mounted once in `app.html`, available app-wide) —
-  the app's custom replacement for `window.confirm()`. Inject the service and
-  `await confirmDialog.confirm({ title, message, confirmLabel, danger: true })`
-  before any destructive action (currently used by local deletion). Never use
-  the native browser `confirm()`/`alert()` — it was explicitly rejected as
-  looking out of place.
-- Local's `numeroLocal` (e.g. "18") is intentionally shown **only** inside the
-  Locales feature (card, detail page, forms) — it was deliberately removed
-  from Pagos, Egresos, Caja chica, and the Dashboard as not relevant there.
+  - `<app-confirm-dialog>` (mounted once in `app.html`, available app-wide) —
+    the app's custom replacement for `window.confirm()`. Inject the service and
+    `await confirmDialog.confirm({ title, message, confirmLabel, danger: true })`
+    before any destructive action (currently used by local deletion). Never use
+    the native browser `confirm()`/`alert()` — it was explicitly rejected as
+    looking out of place.
+- Local's `numeroLocal` (e.g. "PB-D") stays out of the Pagos, Egresos and
+  Caja chica **tables**, which show only the empresa name. It does appear
+  wherever a specific unit has to be told apart from its siblings — the pago
+  form's local dropdown, the Pagos local filter, and the Dashboard's morosos
+  list all render `Empresa — PB-D`, because a company with two units would
+  otherwise show two identical entries.
 
 ## Database (PostgreSQL via Supabase)
-Tables: usuarios, locales, pagos, servicios_pagos, egresos, caja_chica,
+
+Tables: usuarios, empresas, locales, pagos, servicios_pagos, egresos, caja_chica,
 remodelaciones, tasas_cambio, documentos
 
-- Implemented (migration + RLS in `supabase/migrations/`): usuarios, locales,
-  pagos, documentos, tasas_cambio, egresos, caja_chica
+- Implemented (migration + RLS in `supabase/migrations/`): usuarios, empresas,
+  locales, pagos, documentos, tasas_cambio, egresos, caja_chica
+
+### empresas vs locales
+
+A business can rent more than one unit in the mall, so the two are separate:
+
+- **`empresas`** owns the business identity — `nombre_comercial`, `rif`,
+  `imagen_url` (logo), `estado` (activo/inactivo/vencido), and its
+  `documentos` (contrato/RIF scans hang off `documentos.empresa_id`).
+- **`locales`** owns only the physical unit — `numero_local`, `piso`,
+  `area_m2`, `monto_alquiler` — plus `empresa_id`.
+- **`pagos.local_id` is unchanged**: rent is charged per unit, so a company
+  with two locales pays two rents and each unit has its own "al día / moroso"
+  status.
+- Logos still upload to the Storage bucket named `locales` (renaming it would
+  break the public URLs already stored on existing rows).
+- The Dashboard's "Empresas activas" tile counts `empresas`, not `locales` —
+  that mismatch is what drove the split.
 - Not yet implemented: servicios_pagos, remodelaciones
 
 ## Folder structure (feature-based)
+
 ```
 src/app/
 ├── core/                     # Singletons: guards, interceptors, services
@@ -97,6 +158,7 @@ Each feature is lazy-loaded via routes, and contains its own components,
 service(s), and routes file.
 
 ## Adopted design patterns
+
 - **Repository Pattern**: each feature encapsulates its Supabase calls in
   a dedicated service (e.g. LocalesService), never called directly from
   components. Eases testing and allows swapping the data source without
@@ -111,6 +173,7 @@ Any new component or service belongs in its corresponding feature folder,
 not in the root of app/.
 
 ## Working conventions
+
 - **Language rule**: all code, file/folder names, variables, functions, classes,
   components, comments, commit messages, and explanations are in English.
   The only exception is client-facing text — anything the end user (admin/subadmin)
@@ -121,6 +184,7 @@ not in the root of app/.
 - The user wants to understand the backend architecture, not just copy/paste solutions
 
 ## Current status
+
 - **The app is live** (Vercel frontend + Supabase backend)
 - Auth: real login via Supabase Auth (`login-page`, `auth.service`, `auth.guard`
   protecting all routes under the main layout). Role is stored on `usuarios.rol`
@@ -135,14 +199,16 @@ not in the root of app/.
     month), "Locales por estado de pago" pie chart, "Últimos pagos"/"Últimos
     egresos" panels, and the "Ingresos mensuales" bar chart (+ its breakdown
     list) — last 6 calendar months, summed from real pagos
-  - **Locales**: full CRUD incl. delete (gear icon → dropdown menu on the
-    detail page, `ConfirmDialogService` confirmation, admin-only via RLS),
-    image upload to Storage, local detail page (editable, shows payment
-    history), a `rif` text field (see `numero_local`/`rif` — two different
-    things: `rif` is the plain text field on `locales`, while the "RIF" file
-    upload under "Datos avanzados" is a separate scanned-document upload in
-    `documentos`), and "Datos avanzados" to upload contrato/RIF/otro documents
-    to a private Storage bucket
+  - **Locales**: two tabs — "Locales" (the card grid, one card per unit; the
+    logo, name and estado badge come from the empresa join) and "Empresas"
+    (a `.data-table` list with logo, RIF, estado and a locales count, plus
+    add/edit/delete). Full CRUD on both, delete confirmed through
+    `ConfirmDialogService` and admin-only via RLS. Adding a local means picking
+    an empresa from a dropdown. Empresa deletion is blocked while it still has
+    locales assigned. The empresa form owns the logo upload and "Datos
+    avanzados" (contrato/RIF/otro documents to a private Storage bucket) —
+    note `rif` is a plain text field on `empresas`, while the "RIF" file upload
+    is a separate scanned document in `documentos`
   - **Reporte de pagos**: transactions with tipo de tasa (BCV/EUR/USD/otra);
     full edit support via the same modal in edit-mode (prefilled, "Guardar
     cambios"), same edit-icon pattern as Egresos/Caja chica

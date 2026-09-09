@@ -1,33 +1,48 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Local, LocalEstado } from '../../core/models/local.model';
+import { EmpresaEstado } from '../../core/models/empresa.model';
+import { Local } from '../../core/models/local.model';
 import { SupabaseService } from '../../core/services/supabase.service';
 
 interface LocalRow {
   id: string;
+  empresa_id: string;
   numero_local: string;
-  nombre_comercial: string;
-  imagen_url: string | null;
   piso: string | null;
-  rif: string | null;
   area_m2: number | null;
   monto_alquiler: number | null;
-  estado: LocalEstado;
   created_at: string;
+  empresas: {
+    nombre_comercial: string;
+    imagen_url: string | null;
+    estado: EmpresaEstado;
+  } | null;
 }
+
+const SELECT_WITH_EMPRESA = '*, empresas(nombre_comercial, imagen_url, estado)';
 
 function fromRow(row: LocalRow): Local {
   return {
     id: row.id,
+    empresaId: row.empresa_id,
     numeroLocal: row.numero_local,
-    nombreComercial: row.nombre_comercial,
-    imagenUrl: row.imagen_url,
     piso: row.piso,
-    rif: row.rif,
     areaM2: row.area_m2,
     montoAlquiler: row.monto_alquiler,
-    estado: row.estado,
     createdAt: row.created_at,
+    empresaNombre: row.empresas?.nombre_comercial ?? '',
+    empresaImagenUrl: row.empresas?.imagen_url ?? null,
+    empresaEstado: row.empresas?.estado ?? 'inactivo',
   };
+}
+
+// Groups every local of the same business together, then orders its units
+// naturally ("PB-2" before "PB-10"). Done here rather than in the query
+// because PostgREST orders the embedded empresa, not the parent rows.
+function byEmpresaThenNumero(a: Local, b: Local): number {
+  const empresa = a.empresaNombre.localeCompare(b.empresaNombre, 'es', { sensitivity: 'base' });
+  return empresa !== 0
+    ? empresa
+    : a.numeroLocal.localeCompare(b.numeroLocal, 'es', { numeric: true, sensitivity: 'base' });
 }
 
 @Injectable({ providedIn: 'root' })
@@ -49,9 +64,8 @@ export class LocalesService {
 
     const { data, error } = await this.supabase
       .from('locales')
-      .select('*')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false });
+      .select(SELECT_WITH_EMPRESA)
+      .is('deleted_at', null);
 
     if (error) {
       this.error.set(error.message);
@@ -59,40 +73,23 @@ export class LocalesService {
       return;
     }
 
-    this.locales.set((data ?? []).map(fromRow));
+    this.locales.set((data ?? []).map(fromRow).sort(byEmpresaThenNumero));
     this.loading.set(false);
   }
 
-  async uploadImage(file: File): Promise<{ url: string | null; error: string | null }> {
-    const extension = file.name.split('.').pop();
-    const path = `${crypto.randomUUID()}.${extension}`;
-
-    const { error } = await this.supabase.storage.from('locales').upload(path, file);
-
-    if (error) {
-      return { url: null, error: error.message };
-    }
-
-    const { data } = this.supabase.storage.from('locales').getPublicUrl(path);
-    return { url: data.publicUrl, error: null };
-  }
-
   async add(
-    local: Omit<Local, 'id' | 'createdAt'>,
+    local: Omit<Local, 'id' | 'createdAt' | 'empresaNombre' | 'empresaImagenUrl' | 'empresaEstado'>,
   ): Promise<{ local: Local | null; error: string | null }> {
     const { data, error } = await this.supabase
       .from('locales')
       .insert({
+        empresa_id: local.empresaId,
         numero_local: local.numeroLocal,
-        nombre_comercial: local.nombreComercial,
-        imagen_url: local.imagenUrl,
         piso: local.piso,
-        rif: local.rif,
         area_m2: local.areaM2,
         monto_alquiler: local.montoAlquiler,
-        estado: local.estado,
       })
-      .select()
+      .select(SELECT_WITH_EMPRESA)
       .single();
 
     if (error) {
@@ -100,12 +97,16 @@ export class LocalesService {
     }
 
     const created = fromRow(data);
-    this.locales.update((current) => [created, ...current]);
+    this.locales.update((current) => [...current, created].sort(byEmpresaThenNumero));
     return { local: created, error: null };
   }
 
   async getById(id: string): Promise<{ local: Local | null; error: string | null }> {
-    const { data, error } = await this.supabase.from('locales').select('*').eq('id', id).single();
+    const { data, error } = await this.supabase
+      .from('locales')
+      .select(SELECT_WITH_EMPRESA)
+      .eq('id', id)
+      .single();
 
     if (error) {
       return { local: null, error: error.message };
@@ -116,29 +117,32 @@ export class LocalesService {
 
   async update(
     id: string,
-    changes: Omit<Local, 'id' | 'createdAt' | 'areaM2'>,
-  ): Promise<{ error: string | null }> {
+    changes: Omit<
+      Local,
+      'id' | 'createdAt' | 'areaM2' | 'empresaNombre' | 'empresaImagenUrl' | 'empresaEstado'
+    >,
+  ): Promise<{ local: Local | null; error: string | null }> {
     const { data, error } = await this.supabase
       .from('locales')
       .update({
+        empresa_id: changes.empresaId,
         numero_local: changes.numeroLocal,
-        nombre_comercial: changes.nombreComercial,
-        imagen_url: changes.imagenUrl,
         piso: changes.piso,
-        rif: changes.rif,
         monto_alquiler: changes.montoAlquiler,
-        estado: changes.estado,
       })
       .eq('id', id)
-      .select()
+      .select(SELECT_WITH_EMPRESA)
       .single();
 
     if (error) {
-      return { error: error.message };
+      return { local: null, error: error.message };
     }
 
-    this.locales.update((current) => current.map((l) => (l.id === id ? fromRow(data) : l)));
-    return { error: null };
+    const updated = fromRow(data);
+    this.locales.update((current) =>
+      current.map((l) => (l.id === id ? updated : l)).sort(byEmpresaThenNumero),
+    );
+    return { local: updated, error: null };
   }
 
   async delete(id: string): Promise<{ error: string | null }> {

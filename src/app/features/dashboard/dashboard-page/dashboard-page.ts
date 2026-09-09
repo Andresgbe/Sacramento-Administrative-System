@@ -3,6 +3,7 @@ import { Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CategoriaEgreso } from '../../../core/models/egreso.model';
 import { PagosService } from '../../pagos/pagos.service';
+import { EmpresasService } from '../../locales/empresas.service';
 import { LocalesService } from '../../locales/locales.service';
 import { CajaChicaService } from '../../caja-chica/caja-chica.service';
 import { EgresosService } from '../../egresos/egresos.service';
@@ -23,6 +24,7 @@ interface DashboardStat {
 })
 export class DashboardPage implements OnInit {
   private readonly localesService = inject(LocalesService);
+  private readonly empresasService = inject(EmpresasService);
   private readonly pagosService = inject(PagosService);
   private readonly cajaChicaService = inject(CajaChicaService);
   private readonly egresosService = inject(EgresosService);
@@ -33,8 +35,9 @@ export class DashboardPage implements OnInit {
   };
 
   protected readonly stats = computed<DashboardStat[]>(() => {
-    const locales = this.localesService.all();
-    const localesActivos = locales.filter((local) => local.estado === 'activo').length;
+    const empresasActivas = this.empresasService
+      .all()
+      .filter((empresa) => empresa.estado === 'activo').length;
 
     const now = new Date();
     const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -53,7 +56,7 @@ export class DashboardPage implements OnInit {
         value: this.formatUsd(this.cajaChicaService.balance()),
         tone: 'default',
       },
-      { label: 'Empresas activas', value: `${localesActivos}`, tone: 'default' },
+      { label: 'Empresas activas', value: `${empresasActivas}`, tone: 'default' },
       { label: 'Egresos del mes', value: this.formatUsd(egresosDelMes), tone: 'danger' },
       { label: 'Ingresos del mes', value: this.formatUsd(ingresosDelMes), tone: 'default' },
     ];
@@ -76,7 +79,7 @@ export class DashboardPage implements OnInit {
       if (this.pagosService.hasPaidThisMonth(local.id)) {
         alDia++;
       } else {
-        morosos.push(local.nombreComercial);
+        morosos.push(`${local.empresaNombre} — ${local.numeroLocal}`);
       }
     }
 
@@ -87,7 +90,18 @@ export class DashboardPage implements OnInit {
   });
 
   private static readonly monthAbbr = [
-    'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+    'Ene',
+    'Feb',
+    'Mar',
+    'Abr',
+    'May',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dic',
   ];
 
   // Live: last 6 calendar months' income, summed from real pagos.
@@ -114,6 +128,7 @@ export class DashboardPage implements OnInit {
 
   ngOnInit(): void {
     this.localesService.load();
+    this.empresasService.load();
     this.pagosService.load();
     this.cajaChicaService.load();
     this.egresosService.load();

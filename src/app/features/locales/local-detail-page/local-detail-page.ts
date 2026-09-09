@@ -2,7 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Local, LocalEstado } from '../../../core/models/local.model';
+import { Local } from '../../../core/models/local.model';
 import { TipoTasa } from '../../../core/models/pago.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { PageHeaderService } from '../../../core/services/page-header.service';
@@ -11,6 +11,7 @@ import { PositiveDecimalDirective } from '../../../shared/directives/positive-de
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { PagosService } from '../../pagos/pagos.service';
+import { EmpresasService } from '../empresas.service';
 import { PagoStatus } from '../local-card/local-card';
 import { LocalesService } from '../locales.service';
 
@@ -32,6 +33,7 @@ export class LocalDetailPage implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly localesService = inject(LocalesService);
+  private readonly empresasService = inject(EmpresasService);
   private readonly pagosService = inject(PagosService);
   private readonly pageHeaderService = inject(PageHeaderService);
   private readonly confirmDialog = inject(ConfirmDialogService);
@@ -48,9 +50,9 @@ export class LocalDetailPage implements OnInit {
   protected readonly deleting = signal(false);
   protected readonly deleteError = signal<string | null>(null);
 
+  protected readonly empresas = this.empresasService.all;
+
   protected local: Local | null = null;
-  protected imageFile: File | null = null;
-  protected imagePreviewUrl: string | null = null;
 
   protected readonly tasaLabel: Record<TipoTasa, string> = {
     BCV: 'BCV',
@@ -60,18 +62,17 @@ export class LocalDetailPage implements OnInit {
   };
 
   protected readonly form = this.fb.nonNullable.group({
+    empresaId: ['', Validators.required],
     numeroLocal: ['', Validators.required],
-    nombreComercial: ['', Validators.required],
     piso: [''],
-    rif: [''],
     montoAlquiler: [0, [Validators.min(0)]],
-    estado: ['activo' as LocalEstado, Validators.required],
   });
 
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('id');
 
     this.pagosService.load();
+    this.empresasService.load();
 
     if (!id) {
       this.notFound.set(true);
@@ -97,30 +98,15 @@ export class LocalDetailPage implements OnInit {
   private applyLocal(local: Local): void {
     this.local = local;
     this.form.patchValue({
+      empresaId: local.empresaId,
       numeroLocal: local.numeroLocal,
-      nombreComercial: local.nombreComercial,
       piso: local.piso ?? '',
-      rif: local.rif ?? '',
       montoAlquiler: local.montoAlquiler ?? 0,
-      estado: local.estado,
     });
-    this.imagePreviewUrl = local.imagenUrl;
 
     this.pageHeaderService.setHeader({
-      title: local.nombreComercial,
+      title: `${local.empresaNombre} — ${local.numeroLocal}`,
     });
-  }
-
-  protected onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-
-    if (!file) {
-      return;
-    }
-
-    this.imageFile = file;
-    this.imagePreviewUrl = URL.createObjectURL(file);
   }
 
   protected pagoStatus(): PagoStatus {
@@ -147,50 +133,23 @@ export class LocalDetailPage implements OnInit {
     this.saving.set(true);
     this.saveError.set(null);
 
-    let imagenUrl = this.local.imagenUrl;
-
-    if (this.imageFile) {
-      const { url, error } = await this.localesService.uploadImage(this.imageFile);
-
-      if (error) {
-        this.saveError.set(error);
-        this.saving.set(false);
-        return;
-      }
-
-      imagenUrl = url;
-    }
-
     const value = this.form.getRawValue();
 
-    const { error } = await this.localesService.update(this.local.id, {
+    const { local, error } = await this.localesService.update(this.local.id, {
+      empresaId: value.empresaId,
       numeroLocal: value.numeroLocal,
-      nombreComercial: value.nombreComercial,
-      imagenUrl,
       piso: value.piso || null,
-      rif: value.rif || null,
       montoAlquiler: value.montoAlquiler || null,
-      estado: value.estado,
     });
 
     this.saving.set(false);
 
-    if (error) {
+    if (error || !local) {
       this.saveError.set(error);
       return;
     }
 
-    this.imageFile = null;
-    this.applyLocal({
-      ...this.local,
-      numeroLocal: value.numeroLocal,
-      nombreComercial: value.nombreComercial,
-      imagenUrl,
-      piso: value.piso || null,
-      rif: value.rif || null,
-      montoAlquiler: value.montoAlquiler || null,
-      estado: value.estado,
-    });
+    this.applyLocal(local);
     this.toastService.success('Cambios guardados.');
   }
 
@@ -211,7 +170,7 @@ export class LocalDetailPage implements OnInit {
 
     const confirmed = await this.confirmDialog.confirm({
       title: 'Eliminar local',
-      message: `¿Estás seguro que deseas eliminar "${this.local.nombreComercial}"? Esta acción no se puede deshacer.`,
+      message: `¿Estás seguro que deseas eliminar el local ${this.local.numeroLocal} de "${this.local.empresaNombre}"? Esta acción no se puede deshacer.`,
       confirmLabel: 'Eliminar',
       danger: true,
     });

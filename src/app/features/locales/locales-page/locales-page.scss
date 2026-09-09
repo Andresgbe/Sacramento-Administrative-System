@@ -4,6 +4,45 @@
   margin-bottom: 20px;
 }
 
+.empresa-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.empresa-cell__logo {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  object-fit: cover;
+  background: var(--color-surface);
+}
+
+.empresa-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #ffffff;
+
+  &--activo {
+    background: rgb(21 128 61 / 90%);
+  }
+
+  &--vencido {
+    background: rgb(185 28 28 / 90%);
+  }
+
+  &--inactivo {
+    background: rgb(107 114 128 / 90%);
+  }
+}
+
 .locales-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

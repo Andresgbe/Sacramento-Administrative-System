@@ -5,6 +5,8 @@ export interface Pago {
   numero: number;
   localId: string;
   localNombre: string;
+  localNumero: string;
+  empresaId: string;
   fecha: string;
   monto: number;
   tipoTasa: TipoTasa;

@@ -5,8 +5,7 @@ import { adminGuard } from './core/guards/role.guard';
 export const routes: Routes = [
   {
     path: 'login',
-    loadComponent: () =>
-      import('./features/auth/login-page/login-page').then((m) => m.LoginPage),
+    loadComponent: () => import('./features/auth/login-page/login-page').then((m) => m.LoginPage),
   },
   {
     path: '',
@@ -17,10 +16,8 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () =>
-          import('./features/dashboard/dashboard-page/dashboard-page').then(
-            (m) => m.DashboardPage,
-          ),
-        data: { title: 'Dashboard'},
+          import('./features/dashboard/dashboard-page/dashboard-page').then((m) => m.DashboardPage),
+        data: { title: 'Dashboard' },
       },
       {
         path: 'locales',
@@ -40,7 +37,7 @@ export const routes: Routes = [
         path: 'pagos',
         loadComponent: () =>
           import('./features/pagos/pagos-page/pagos-page').then((m) => m.PagosPage),
-        data: { title: 'Reporte de pagos', subtitle: 'Reporte de pagos' },
+        data: { title: 'Reporte de pagos', subtitle: 'Alquileres cobrados por local' },
       },
       {
         path: 'calculadora',
@@ -67,9 +64,7 @@ export const routes: Routes = [
       {
         path: 'reportes',
         loadComponent: () =>
-          import('./features/reportes/reportes-page/reportes-page').then(
-            (m) => m.ReportesPage,
-          ),
+          import('./features/reportes/reportes-page/reportes-page').then((m) => m.ReportesPage),
         data: { title: 'Reportes', subtitle: 'Generación de reportes' },
       },
       {

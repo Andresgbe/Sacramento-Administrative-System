@@ -1,14 +1,16 @@
-export type LocalEstado = 'activo' | 'inactivo' | 'vencido';
+import { EmpresaEstado } from './empresa.model';
 
 export interface Local {
   id: string;
+  empresaId: string;
   numeroLocal: string;
-  nombreComercial: string;
-  imagenUrl: string | null;
-  estado: LocalEstado;
   piso: string | null;
-  rif: string | null;
   areaM2: number | null;
   montoAlquiler: number | null;
   createdAt: string;
+  // Resolved from the empresa join — the card and detail header show the
+  // business identity, which no longer lives on the local itself.
+  empresaNombre: string;
+  empresaImagenUrl: string | null;
+  empresaEstado: EmpresaEstado;
 }

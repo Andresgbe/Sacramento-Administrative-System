@@ -4,7 +4,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 
 interface DocumentoRow {
   id: string;
-  local_id: string;
+  empresa_id: string;
   tipo: DocumentoTipo;
   nombre_archivo: string;
   ruta: string;
@@ -14,7 +14,7 @@ interface DocumentoRow {
 function fromRow(row: DocumentoRow): Documento {
   return {
     id: row.id,
-    localId: row.local_id,
+    empresaId: row.empresa_id,
     tipo: row.tipo,
     nombreArchivo: row.nombre_archivo,
     ruta: row.ruta,
@@ -27,12 +27,12 @@ export class DocumentosService {
   private readonly supabase = inject(SupabaseService).client;
 
   async upload(
-    localId: string,
+    empresaId: string,
     tipo: DocumentoTipo,
     file: File,
   ): Promise<{ error: string | null }> {
     const extension = file.name.split('.').pop();
-    const path = `${localId}/${crypto.randomUUID()}.${extension}`;
+    const path = `${empresaId}/${crypto.randomUUID()}.${extension}`;
 
     const { error: uploadError } = await this.supabase.storage
       .from('documentos')
@@ -43,7 +43,7 @@ export class DocumentosService {
     }
 
     const { error: insertError } = await this.supabase.from('documentos').insert({
-      local_id: localId,
+      empresa_id: empresaId,
       tipo,
       nombre_archivo: file.name,
       ruta: path,
@@ -56,11 +56,13 @@ export class DocumentosService {
     return { error: null };
   }
 
-  async listByLocal(localId: string): Promise<{ documentos: Documento[]; error: string | null }> {
+  async listByEmpresa(
+    empresaId: string,
+  ): Promise<{ documentos: Documento[]; error: string | null }> {
     const { data, error } = await this.supabase
       .from('documentos')
       .select('*')
-      .eq('local_id', localId)
+      .eq('empresa_id', empresaId)
       .order('created_at', { ascending: false });
 
     if (error) {

@@ -7,15 +7,30 @@ import { PositiveDecimalDirective } from '../../../shared/directives/positive-de
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import {
+  MultiSelect,
+  MultiSelectOption,
+} from '../../../shared/components/multi-select/multi-select';
+import { EmpresasService } from '../../locales/empresas.service';
 import { LocalesService } from '../../locales/locales.service';
 import { ComprobantePreviewModal } from '../comprobante-preview-modal/comprobante-preview-modal';
 import { PagoFormModal, PagoFormPayload } from '../pago-form-modal/pago-form-modal';
 import { PagosService } from '../pagos.service';
 
-function currentMonthIso(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
+const MESES = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+].map((label, index) => ({ value: String(index + 1).padStart(2, '0'), label }));
 
 @Component({
   selector: 'app-pagos-page',
@@ -27,6 +42,7 @@ function currentMonthIso(): string {
     ComprobantePreviewModal,
     SelectOnFocusDirective,
     PositiveDecimalDirective,
+    MultiSelect,
   ],
   templateUrl: './pagos-page.html',
   styleUrl: './pagos-page.scss',
@@ -34,6 +50,7 @@ function currentMonthIso(): string {
 export class PagosPage implements OnInit {
   private readonly pagosService = inject(PagosService);
   private readonly localesService = inject(LocalesService);
+  private readonly empresasService = inject(EmpresasService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly toastService = inject(ToastService);
   private readonly authService = inject(AuthService);
@@ -45,6 +62,7 @@ export class PagosPage implements OnInit {
   protected readonly loadError = this.pagosService.loadError;
 
   protected readonly locales = this.localesService.all;
+  protected readonly empresas = this.empresasService.all;
 
   protected readonly tasaLabel: Record<TipoTasa, string> = {
     BCV: 'BCV',
@@ -64,41 +82,55 @@ export class PagosPage implements OnInit {
   protected readonly comprobanteLoading = signal(false);
   protected readonly comprobanteError = signal<string | null>(null);
 
+  protected readonly meses = MESES;
+
   protected readonly searchInput = signal('');
   protected readonly appliedSearch = signal('');
-  protected readonly month = signal(currentMonthIso());
+  protected readonly anio = signal(String(new Date().getFullYear()));
+  protected readonly mes = signal(String(new Date().getMonth() + 1).padStart(2, '0'));
   protected readonly montoMin = signal<number | null>(null);
   protected readonly montoMax = signal<number | null>(null);
   protected readonly selectedLocalIds = signal<Set<string>>(new Set());
-  protected readonly localMenuOpen = signal(false);
+  protected readonly selectedEmpresaIds = signal<Set<string>>(new Set());
+
+  // Every year that actually has payments, plus the current one so the default
+  // selection is always offered even on an empty ledger.
+  protected readonly aniosDisponibles = computed(() => {
+    const years = new Set(this.pagos().map((pago) => pago.fecha.slice(0, 4)));
+    years.add(String(new Date().getFullYear()));
+    return [...years].sort((a, b) => b.localeCompare(a));
+  });
+
+  protected readonly empresaOptions = computed<MultiSelectOption[]>(() =>
+    this.empresas().map((empresa) => ({ id: empresa.id, label: empresa.nombreComercial })),
+  );
+
+  protected readonly localOptions = computed<MultiSelectOption[]>(() =>
+    this.locales().map((local) => ({
+      id: local.id,
+      label: `${local.empresaNombre} — ${local.numeroLocal}`,
+    })),
+  );
 
   protected readonly hasActiveFilters = computed(
     () =>
       this.appliedSearch() !== '' ||
-      this.month() !== '' ||
+      this.anio() !== '' ||
+      this.mes() !== '' ||
       this.montoMin() !== null ||
       this.montoMax() !== null ||
-      this.selectedLocalIds().size > 0,
+      this.selectedLocalIds().size > 0 ||
+      this.selectedEmpresaIds().size > 0,
   );
-
-  protected readonly localFilterLabel = computed(() => {
-    const selected = this.selectedLocalIds();
-    if (selected.size === 0) {
-      return 'Todos los locales';
-    }
-    if (selected.size === 1) {
-      const [id] = selected;
-      return this.locales().find((local) => local.id === id)?.nombreComercial ?? '1 local';
-    }
-    return `${selected.size} locales seleccionados`;
-  });
 
   protected readonly pagosFiltrados = computed(() => {
     const term = this.appliedSearch();
-    const month = this.month();
+    const anio = this.anio();
+    const mes = this.mes();
     const min = this.montoMin();
     const max = this.montoMax();
     const localIds = this.selectedLocalIds();
+    const empresaIds = this.selectedEmpresaIds();
 
     return this.pagos().filter((pago) => {
       if (
@@ -108,13 +140,21 @@ export class PagosPage implements OnInit {
       ) {
         return false;
       }
-      if (month && !pago.fecha.startsWith(month)) {
+      // Year and month are matched independently, so "todos los meses de 2026"
+      // and "todos los septiembres" are both expressible.
+      if (anio && pago.fecha.slice(0, 4) !== anio) {
+        return false;
+      }
+      if (mes && pago.fecha.slice(5, 7) !== mes) {
         return false;
       }
       if (min !== null && pago.monto < min) {
         return false;
       }
       if (max !== null && pago.monto > max) {
+        return false;
+      }
+      if (empresaIds.size > 0 && !empresaIds.has(pago.empresaId)) {
         return false;
       }
       if (localIds.size > 0 && !localIds.has(pago.localId)) {
@@ -127,6 +167,7 @@ export class PagosPage implements OnInit {
   ngOnInit(): void {
     this.pagosService.load();
     this.localesService.load();
+    this.empresasService.load();
   }
 
   protected setSearchInput(value: string): void {
@@ -137,8 +178,12 @@ export class PagosPage implements OnInit {
     this.appliedSearch.set(this.searchInput().trim().toLowerCase());
   }
 
-  protected setMonth(value: string): void {
-    this.month.set(value);
+  protected setAnio(value: string): void {
+    this.anio.set(value);
+  }
+
+  protected setMes(value: string): void {
+    this.mes.set(value);
   }
 
   protected setMontoMin(value: string): void {
@@ -149,41 +194,23 @@ export class PagosPage implements OnInit {
     this.montoMax.set(value === '' ? null : Number(value));
   }
 
-  protected toggleLocalMenu(): void {
-    this.localMenuOpen.update((open) => !open);
+  protected setSelectedLocalIds(ids: Set<string>): void {
+    this.selectedLocalIds.set(ids);
   }
 
-  protected closeLocalMenu(): void {
-    this.localMenuOpen.set(false);
-  }
-
-  protected isLocalSelected(id: string): boolean {
-    return this.selectedLocalIds().has(id);
-  }
-
-  protected toggleLocalSelection(id: string): void {
-    this.selectedLocalIds.update((current) => {
-      const next = new Set(current);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }
-
-  protected clearLocalFilter(): void {
-    this.selectedLocalIds.set(new Set());
+  protected setSelectedEmpresaIds(ids: Set<string>): void {
+    this.selectedEmpresaIds.set(ids);
   }
 
   protected clearAllFilters(): void {
     this.searchInput.set('');
     this.appliedSearch.set('');
-    this.month.set('');
+    this.anio.set('');
+    this.mes.set('');
     this.montoMin.set(null);
     this.montoMax.set(null);
     this.selectedLocalIds.set(new Set());
+    this.selectedEmpresaIds.set(new Set());
   }
 
   protected openModal(): void {

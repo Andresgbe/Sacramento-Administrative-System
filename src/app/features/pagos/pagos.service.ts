@@ -13,7 +13,11 @@ interface PagoRow {
   comprobante_ruta: string | null;
   comprobante_nombre: string | null;
   created_at: string;
-  locales: { nombre_comercial: string } | null;
+  locales: {
+    numero_local: string;
+    empresa_id: string;
+    empresas: { nombre_comercial: string } | null;
+  } | null;
 }
 
 function fromRow(row: PagoRow): Pago {
@@ -21,7 +25,9 @@ function fromRow(row: PagoRow): Pago {
     id: row.id,
     numero: row.numero,
     localId: row.local_id,
-    localNombre: row.locales?.nombre_comercial ?? '',
+    localNombre: row.locales?.empresas?.nombre_comercial ?? '',
+    localNumero: row.locales?.numero_local ?? '',
+    empresaId: row.locales?.empresa_id ?? '',
     fecha: row.fecha,
     monto: row.monto,
     tipoTasa: row.tipo_tasa,
@@ -51,7 +57,7 @@ export class PagosService {
 
     const { data, error } = await this.supabase
       .from('pagos')
-      .select('*, locales(nombre_comercial)')
+      .select('*, locales(numero_local, empresa_id, empresas(nombre_comercial))')
       .order('fecha', { ascending: false });
 
     if (error) {
@@ -136,10 +142,7 @@ export class PagosService {
     return { error: null };
   }
 
-  private async uploadComprobante(
-    pagoId: string,
-    file: File,
-  ): Promise<{ error: string | null }> {
+  private async uploadComprobante(pagoId: string, file: File): Promise<{ error: string | null }> {
     const extension = file.name.split('.').pop();
     const path = `pagos/${pagoId}/${crypto.randomUUID()}.${extension}`;
 
