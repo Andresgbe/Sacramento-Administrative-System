@@ -137,18 +137,33 @@ export class DashboardPage implements OnInit {
     'Dic',
   ];
 
-  // Live: last 6 calendar months' rent income. Canon only, same reasoning as
-  // the "Ingresos del mes" tile.
+  /**
+   * Rent income for the current calendar year, from the first month that has
+   * a payment through December. Canon only, same reasoning as the tile above.
+   *
+   * Not a rolling six-month window: the mall started using the app partway
+   * through the year, so that showed a run of empty months before launch.
+   * Starting at the first month with data keeps it self-correcting — once a
+   * January has payments, the chart simply spans the whole year.
+   */
   protected readonly ingresosMensuales = computed<BarDatum[]>(() => {
-    const pagos = this.pagosService.all().filter((pago) => pago.concepto === 'canon');
     const now = new Date();
+    const year = now.getFullYear();
+
+    const pagos = this.pagosService
+      .all()
+      .filter((pago) => pago.concepto === 'canon' && pago.fecha.startsWith(`${year}-`));
+
+    const primerMesConDatos = pagos.reduce(
+      (earliest, pago) => Math.min(earliest, Number(pago.fecha.slice(5, 7))),
+      now.getMonth() + 1,
+    );
 
     const months: { key: string; label: string }[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    for (let month = primerMesConDatos; month <= 12; month++) {
       months.push({
-        key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-        label: DashboardPage.monthAbbr[d.getMonth()],
+        key: `${year}-${String(month).padStart(2, '0')}`,
+        label: DashboardPage.monthAbbr[month - 1],
       });
     }
 

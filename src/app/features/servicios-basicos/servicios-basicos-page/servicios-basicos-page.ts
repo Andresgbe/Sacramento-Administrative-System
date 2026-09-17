@@ -49,11 +49,11 @@ export class ServiciosBasicosPage implements OnInit {
 
   protected readonly conceptoLabel = CONCEPTO_LABEL;
 
-  protected readonly tab = signal<ServiciosTab>('facturas');
+  protected readonly tab = signal<ServiciosTab>('pagos');
 
   protected readonly tabItems: TabItem<ServiciosTab>[] = [
-    { id: 'facturas', label: 'Facturas del mes' },
     { id: 'pagos', label: 'Pagos de las empresas' },
+    { id: 'facturas', label: 'Facturas del mes' },
   ];
 
   /** Canon is the mall's own income and belongs in Reporte de pagos; these
