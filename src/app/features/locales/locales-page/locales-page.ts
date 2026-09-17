@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Empresa } from '../../../core/models/empresa.model';
+import { Local, PagoStatus } from '../../../core/models/local.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { TabItem, Tabs } from '../../../shared/components/tabs/tabs';
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
@@ -8,7 +9,7 @@ import { PagosService } from '../../pagos/pagos.service';
 import { DocumentosService } from '../documentos.service';
 import { EmpresaFormModal, EmpresaFormPayload } from '../empresa-form-modal/empresa-form-modal';
 import { EmpresasService } from '../empresas.service';
-import { LocalCard, PagoStatus } from '../local-card/local-card';
+import { LocalCard } from '../local-card/local-card';
 import { LocalFormModal, LocalFormPayload } from '../local-form-modal/local-form-modal';
 import { LocalesService } from '../locales.service';
 
@@ -77,8 +78,16 @@ export class LocalesPage implements OnInit {
     this.tab.set(tab);
   }
 
-  protected pagoStatus(localId: string): PagoStatus {
-    return this.pagosService.hasPaidThisMonth(localId) ? 'al-dia' : 'debe';
+  protected pagoStatus(local: Local): PagoStatus {
+    return this.pagosService.estadoPago(local.id, local.montoAlquiler);
+  }
+
+  protected faltante(local: Local): number {
+    return this.pagosService.faltantePorPagar(local.id, local.montoAlquiler);
+  }
+
+  protected pagado(local: Local): number {
+    return this.pagosService.canonPagadoEsteMes(local.id);
   }
 
   protected localesCount(empresaId: string): number {

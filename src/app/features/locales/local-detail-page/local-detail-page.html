@@ -80,8 +80,16 @@
       }
 
       <span class="detail-pago-badge detail-pago-badge--{{ pagoStatus() }}">
-        {{ pagoStatus() === 'al-dia' ? 'Al día' : 'No ha pagado alquiler' }}
+        {{ pagoStatusLabel[pagoStatus()] }}
       </span>
+
+      @if (pagado() > 0) {
+        <span class="detail-pago-paid"> Depositó $ {{ pagado() | number: '1.2-2' }} este mes </span>
+      }
+
+      @if (pagoStatus() === 'parcial') {
+        <span class="detail-pago-pending"> Faltan $ {{ faltante() | number: '1.2-2' }} </span>
+      }
     </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()" class="detail-form">
@@ -171,7 +179,12 @@
               <tr>
                 <td>{{ pago.numero }}</td>
                 <td>{{ pago.fecha | date: 'dd/MM/yyyy' : 'UTC' }}</td>
-                <td>$ {{ pago.monto | number: '1.2-2' }}</td>
+                <td class="data-table__amount">
+                  $ {{ pago.monto | number: '1.2-2' }}
+                  @if (pago.montoBs) {
+                    <span class="detail-monto-bs">{{ pago.montoBs | number: '1.2-2' }} Bs</span>
+                  }
+                </td>
                 <td>{{ tasaLabel[pago.tipoTasa] }}</td>
                 <td>{{ pago.descripcion || '—' }}</td>
               </tr>

@@ -20,9 +20,16 @@
 - Color palette: white, gray, and orange (#f97316) as accent color
   - Orange is used sparingly: primary button, input focus, logo icon
   - Avoid saturating the UI with orange — it's an accent, not a dominant color
-- Typography:
-  - Inter (general text, UI, body copy)
-  - Plus Jakarta Sans (headings/titles)
+- Typography (`src/app/styles/_typography.scss`):
+  - `--font-body` — Inter (general text, UI, body copy)
+  - `--font-heading` — Plus Jakarta Sans (headings/titles)
+  - **`--font-amount` — every money figure in the app.** Currently Plus Jakarta
+    Sans: numbers get more presence than in the body face. It covers the big
+    total cards, `.data-table__amount` cells, card rents, the "Depositó /
+    Faltan" lines, bolívar sub-lines, chart values and dashboard stats. The
+    variable used to be called `--font-mono` and aliased `--font-body`, which
+    is why nothing here is monospaced. **Any new amount uses this variable** —
+    never hard-code a face on a figure.
 - SCSS structure: organized global partials (variables, mixins, typography, etc.)
 - Favicon (`public/favicon.ico`) is a tight circular crop of `public/images/logo.jpg`
   (the same building badge used in the sidebar/login), regenerated with Pillow —
@@ -52,7 +59,7 @@ directives and services under `src/app/shared/`.
 
 - **`.data-table-wrapper` / `.data-table` / `.data-table__amount` /
   `.data-table__actions` / `.data-table__edit`** — the transaction-table system.
-  Gives every table (Pagos, Egresos, Caja chica, and the local detail page's
+  Gives every table (Pagos, Egresos, Balance, Servicios, and the local detail page's
   "Historial de pagos") the same look: white card wrapper, uppercase muted
   header, **light grey (`--color-surface-muted`) row background**, a right-hand
   action column with a circular pencil "edit" icon button, and left-aligned
@@ -64,13 +71,14 @@ directives and services under `src/app/shared/`.
   for visual consistency.
   When adding a new transaction table, use `class="data-table-wrapper"` on the
   wrapper and `class="data-table"` on the `<table>` — don't recreate the
-  th/td/row styling locally.
+  th/td/row styling locally. Put `class="data-table__amount"` on every money
+  `<td>`: it applies `--font-amount` and stops the figure wrapping.
 - **Directives in `src/app/shared/directives/`**: `appSelectOnFocus` (selects
   the field's value on focus, so typing over a `0`-default number input
   overwrites instead of prepending) and `appPositiveDecimal` (blocks `e`/`E`/
   `+`/`-` keys, since `type="number"` otherwise accepts scientific notation)
   — both applied to **every** currency "monto" input across the app (pagos,
-  egresos, caja chica, locales' `montoAlquiler`, calculadora). Apply both to
+  egresos, servicios, locales' `montoAlquiler`, calculadora). Apply both to
   any new amount field.
 - **`<app-tabs>`** (`src/app/shared/components/tabs/`) — the app's ONE switch /
   tab style. Underlined text tabs: no container, no pill, no background — the
@@ -91,7 +99,7 @@ directives and services under `src/app/shared/`.
   hand-roll tab markup or a pill/segmented control in a feature's SCSS.
 - **`.filters-bar` / `.filters-field` / `.filters-field--search` /
   `.filters-field__amount-row` / `.filters-clear`** — the filter card above
-  every report table (Pagos, Egresos, Caja chica). It's a white card whose
+  every report table (Pagos, Egresos, Balance, Servicios). It's a white card whose
   fields sit on a **CSS grid** (`repeat(auto-fit, minmax(min(190px, 100%), 1fr))`),
   not flex-wrap: wrapped flex items kept their own widths and left ragged gaps,
   which is what made the bar look tangled on phones. Search spans two columns
@@ -101,8 +109,8 @@ directives and services under `src/app/shared/`.
   an `@if`: it used to vanish the moment it did its job, which read as the
   button deleting itself, and it reflowed the grid on every click.
 - **`<app-period-filter>`** (`src/app/shared/components/period-filter/`) —
-  the Año + Mes filter pair, used by **all three** report pages (Pagos,
-  Egresos, Caja chica). They are two **independent** selects, not one
+  the Año + Mes filter pair, used by every report page (Pagos, Egresos,
+  Balance, Servicios). They are two **independent** selects, not one
   `<input type="month">`, so "todo 2026" and "todos los septiembres" are both
   expressible; `''` means "todos" on either. The host is `display: contents`
   so its two `.filters-field` children land as direct grid items of
@@ -126,8 +134,8 @@ directives and services under `src/app/shared/`.
     before any destructive action (currently used by local deletion). Never use
     the native browser `confirm()`/`alert()` — it was explicitly rejected as
     looking out of place.
-- Local's `numeroLocal` (e.g. "PB-D") stays out of the Pagos, Egresos and
-  Caja chica **tables**, which show only the empresa name. It does appear
+- Local's `numeroLocal` (e.g. "PB-D") stays out of the Pagos and Egresos
+  **tables**, which show only the empresa name. It does appear
   wherever a specific unit has to be told apart from its siblings — the pago
   form's local dropdown, the Pagos local filter, and the Dashboard's morosos
   list all render `Empresa — PB-D`, because a company with two units would
@@ -135,11 +143,25 @@ directives and services under `src/app/shared/`.
 
 ## Database (PostgreSQL via Supabase)
 
-Tables: usuarios, empresas, locales, pagos, servicios_pagos, egresos, caja_chica,
-remodelaciones, tasas_cambio, documentos
+Implemented (migration + RLS in `supabase/migrations/`): usuarios, empresas,
+locales, pagos, deudas, facturas_servicio, facturas_servicio_fotos, documentos,
+tasas_cambio, egresos. Not built: `remodelaciones`.
 
-- Implemented (migration + RLS in `supabase/migrations/`): usuarios, empresas,
-  locales, pagos, documentos, tasas_cambio, egresos, caja_chica
+- `caja_chica` still exists in the database but **nothing reads it**: the Caja
+  chica module was removed in favour of Balance. Drop the table only on an
+  explicit decision — the rows are real history.
+
+- The `servicios_pagos` table from the original plan was never built and is not
+  coming: its job is now split between `facturas_servicio` (the provider's
+  monthly bill) and `deudas` (what each empresa owes).
+- **Every new table needs its RLS policies in the same migration.** RLS with no
+  policy denies everything, and it fails only at runtime with "new row violates
+  row-level security policy" — `facturas_servicio` shipped that way once.
+- Migrations are applied by pasting SQL into the Supabase SQL Editor, which
+  wraps the whole script in one transaction. Guard DDL (`if not exists`,
+  `drop policy if exists`, `do $$ ... $$` around `create type`) so a re-run is
+  harmless, and run it with the live app closed — `alter table` takes an
+  exclusive lock and has deadlocked against the running frontend before.
 
 ### empresas vs locales
 
@@ -150,6 +172,21 @@ A business can rent more than one unit in the mall, so the two are separate:
   `documentos` (contrato/RIF scans hang off `documentos.empresa_id`).
 - **`locales`** owns only the physical unit — `numero_local`, `piso`,
   `area_m2`, `monto_alquiler` — plus `empresa_id`.
+- Logos still upload to the Storage bucket named `locales` (renaming it would
+  break the public URLs already stored on existing rows).
+- The Dashboard's "Empresas activas" tile counts `empresas`, not `locales` —
+  that mismatch is what drove the split.
+- **`empresas.es_propietaria`** marks Inmobiliaria Di Placido, which owns the
+  mall and collects the rents. It is an `empresas` row only because it absorbs
+  a share of the Corpoelec and Hidrocapital bills, so debts must be assignable
+  to it. It is **not a tenant**: excluded from "Empresas activas", and offered
+  in the pago/deuda empresa picker only for `corpoelec` and `hidrocapital` —
+  it pays itself neither canon nor condominio. Exactly one row carries the
+  flag; the empresa form never writes it.
+- The Locales grid is sorted by empresa, then by `numero_local` with
+  `localeCompare(..., { numeric: true })` so a company's units sit together and
+  "PB-2" precedes "PB-10". Sorted in `LocalesService`, not the query: PostgREST
+  orders the embedded empresa, not the parent rows.
 
 ### Payment concepts (`pagos.concepto`)
 
@@ -165,28 +202,60 @@ same level — this is why `pagos` carries both `empresa_id` and `local_id`:
 
 - `empresa_id` is **always** set, so grouping and filtering by empresa works
   for every concept; `local_id` only narrows the per-unit ones.
+- A pago carries **two amounts**: `monto` (USD) and `monto_bs` (nullable). USD
+  is authoritative — rent status, every total and the dashboard compare against
+  `locales.monto_alquiler`, which is in dollars. `monto_bs` records what
+  actually left the tenant's account, since the bank reference is in bolívares;
+  it is never an input to a calculation. Null when paid in cash dollars. Both
+  are typed by hand, so the rate is implicit in the pair — don't add a stored
+  rate to `pagos`.
 - A check constraint (`pagos_local_matches_concepto`) enforces the table above,
   because "which local is this water bill for?" has no correct answer. Add a
   new per-unit concept to `CONCEPTOS_POR_LOCAL` in `pago.model.ts` **and** to
   that constraint, or inserts will be rejected.
-- **"Al día / moroso" means canon only** (`PagosService.monthsSinceLastPayment`)
-  — a company can be current on its water bill and still owe rent.
-- The Dashboard's "Ingresos del mes" deliberately sums **all** concepts. The
-  utilities the mall collects and forwards also appear as `egresos`, so income
-  and expense cancel out; counting only canon would leave the expense side
-  unbalanced.
-- Logos still upload to the Storage bucket named `locales` (renaming it would
-  break the public URLs already stored on existing rows).
-- The Dashboard's "Empresas activas" tile counts `empresas`, not `locales` —
-  that mismatch is what drove the split.
-- **`empresas.es_propietaria`** marks Inmobiliaria Di Placido, which owns the
-  mall and collects the rents. It is an `empresas` row only because it absorbs
-  a share of the Corpoelec and Hidrocapital bills, so debts must be assignable
-  to it. It is **not a tenant**: excluded from "Empresas activas", and offered
-  in the pago/deuda empresa picker only for `corpoelec` and `hidrocapital` —
-  it pays itself neither canon nor condominio. Exactly one row carries the
-  flag; the empresa form never writes it.
-- Not yet implemented: servicios_pagos, remodelaciones
+- **Rent status has three states**, not two (`PagoStatus` in `local.model.ts`,
+  computed by `PagosService.estadoPago(localId, montoAlquiler)`):
+  `al-dia` · `parcial` · `debe`. It sums the month's **canon** payments for the
+  unit and compares them against the local's `montoAlquiler` — a tenant who
+  paid $1.000 of a $1.152 canon is neither up to date nor simply owing, and
+  showing them as "Al día" was a real bug. `faltantePorPagar()` gives the
+  outstanding amount, shown on the card, the detail page and the Dashboard pie.
+  Only canon counts: a company can be current on its water bill and still owe
+  rent. With no `montoAlquiler` on record it falls back to paid/unpaid, since
+  there is nothing to compare against.
+- **Canon and the other three live in different screens.** `Reporte de pagos`
+  is the rent ledger and shows **canon only**; condominio, Corpoelec and
+  Hidrocapital are registered under `Servicios`, because they are money the
+  mall collects and forwards, not its income. One table, two pages: each
+  passes `conceptosPermitidos` to the shared `<app-pago-form-modal>` so neither
+  can write the other's rows.
+- **The Dashboard counts canon only** — "Ingresos del mes", the "Ingresos
+  mensuales" chart and "Últimos pagos" all filter to canon. Counting the
+  pass-through utilities there inflated income against expenses already
+  recorded in `egresos`.
+
+### deudas y facturas de servicio
+
+`pagos` records money that came IN. `deudas` records what is OWED — that is what
+the monthly "Estado de cuenta" is, and unpaid obligations carry across months
+(a tenant can owe condominio for both August and September). Balance for a
+business = its `deudas` minus the `pagos` linked to them (`pagos.deuda_id`).
+
+- **`facturas_servicio`** — one provider bill per service per month, plus its
+  scans in `facturas_servicio_fotos`. Corpoelec and Hidrocapital arrive as ONE
+  bill covering a shared meter, then get split among the businesses on it;
+  there is more than one electricity account, each shared by a different set of
+  companies. **The split percentages are entered per bill, never stored** — the
+  mall confirmed the proportions change month to month.
+- **`deudas`** — one row per empresa / concepto / period, with `factura_id` set
+  when it is one company's share of a shared bill, and null for canon and
+  condominio which are billed straight to the business. Mirrors `pagos`: a
+  check constraint requires `local_id` for canon and forbids it otherwise.
+- **`deudas.moneda`** — services in `VES`, canon and condominio in `USD`. The
+  estado de cuenta reports the two totals **side by side and never sums them**,
+  which is how the mall's own PDF reads. The rate a debt was converted at is
+  snapshotted on the row, not joined live from `tasas_cambio`: otherwise a past
+  month's debt would move every time the dollar does.
 
 ## Folder structure (feature-based)
 
@@ -203,7 +272,7 @@ src/app/
 │   ├── locales/
 │   ├── pagos/
 │   ├── egresos/
-│   ├── caja-chica/
+│   ├── balance/
 │   ├── tasas-cambio/
 │   ├── calculadora/
 │   └── reportes/
@@ -246,12 +315,13 @@ not in the root of app/.
 - Auth: real login via Supabase Auth (`login-page`, `auth.service`, `auth.guard`
   protecting all routes under the main layout). Role is stored on `usuarios.rol`
   but the UI doesn't yet restrict subadmin actions — only RLS enforces it today.
-  Every table's RLS lets admin **and** subadmin insert/select, but **only
-  admin** can update/delete (`pagos`, `egresos`, `caja_chica`, `locales` all
-  follow this same pattern) — a subadmin clicking edit/delete gets a Supabase
-  error surfaced in the UI, by design, until role-based UI gating is built
+  Every table follows the same shape: **all authenticated users read, only
+  admin writes** (insert, update and delete) — `20260821000000` tightened
+  inserts to admin too, so subadmins are effectively read-only. A subadmin
+  clicking a write action gets a Supabase error surfaced in the UI, by design,
+  until role-based UI gating is built
 - The sidebar modules are built and wired to real Supabase data:
-  - **Dashboard**: fully live — caja chica balance, Locales activos, Egresos
+  - **Dashboard**: fully live — Balance del mes, Empresas activas, Egresos
     del mes, Ingresos del mes (all real, computed for the current calendar
     month), "Locales por estado de pago" pie chart, "Últimos pagos"/"Últimos
     egresos" panels, and the "Ingresos mensuales" bar chart (+ its breakdown
@@ -266,36 +336,73 @@ not in the root of app/.
     avanzados" (contrato/RIF/otro documents to a private Storage bucket) —
     note `rif` is a plain text field on `empresas`, while the "RIF" file upload
     is a separate scanned document in `documentos`
-  - **Reporte de pagos**: transactions with tipo de tasa (BCV/EUR/USD/otra);
-    full edit support via the same modal in edit-mode (prefilled, "Guardar
-    cambios"), same edit-icon pattern as Egresos/Caja chica
+  - **Reporte de pagos**: tabs per concepto (Todos / Canon / Condominio /
+    Corpoelec / Hidrocapital) with the total recomputed per tab, plus filters
+    for search, año, mes, monto range, empresa and local (the last two are
+    `<app-multi-select>`). Columns: ID, fecha, concepto chip, empresa, local
+    (`—` for empresa-wide concepts), monto, tasa, comprobante. Full edit and
+    delete. The form picks concepto first; the Local field only appears for
+    canon and lists just that empresa's units
   - **Egresos**: transactions split into administrativo / operativo, plus a
     combined total view (tabs order: Total, Gastos administrativos, Gastos
     operativos); full edit support
-  - **Caja chica**: ingreso/retiro ledger with a live running balance; full
-    edit support
-  - **Servicios básicos** (`/servicios-basicos`, after Reportes in the sidebar):
-    where the admin records each month's bill for condominio, Corpoelec and
-    Hidrocapital. One row per bill in `facturas_servicio`, with tabs per
-    service and the shared año/mes filter. Each bill carries **several photos**
-    (`facturas_servicio_fotos`) because a month's bill arrives as multiple
-    pages — the Corpoelec sheets come in two parts. Files go to the existing
-    private `documentos` bucket under `facturas/<factura_id>/`, same
-    arrangement as pago comprobantes, so no new bucket or storage policy.
-    Deleting a bill removes its Storage objects first: the DB rows cascade,
-    the files don't.
-    The module is an **archive, not an amount ledger** — the form asks only
-    for service, month, year and photos. It deliberately carries **no amount,
-    currency or exchange rate**: the figures live inside the attached
-    documents, and the per-empresa numbers belong in `deudas`. Don't reinstate
-    a total here — it would be a second place for the same number to drift.
+  - **Balance** (`/balance`): three cards — Ingresos, Egresos and the Balance
+    between them — over a single list of the period's movements, both sides
+    together, newest first, with a green/red chip and a signed amount.
+    Read-only: every row is registered in Reporte de pagos or Reporte de
+    egresos and is edited there. Defaults to the current month.
+    **Canon only on the income side, and servicios excluded entirely**:
+    condominio, Corpoelec and Hidrocapital are collected and forwarded, and the
+    forwarding already appears as an egreso, so including them would have each
+    cancel against itself and make the balance meaningless.
+    **Caja chica was removed** — the module, its service, model and modal are
+    gone. The `caja_chica` table is still in the database, untouched, pending a
+    decision on whether to drop it.
+  - **Servicios** (`/servicios-basicos`, sits **directly below Reporte de
+    pagos** in the sidebar, since the two are the twin halves of what a tenant
+    pays). Two top-level tabs:
+    - **Facturas del mes** — the provider bills archive described below.
+    - **Pagos de las empresas** — what each business paid for condominio,
+      Corpoelec and Hidrocapital, with its own total. These are `pagos` rows
+      like any other; the page just filters `concepto <> 'canon'` and hands
+      `<app-pago-form-modal>` the three service concepts.
+      The bills half records each month's bill for condominio, Corpoelec and
+      Hidrocapital. One row per bill in `facturas_servicio`, with tabs per
+      service and the shared año/mes filter. Each bill carries **several photos**
+      (`facturas_servicio_fotos`) because a month's bill arrives as multiple
+      pages — the Corpoelec sheets come in two parts. Files go to the existing
+      private `documentos` bucket under `facturas/<factura_id>/`, same
+      arrangement as pago comprobantes, so no new bucket or storage policy.
+      Deleting a bill removes its Storage objects first: the DB rows cascade,
+      the files don't.
+      The module is an **archive, not an amount ledger** — the form asks only
+      for service, month, year and photos. It deliberately carries **no amount,
+      currency or exchange rate**: the figures live inside the attached
+      documents, and the per-empresa numbers belong in `deudas`. Don't reinstate
+      a total here — it would be a second place for the same number to drift.
   - **Calculadora**: BCV + paralelo rates from dolarapi.com, USDT from Binance
     P2P, fetched and cached once per day by the `tasas-cambio` Edge Function
     into the `tasas_cambio` table
 - Sidebar is collapsible on desktop (chevron toggle below the logo, icon-only
   rail at 76px, state persisted in `localStorage`); unchanged on mobile
   (<900px), which still uses the hamburger/overlay pattern
-- Next steps: role-based UI restrictions for subadmin, delete support for
-  pagos/egresos/caja_chica (RLS already allows it — only the UI is missing,
-  follow the locales gear-menu pattern), `reportes` module, `servicios_pagos`
-  and `remodelaciones` tables
+- Next steps, in order:
+  1. **The split screen** — pick a `facturas_servicio` row and enter what each
+     empresa owes, writing the `deudas` rows. Nothing writes `deudas` yet.
+  2. **Estado de cuenta per empresa** — unpaid `deudas` grouped by concepto and
+     period, with the bolívar and dollar totals separate, replicating the PDF
+     the mall sends its tenants today.
+  3. Linking a `pago` to the `deuda` it settles (`pagos.deuda_id` exists and is
+     never written), so a balance can be computed.
+  4. Role-based UI restrictions for subadmin — today only RLS enforces it, so a
+     subadmin sees buttons that fail with a Supabase error.
+  5. `reportes` module; `remodelaciones` table.
+
+## Working with the client's documents
+
+The mall sends scanned PDFs (Corpoelec/Hidrocapital bills, estados de cuenta).
+The Read tool returns only metadata for them, but **`pypdf` extracts the text
+fine** — `python -c "import pypdf; ..."`. `pdftoppm` is not installed, so page
+rasterising is unavailable. Read the bills before designing around them: they
+are where facts like "there are two Corpoelec accounts with different member
+sets" actually came from.

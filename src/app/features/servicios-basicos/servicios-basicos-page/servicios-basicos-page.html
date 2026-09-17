@@ -1,11 +1,29 @@
+<app-tabs [tabs]="tabItems" [active]="tab()" (selected)="setTab($event)" />
+
 <div class="servicios-page__header">
+  @if (tab() === 'pagos') {
+    <div class="servicios-total">
+      <span class="servicios-total__label">Total cobrado en servicios</span>
+      <span class="servicios-total__value">$ {{ totalPagos() | number: '1.2-2' }}</span>
+    </div>
+  }
+
   @if (isAdmin()) {
-    <button type="button" class="btn btn--primary" (click)="openModal(null)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 5v14M5 12h14" stroke-linecap="round" />
-      </svg>
-      Registrar deuda
-    </button>
+    @if (tab() === 'facturas') {
+      <button type="button" class="btn btn--primary" (click)="openModal(null)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+        </svg>
+        Registrar deuda
+      </button>
+    } @else {
+      <button type="button" class="btn btn--primary" (click)="openPagoModal(null)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14" stroke-linecap="round" />
+        </svg>
+        Registrar pago
+      </button>
+    }
   }
 </div>
 
@@ -33,66 +51,49 @@
   </button>
 </div>
 
-@if (isLoading()) {
-  <p class="servicios-page__status">Cargando facturas…</p>
-} @else if (loadError()) {
-  <p class="servicios-page__status servicios-page__status--error">
-    No se pudieron cargar las facturas: {{ loadError() }}
-  </p>
-} @else if (facturasFiltradas().length === 0) {
-  <p class="servicios-page__status">Todavía no hay facturas registradas para este filtro.</p>
-} @else {
-  <div class="data-table-wrapper">
-    <table class="data-table servicios-table">
-      <thead>
-        <tr>
-          <th>Período</th>
-          <th>Servicio</th>
-          <th>Fotos</th>
-          @if (isAdmin()) {
-            <th class="data-table__actions"></th>
-          }
-        </tr>
-      </thead>
-      <tbody>
-        @for (factura of facturasFiltradas(); track factura.id) {
+@if (tab() === 'facturas') {
+  @if (isLoading()) {
+    <p class="servicios-page__status">Cargando facturas…</p>
+  } @else if (loadError()) {
+    <p class="servicios-page__status servicios-page__status--error">
+      No se pudieron cargar las facturas: {{ loadError() }}
+    </p>
+  } @else if (facturasFiltradas().length === 0) {
+    <p class="servicios-page__status">Todavía no hay facturas registradas para este filtro.</p>
+  } @else {
+    <div class="data-table-wrapper">
+      <table class="data-table servicios-table">
+        <thead>
           <tr>
-            <td class="servicios-table__periodo">{{ periodoLabel(factura.periodo) }}</td>
-            <td>
-              <span class="concepto-badge concepto-badge--{{ factura.concepto }}">
-                {{ conceptoLabel[factura.concepto] }}
-              </span>
-            </td>
-            <td>
-              @if (factura.fotos.length === 0) {
-                <span class="servicios-sin-fotos">Sin fotos</span>
-              } @else {
-                <div class="servicios-fotos">
-                  @for (foto of factura.fotos; track foto.id) {
-                    <span class="servicios-foto">
-                      <button
-                        type="button"
-                        class="servicios-foto__open"
-                        [title]="foto.nombreArchivo"
-                        (click)="abrirFoto(foto)"
-                      >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <rect x="3" y="4" width="18" height="16" rx="2" />
-                          <circle cx="9" cy="10" r="1.6" />
-                          <path
-                            d="m4 18 5-5 4 4 3-3 4 4"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          />
-                        </svg>
-                        {{ foto.nombreArchivo }}
-                      </button>
-                      @if (isAdmin()) {
+            <th>Período</th>
+            <th>Servicio</th>
+            <th>Fotos</th>
+            @if (isAdmin()) {
+              <th class="data-table__actions"></th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (factura of facturasFiltradas(); track factura.id) {
+            <tr>
+              <td class="servicios-table__periodo">{{ periodoLabel(factura.periodo) }}</td>
+              <td>
+                <span class="concepto-badge concepto-badge--{{ factura.concepto }}">
+                  {{ conceptoLabel[factura.concepto] }}
+                </span>
+              </td>
+              <td>
+                @if (factura.fotos.length === 0) {
+                  <span class="servicios-sin-fotos">Sin fotos</span>
+                } @else {
+                  <div class="servicios-fotos">
+                    @for (foto of factura.fotos; track foto.id) {
+                      <span class="servicios-foto">
                         <button
                           type="button"
-                          class="servicios-foto__remove"
-                          aria-label="Eliminar foto"
-                          (click)="deleteFoto(factura, foto)"
+                          class="servicios-foto__open"
+                          [title]="foto.nombreArchivo"
+                          (click)="abrirFoto(foto)"
                         >
                           <svg
                             viewBox="0 0 24 24"
@@ -100,59 +101,180 @@
                             stroke="currentColor"
                             stroke-width="2"
                           >
-                            <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+                            <rect x="3" y="4" width="18" height="16" rx="2" />
+                            <circle cx="9" cy="10" r="1.6" />
+                            <path
+                              d="m4 18 5-5 4 4 3-3 4 4"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
                           </svg>
+                          {{ foto.nombreArchivo }}
                         </button>
-                      }
-                    </span>
-                  }
-                </div>
-              }
-            </td>
-            @if (isAdmin()) {
-              <td class="data-table__actions">
-                <div class="data-table__action-group">
-                  <button
-                    type="button"
-                    class="data-table__edit"
-                    (click)="openModal(factura)"
-                    aria-label="Editar factura"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path
-                        d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    class="data-table__delete"
-                    [disabled]="deletingId() === factura.id"
-                    (click)="deleteFactura(factura)"
-                    aria-label="Eliminar factura"
-                  >
-                    @if (deletingId() === factura.id) {
-                      <span class="spinner spinner--dark"></span>
-                    } @else {
+                        @if (isAdmin()) {
+                          <button
+                            type="button"
+                            class="servicios-foto__remove"
+                            aria-label="Eliminar foto"
+                            (click)="deleteFoto(factura, foto)"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            >
+                              <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+                            </svg>
+                          </button>
+                        }
+                      </span>
+                    }
+                  </div>
+                }
+              </td>
+              @if (isAdmin()) {
+                <td class="data-table__actions">
+                  <div class="data-table__action-group">
+                    <button
+                      type="button"
+                      class="data-table__edit"
+                      (click)="openModal(factura)"
+                      aria-label="Editar factura"
+                    >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path
-                          d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"
+                          d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
                           stroke-linecap="round"
                           stroke-linejoin="round"
                         />
                       </svg>
-                    }
-                  </button>
-                </div>
-              </td>
+                    </button>
+                    <button
+                      type="button"
+                      class="data-table__delete"
+                      [disabled]="deletingId() === factura.id"
+                      (click)="deleteFactura(factura)"
+                      aria-label="Eliminar factura"
+                    >
+                      @if (deletingId() === factura.id) {
+                        <span class="spinner spinner--dark"></span>
+                      } @else {
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path
+                            d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      }
+                    </button>
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+} @else {
+  @if (pagosFiltrados().length === 0) {
+    <p class="servicios-page__status">Todavía no hay pagos de servicios para este filtro.</p>
+  } @else {
+    <div class="data-table-wrapper">
+      <table class="data-table servicios-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Fecha</th>
+            <th>Servicio</th>
+            <th>Empresa</th>
+            <th>Monto</th>
+            <th>Tasa</th>
+            <th>Descripción</th>
+            @if (isAdmin()) {
+              <th class="data-table__actions"></th>
             }
           </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          @for (pago of pagosFiltrados(); track pago.id) {
+            <tr>
+              <td>{{ pago.numero }}</td>
+              <td>{{ pago.fecha | date: 'dd/MM/yyyy' : 'UTC' }}</td>
+              <td>
+                <span class="concepto-badge concepto-badge--{{ pago.concepto }}">
+                  {{ conceptoLabel[pago.concepto] }}
+                </span>
+              </td>
+              <td>{{ pago.empresaNombre }}</td>
+              <td class="data-table__amount">
+                $ {{ pago.monto | number: '1.2-2' }}
+                @if (pago.montoBs) {
+                  <span class="servicios-monto-bs">{{ pago.montoBs | number: '1.2-2' }} Bs</span>
+                }
+              </td>
+              <td>{{ pago.tipoTasa }}</td>
+              <td>{{ pago.descripcion || '—' }}</td>
+              @if (isAdmin()) {
+                <td class="data-table__actions">
+                  <div class="data-table__action-group">
+                    <button
+                      type="button"
+                      class="data-table__edit"
+                      (click)="openPagoModal(pago)"
+                      aria-label="Editar pago"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                          d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="data-table__delete"
+                      [disabled]="deletingPagoId() === pago.id"
+                      (click)="deletePago(pago)"
+                      aria-label="Eliminar pago"
+                    >
+                      @if (deletingPagoId() === pago.id) {
+                        <span class="spinner spinner--dark"></span>
+                      } @else {
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path
+                            d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      }
+                    </button>
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+}
+
+@if (pagoModalOpen()) {
+  <app-pago-form-modal
+    [locales]="locales()"
+    [empresas]="empresas()"
+    [conceptosPermitidos]="conceptosPermitidos"
+    [saving]="saving()"
+    [errorMessage]="saveError()"
+    [pago]="editingPago()"
+    (closed)="closePagoModal()"
+    (saved)="onPagoSaved($event)"
+  />
 }
 
 @if (modalOpen()) {

@@ -1,4 +1,8 @@
-<div class="modal-backdrop" (mousedown)="onBackdropMouseDown($event)" (click)="onBackdropClick($event)">
+<div
+  class="modal-backdrop"
+  (mousedown)="onBackdropMouseDown($event)"
+  (click)="onBackdropClick($event)"
+>
   <div class="modal">
     <div class="modal__header">
       <h2>Agregar subadmin</h2>
@@ -12,12 +16,12 @@
     <form [formGroup]="form" (ngSubmit)="submit()" class="modal__form">
       <label class="field">
         <span>Nombre completo</span>
-        <input type="text" formControlName="nombreCompleto"/>
+        <input type="text" formControlName="nombreCompleto" />
       </label>
 
       <label class="field">
         <span>Correo electrónico</span>
-        <input type="email" formControlName="email"/>
+        <input type="email" formControlName="email" />
       </label>
 
       <label class="field">

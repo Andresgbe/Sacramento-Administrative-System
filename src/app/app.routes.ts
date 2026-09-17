@@ -51,15 +51,13 @@ export const routes: Routes = [
         path: 'egresos',
         loadComponent: () =>
           import('./features/egresos/egresos-page/egresos-page').then((m) => m.EgresosPage),
-        data: { title: 'Egresos', subtitle: 'Reporte de gastos' },
+        data: { title: 'Reporte de egresos', subtitle: 'Gastos administrativos y operativos' },
       },
       {
-        path: 'caja-chica',
+        path: 'balance',
         loadComponent: () =>
-          import('./features/caja-chica/caja-chica-page/caja-chica-page').then(
-            (m) => m.CajaChicaPage,
-          ),
-        data: { title: 'Caja chica', subtitle: 'Control de caja chica' },
+          import('./features/balance/balance-page/balance-page').then((m) => m.BalancePage),
+        data: { title: 'Balance', subtitle: 'Ingresos y egresos del período' },
       },
       {
         path: 'reportes',
@@ -74,8 +72,7 @@ export const routes: Routes = [
             (m) => m.ServiciosBasicosPage,
           ),
         data: {
-          title: 'Servicios básicos',
-          subtitle: 'Facturas mensuales de condominio, Corpoelec e Hidrocapital',
+          title: 'Servicios',
         },
       },
       {

@@ -27,6 +27,7 @@ export interface PagoFormPayload {
   localId: string | null;
   fecha: string;
   monto: number;
+  montoBs: number | null;
   tipoTasa: TipoTasa;
   descripcion: string | null;
   comprobanteFile: File | null;
@@ -53,6 +54,10 @@ export class PagoFormModal implements OnInit {
   @Input() saving = false;
   @Input() errorMessage: string | null = null;
   @Input() pago: Pago | null = null;
+  /** Which concepts this form may register. Reporte de pagos passes `['canon']`
+   *  and Servicios passes the three service concepts, so the same modal serves
+   *  both without either page being able to write the other's rows. */
+  @Input({ required: true }) conceptosPermitidos: PagoConcepto[] = [];
 
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<PagoFormPayload>();
@@ -78,7 +83,6 @@ export class PagoFormModal implements OnInit {
     this.mouseDownOnBackdrop = false;
   }
 
-  protected readonly conceptos = Object.keys(CONCEPTO_LABEL) as PagoConcepto[];
   protected readonly conceptoLabel = CONCEPTO_LABEL;
 
   protected readonly concepto = signal<PagoConcepto>('canon');
@@ -108,11 +112,15 @@ export class PagoFormModal implements OnInit {
     localId: [''],
     fecha: [todayLocalIso(), Validators.required],
     monto: [0, [Validators.required, Validators.min(0.01)]],
+    montoBs: [0],
     tipoTasa: ['BCV' as TipoTasa, Validators.required],
     descripcion: [''],
   });
 
   ngOnInit(): void {
+    this.form.controls.concepto.setValue(this.conceptosPermitidos[0]);
+    this.concepto.set(this.conceptosPermitidos[0]);
+
     if (this.pago) {
       this.form.patchValue({
         concepto: this.pago.concepto,
@@ -120,6 +128,7 @@ export class PagoFormModal implements OnInit {
         localId: this.pago.localId ?? '',
         fecha: this.pago.fecha,
         monto: this.pago.monto,
+        montoBs: this.pago.montoBs ?? 0,
         tipoTasa: this.pago.tipoTasa,
         descripcion: this.pago.descripcion ?? '',
       });
@@ -174,6 +183,8 @@ export class PagoFormModal implements OnInit {
       localId: value.localId || null,
       fecha: value.fecha,
       monto: value.monto,
+      // Optional: a payment made in cash dollars has no bolívar side.
+      montoBs: value.montoBs || null,
       tipoTasa: value.tipoTasa,
       descripcion: value.descripcion || null,
       comprobanteFile: this.comprobanteFile,

@@ -1,0 +1,89 @@
+.balance-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.balance-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px 28px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+
+  // The bottom line carries more weight than the two figures feeding it.
+  &--destacada {
+    border-color: var(--color-text-primary);
+  }
+}
+
+.balance-card__label {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.balance-card__value {
+  font-family: var(--font-amount);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+
+  &--ingreso {
+    color: var(--color-success);
+  }
+
+  &--egreso {
+    color: var(--color-danger);
+  }
+}
+
+.balance-card__hint {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.balance-page__status {
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.data-table.balance-table {
+  min-width: 560px;
+}
+
+.balance-table__amount--ingreso {
+  color: var(--color-success);
+}
+
+.balance-table__amount--egreso {
+  color: var(--color-danger);
+}
+
+.balance-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+
+  &--ingreso {
+    background: rgb(21 128 61 / 12%);
+    color: var(--color-success);
+  }
+
+  &--egreso {
+    background: rgb(185 28 28 / 12%);
+    color: var(--color-danger);
+  }
+}

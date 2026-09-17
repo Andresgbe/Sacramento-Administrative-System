@@ -2,7 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Local } from '../../../core/models/local.model';
+import { Local, PagoStatus } from '../../../core/models/local.model';
 import { TipoTasa } from '../../../core/models/pago.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { PageHeaderService } from '../../../core/services/page-header.service';
@@ -12,7 +12,6 @@ import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.se
 import { ToastService } from '../../../shared/services/toast.service';
 import { PagosService } from '../../pagos/pagos.service';
 import { EmpresasService } from '../empresas.service';
-import { PagoStatus } from '../local-card/local-card';
 import { LocalesService } from '../locales.service';
 
 @Component({
@@ -53,6 +52,12 @@ export class LocalDetailPage implements OnInit {
   protected readonly empresas = this.empresasService.all;
 
   protected local: Local | null = null;
+
+  protected readonly pagoStatusLabel: Record<PagoStatus, string> = {
+    'al-dia': 'Al día',
+    parcial: 'Pago incompleto',
+    debe: 'No ha pagado alquiler',
+  };
 
   protected readonly tasaLabel: Record<TipoTasa, string> = {
     BCV: 'BCV',
@@ -113,7 +118,21 @@ export class LocalDetailPage implements OnInit {
     if (!this.local) {
       return 'debe';
     }
-    return this.pagosService.hasPaidThisMonth(this.local.id) ? 'al-dia' : 'debe';
+    return this.pagosService.estadoPago(this.local.id, this.local.montoAlquiler);
+  }
+
+  protected faltante(): number {
+    if (!this.local) {
+      return 0;
+    }
+    return this.pagosService.faltantePorPagar(this.local.id, this.local.montoAlquiler);
+  }
+
+  protected pagado(): number {
+    if (!this.local) {
+      return 0;
+    }
+    return this.pagosService.canonPagadoEsteMes(this.local.id);
   }
 
   protected pagosDelLocal() {

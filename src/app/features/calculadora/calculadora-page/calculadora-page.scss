@@ -48,7 +48,7 @@
 }
 
 .rate-card__value {
-  font-family: var(--font-mono);
+  font-family: var(--font-amount);
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-text-primary);
@@ -88,7 +88,7 @@
 }
 
 .converter__field input {
-  font-family: var(--font-mono);
+  font-family: var(--font-amount);
   font-size: 1.1rem;
   color: var(--color-text-primary);
   padding: 10px 12px;
@@ -107,7 +107,7 @@
 }
 
 .converter__result {
-  font-family: var(--font-mono);
+  font-family: var(--font-amount);
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--color-accent);

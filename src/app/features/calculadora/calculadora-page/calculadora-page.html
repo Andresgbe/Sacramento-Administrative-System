@@ -20,7 +20,9 @@
 
   <section class="converter">
     <div class="converter__field">
-      <span class="converter__label">{{ direccion() === 'usd-a-bs' ? 'Monto en USD' : 'Monto en Bs' }}</span>
+      <span class="converter__label">{{
+        direccion() === 'usd-a-bs' ? 'Monto en USD' : 'Monto en Bs'
+      }}</span>
       <input
         type="number"
         min="0"
@@ -32,7 +34,12 @@
       />
     </div>
 
-    <button type="button" class="converter__swap" (click)="invertirDireccion()" aria-label="Invertir dirección">
+    <button
+      type="button"
+      class="converter__swap"
+      (click)="invertirDireccion()"
+      aria-label="Invertir dirección"
+    >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M7 4v13m0 0-4-4m4 4 4-4" stroke-linecap="round" stroke-linejoin="round" />
         <path d="M17 20V7m0 0 4 4m-4-4-4 4" stroke-linecap="round" stroke-linejoin="round" />
@@ -40,7 +47,9 @@
     </button>
 
     <div class="converter__field">
-      <span class="converter__label">{{ direccion() === 'usd-a-bs' ? 'Equivale en Bs' : 'Equivale en USD' }}</span>
+      <span class="converter__label">{{
+        direccion() === 'usd-a-bs' ? 'Equivale en Bs' : 'Equivale en USD'
+      }}</span>
       <div class="converter__result">
         {{ resultado() | number: '1.2-2' }}
       </div>
@@ -48,7 +57,8 @@
   </section>
 
   <p class="converter__hint">
-    Calculado con la tasa {{ tasaLabel[tasaSeleccionada()] }} — Bs. {{ tasas[tasaSeleccionada()] | number: '1.2-2' }}
+    Calculado con la tasa {{ tasaLabel[tasaSeleccionada()] }} — Bs.
+    {{ tasas[tasaSeleccionada()] | number: '1.2-2' }}
     por USD.
   </p>
 }

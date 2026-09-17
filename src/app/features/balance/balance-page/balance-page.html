@@ -1,0 +1,87 @@
+<div class="balance-cards">
+  <div class="balance-card">
+    <span class="balance-card__label">Ingresos</span>
+    <span class="balance-card__value balance-card__value--ingreso">
+      $ {{ ingresos() | number: '1.2-2' }}
+    </span>
+    <span class="balance-card__hint">Alquiler cobrado</span>
+  </div>
+
+  <div class="balance-card">
+    <span class="balance-card__label">Egresos</span>
+    <span class="balance-card__value balance-card__value--egreso">
+      $ {{ egresos() | number: '1.2-2' }}
+    </span>
+    <span class="balance-card__hint">Gastos administrativos y operativos</span>
+  </div>
+
+  <div class="balance-card balance-card--destacada">
+    <span class="balance-card__label">Balance</span>
+    <span class="balance-card__value" [class.balance-card__value--egreso]="balance() < 0">
+      $ {{ balance() | number: '1.2-2' }}
+    </span>
+    <span class="balance-card__hint">Ingresos menos egresos</span>
+  </div>
+</div>
+
+<div class="filters-bar">
+  <app-period-filter
+    [anio]="anio()"
+    [mes]="mes()"
+    [anios]="aniosDisponibles()"
+    (anioChange)="setAnio($event)"
+    (mesChange)="setMes($event)"
+  />
+
+  <button
+    type="button"
+    class="filters-clear"
+    [disabled]="!hasActiveFilters()"
+    (click)="clearAllFilters()"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+    </svg>
+    Limpiar filtros
+  </button>
+</div>
+
+@if (isLoading()) {
+  <p class="balance-page__status">Cargando movimientos…</p>
+} @else if (movimientos().length === 0) {
+  <p class="balance-page__status">No hay movimientos en este período.</p>
+} @else {
+  <div class="data-table-wrapper">
+    <table class="data-table balance-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Detalle</th>
+          <th>Monto</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (movimiento of movimientos(); track movimiento.id) {
+          <tr>
+            <td>{{ movimiento.fecha | date: 'dd/MM/yyyy' : 'UTC' }}</td>
+            <td>
+              <span class="balance-badge balance-badge--{{ movimiento.tipo }}">
+                {{ movimiento.tipo === 'ingreso' ? 'Ingreso' : 'Egreso' }}
+              </span>
+            </td>
+            <td>{{ movimiento.detalle }}</td>
+            <td
+              class="data-table__amount"
+              [class.balance-table__amount--ingreso]="movimiento.tipo === 'ingreso'"
+              [class.balance-table__amount--egreso]="movimiento.tipo === 'egreso'"
+            >
+              {{ movimiento.tipo === 'ingreso' ? '+' : '−' }} $
+              {{ movimiento.monto | number: '1.2-2' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

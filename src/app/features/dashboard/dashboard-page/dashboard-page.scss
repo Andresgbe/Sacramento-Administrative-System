@@ -20,8 +20,16 @@
   color: var(--color-text-secondary);
 }
 
+.stat-card__secondary {
+  margin-top: -4px;
+  font-family: var(--font-amount);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
 .stat-card__value {
-  font-family: var(--font-mono);
+  font-family: var(--font-amount);
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--color-text-primary);
@@ -110,6 +118,12 @@
   text-align: right;
 }
 
+.panel__table td.panel__table-amount {
+  font-family: var(--font-amount);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .charts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -143,7 +157,7 @@
 }
 
 .income-breakdown__value {
-  font-family: var(--font-mono);
+  font-family: var(--font-amount);
   font-weight: 700;
   color: var(--color-text-primary);
 }
