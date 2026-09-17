@@ -1,5 +1,9 @@
 import { EmpresaEstado } from './empresa.model';
 
+/** Rent status for the current month. `parcial` covers the real case of a
+ *  tenant who paid part of the canon — neither up to date nor simply owing. */
+export type PagoStatus = 'al-dia' | 'parcial' | 'debe';
+
 export interface Local {
   id: string;
   empresaId: string;

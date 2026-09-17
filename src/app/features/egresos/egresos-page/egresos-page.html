@@ -134,7 +134,7 @@
                 {{ categoriaLabel[egreso.categoria] }}
               </span>
             </td>
-            <td>$ {{ egreso.monto | number: '1.2-2' }}</td>
+            <td class="data-table__amount">$ {{ egreso.monto | number: '1.2-2' }}</td>
             <td>{{ egreso.descripcion || '—' }}</td>
             @if (isAdmin()) {
               <td class="data-table__actions">

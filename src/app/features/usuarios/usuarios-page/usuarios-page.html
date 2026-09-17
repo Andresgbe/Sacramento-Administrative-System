@@ -56,10 +56,14 @@
                 }
               </div>
             </td>
-            <td>{{ usuario.createdAt | date: 'dd/MM/yyyy':'UTC' }}</td>
+            <td>{{ usuario.createdAt | date: 'dd/MM/yyyy' : 'UTC' }}</td>
             <td class="usuarios-table__actions">
               @if (usuario.rol === 'subadmin') {
-                <button type="button" class="usuarios-table__link" (click)="openPasswordModal(usuario)">
+                <button
+                  type="button"
+                  class="usuarios-table__link"
+                  (click)="openPasswordModal(usuario)"
+                >
                   Cambiar contraseña
                 </button>
               }

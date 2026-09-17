@@ -45,11 +45,11 @@ export class Sidebar {
     { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
     { label: 'Locales', icon: 'store', route: '/locales' },
     { label: 'Reporte de pagos', icon: 'receipt', route: '/pagos' },
-    { label: 'Egresos', icon: 'expenses', route: '/egresos' },
-    { label: 'Caja chica', icon: 'wallet', route: '/caja-chica' },
+    { label: 'Servicios', icon: 'services', route: '/servicios-basicos' },
+    { label: 'Reporte de egresos', icon: 'expenses', route: '/egresos' },
+    { label: 'Balance', icon: 'wallet', route: '/balance' },
     { label: 'Calculadora', icon: 'calculator', route: '/calculadora' },
     { label: 'Reportes', icon: 'reports', route: '/reportes' },
-    { label: 'Servicios básicos', icon: 'services', route: '/servicios-basicos' },
   ];
 
   protected readonly navItems = computed<NavItem[]>(() =>

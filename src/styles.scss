@@ -186,6 +186,14 @@ button {
   }
 }
 
+// Money cells inside a .data-table. Stays left-aligned on purpose (see the
+// note above); this only gives the figure the amount typeface.
+.data-table__amount {
+  font-family: var(--font-amount);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .data-table__actions {
   width: 1%;
   text-align: right;
@@ -273,7 +281,7 @@ button {
 }
 
 // Shared filter-bar styles, used across the transaction report pages
-// (pagos, egresos, caja chica) — a search box + date/amount/etc. inputs
+// (pagos, egresos, balance, servicios) — a search box + date/amount/etc. inputs
 // above the .data-table.
 // Grid rather than flex-wrap: wrapped flex items keep their own widths and
 // leave ragged gaps, which is what made the bar look tangled on narrow

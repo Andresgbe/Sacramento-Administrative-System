@@ -1,5 +1,8 @@
 :root {
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-heading: 'Plus Jakarta Sans', var(--font-body);
-  --font-mono: var(--font-body);
+  // Every money figure in the app — totals, table amounts, chart values.
+  // Plus Jakarta Sans gives numbers more presence than the body face; the
+  // variable used to alias --font-body, which is why it is not called "mono".
+  --font-amount: var(--font-heading);
 }

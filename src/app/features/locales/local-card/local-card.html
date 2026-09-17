@@ -31,5 +31,13 @@
     @if (local.montoAlquiler) {
       <span class="local-card__rent">$ {{ local.montoAlquiler | number: '1.2-2' }}</span>
     }
+
+    @if (pagado > 0) {
+      <span class="local-card__paid">Depositó $ {{ pagado | number: '1.2-2' }}</span>
+    }
+
+    @if (pagoStatus === 'parcial') {
+      <span class="local-card__pending">Faltan $ {{ faltante | number: '1.2-2' }}</span>
+    }
   </div>
 </article>

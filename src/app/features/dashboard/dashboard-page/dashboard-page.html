@@ -5,6 +5,9 @@
       <span class="stat-card__value" [class]="'stat-card__value--' + stat.tone">
         {{ stat.value }}
       </span>
+      @if (stat.secondary) {
+        <span class="stat-card__secondary">{{ stat.secondary }}</span>
+      }
     </div>
   }
 </section>

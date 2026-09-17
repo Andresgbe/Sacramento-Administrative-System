@@ -26,7 +26,12 @@ export interface Pago {
   localId: string | null;
   localNumero: string | null;
   fecha: string;
+  /** Authoritative amount: rent status and every total compare against this,
+   *  since `locales.monto_alquiler` is in dollars. */
   monto: number;
+  /** What actually left the tenant's account, when it was paid in bolívares.
+   *  A record of the transfer, never an input to a calculation. */
+  montoBs: number | null;
   tipoTasa: TipoTasa;
   descripcion: string | null;
   comprobanteRuta: string | null;

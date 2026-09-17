@@ -1,4 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
+import { PagoStatus } from '../../core/models/local.model';
 import { Pago, PagoConcepto, TipoTasa, esConceptoPorLocal } from '../../core/models/pago.model';
 import { SupabaseService } from '../../core/services/supabase.service';
 
@@ -10,6 +11,7 @@ interface PagoRow {
   local_id: string | null;
   fecha: string;
   monto: number;
+  monto_bs: number | null;
   tipo_tasa: TipoTasa;
   descripcion: string | null;
   comprobante_ruta: string | null;
@@ -27,6 +29,7 @@ export interface PagoInput {
   localId: string | null;
   fecha: string;
   monto: number;
+  montoBs: number | null;
   tipoTasa: TipoTasa;
   descripcion: string | null;
   comprobanteFile: File | null;
@@ -41,6 +44,7 @@ function toRow(pago: PagoInput) {
     local_id: esConceptoPorLocal(pago.concepto) ? pago.localId : null,
     fecha: pago.fecha,
     monto: pago.monto,
+    monto_bs: pago.montoBs,
     tipo_tasa: pago.tipoTasa,
     descripcion: pago.descripcion,
   };
@@ -57,6 +61,7 @@ function fromRow(row: PagoRow): Pago {
     localNumero: row.locales?.numero_local ?? null,
     fecha: row.fecha,
     monto: row.monto,
+    montoBs: row.monto_bs,
     tipoTasa: row.tipo_tasa,
     descripcion: row.descripcion,
     comprobanteRuta: row.comprobante_ruta,
@@ -184,38 +189,54 @@ export class PagosService {
     return { error: null };
   }
 
-  hasPaidThisMonth(localId: string): boolean {
-    return this.monthsSinceLastPayment(localId) === 0;
-  }
-
   /**
-   * Whole months elapsed since the local's most recent CANON payment (0 = paid
-   * this month). Returns null if the local has never paid rent.
+   * Total canon paid for a local in the current calendar month.
    *
    * Only canon counts: a company can be up to date on its water bill and still
    * owe rent, so counting every concept would mark it as al día.
    *
-   * Computed from "YYYY-MM" parts rather than `Date` arithmetic — `fecha` is
-   * a date-only string (no time), so parsing it with `new Date()` reads it
-   * as UTC midnight and can roll over to the previous month once converted
-   * to a negative-offset local timezone (e.g. Venezuela, UTC-4).
+   * Matched on the "YYYY-MM" prefix rather than `Date` arithmetic — `fecha` is
+   * a date-only string (no time), so parsing it with `new Date()` reads it as
+   * UTC midnight and can roll over to the previous month once converted to a
+   * negative-offset local timezone (e.g. Venezuela, UTC-4).
    */
-  monthsSinceLastPayment(localId: string): number | null {
-    const pagosDelLocal = this.pagos().filter(
-      (pago) => pago.concepto === 'canon' && pago.localId === localId,
-    );
-
-    if (pagosDelLocal.length === 0) {
-      return null;
-    }
-
-    const ultimoPago = pagosDelLocal.reduce((latest, pago) =>
-      pago.fecha > latest.fecha ? pago : latest,
-    );
-
-    const [year, month] = ultimoPago.fecha.split('-').map(Number);
+  canonPagadoEsteMes(localId: string): number {
     const now = new Date();
+    const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-    return (now.getFullYear() - year) * 12 + (now.getMonth() + 1 - month);
+    return this.pagos()
+      .filter(
+        (pago) =>
+          pago.concepto === 'canon' && pago.localId === localId && pago.fecha.startsWith(yearMonth),
+      )
+      .reduce((sum, pago) => sum + pago.monto, 0);
+  }
+
+  /**
+   * Rent status compared against what the unit actually owes. A tenant who
+   * paid $1.000 of a $1.152 canon is neither al día nor moroso.
+   *
+   * Falls back to paid/unpaid when the local has no `montoAlquiler` on record:
+   * with no expected amount there is nothing to compare against.
+   */
+  estadoPago(localId: string, montoAlquiler: number | null): PagoStatus {
+    const pagado = this.canonPagadoEsteMes(localId);
+
+    if (pagado <= 0) {
+      return 'debe';
+    }
+    if (!montoAlquiler) {
+      return 'al-dia';
+    }
+    // Half a cent of slack: amounts converted from bolívares land a hair short.
+    return pagado >= montoAlquiler - 0.005 ? 'al-dia' : 'parcial';
+  }
+
+  /** How much of this month's canon is still outstanding; 0 when settled. */
+  faltantePorPagar(localId: string, montoAlquiler: number | null): number {
+    if (!montoAlquiler) {
+      return 0;
+    }
+    return Math.max(0, montoAlquiler - this.canonPagadoEsteMes(localId));
   }
 }

@@ -1,4 +1,8 @@
-<div class="modal-backdrop" (mousedown)="onBackdropMouseDown($event)" (click)="onBackdropClick($event)">
+<div
+  class="modal-backdrop"
+  (mousedown)="onBackdropMouseDown($event)"
+  (click)="onBackdropClick($event)"
+>
   <div class="modal">
     <div class="modal__header">
       <h2>{{ egreso ? 'Editar gasto' : 'Registrar gasto' }}</h2>
