@@ -4,7 +4,10 @@
   @if (tab() === 'pagos') {
     <div class="servicios-total">
       <span class="servicios-total__label">Total cobrado en servicios</span>
-      <span class="servicios-total__value">$ {{ totalPagos() | number: '1.2-2' }}</span>
+      <span class="servicios-total__value">{{ totalPagosBs() | number: '1.2-2' }} Bs</span>
+      @if (totalPagosUsdEquivalente() !== null) {
+        <span class="servicios-monto-bs">≈ $ {{ totalPagosUsdEquivalente() | number: '1.2-2' }}</span>
+      }
     </div>
   }
 
@@ -210,9 +213,15 @@
               </td>
               <td>{{ pago.empresaNombre }}</td>
               <td class="data-table__amount">
-                $ {{ pago.monto | number: '1.2-2' }}
                 @if (pago.montoBs) {
-                  <span class="servicios-monto-bs">{{ pago.montoBs | number: '1.2-2' }} Bs</span>
+                  {{ pago.montoBs | number: '1.2-2' }} Bs
+                  @if (montoUsdEquivalente(pago) !== null) {
+                    <span class="servicios-monto-bs"
+                      >≈ $ {{ montoUsdEquivalente(pago) | number: '1.2-2' }}</span
+                    >
+                  }
+                } @else {
+                  $ {{ pago.monto | number: '1.2-2' }}
                 }
               </td>
               <td>{{ pago.tipoTasa }}</td>

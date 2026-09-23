@@ -67,37 +67,68 @@
           <input type="date" formControlName="fecha" />
         </label>
 
-        <label
-          class="field"
-          [class.field--invalid]="form.controls.monto.invalid && form.controls.monto.touched"
-        >
-          <span>Monto (USD)</span>
+        @if (esServicio()) {
+          <label
+            class="field"
+            [class.field--invalid]="form.controls.montoBs.invalid && form.controls.montoBs.touched"
+          >
+            <span>Monto (Bs)</span>
+            <input
+              type="number"
+              formControlName="montoBs"
+              min="0"
+              step="0.01"
+              appSelectOnFocus
+              appPositiveDecimal
+            />
+            @if (form.controls.montoBs.invalid && form.controls.montoBs.touched) {
+              <span class="field__error">El monto no puede estar vacío.</span>
+            }
+          </label>
+        } @else {
+          <label
+            class="field"
+            [class.field--invalid]="form.controls.monto.invalid && form.controls.monto.touched"
+          >
+            <span>Monto (USD)</span>
+            <input
+              type="number"
+              formControlName="monto"
+              min="0"
+              step="0.01"
+              appSelectOnFocus
+              appPositiveDecimal
+            />
+            @if (form.controls.monto.invalid && form.controls.monto.touched) {
+              <span class="field__error">El monto no puede estar vacío.</span>
+            }
+          </label>
+        }
+      </div>
+
+      @if (esServicio()) {
+        <p class="field-hint">
+          @if (bcvRate() && montoUsdEstimado() !== null) {
+            Equivalente: $ {{ montoUsdEstimado() | number: '1.2-2' }} (tasa BCV
+            {{ bcvRate() | number: '1.2-2' }})
+          } @else {
+            Cargando tasa BCV…
+          }
+        </p>
+      } @else {
+        <label class="field">
+          <span>Monto (Bs)</span>
           <input
             type="number"
-            formControlName="monto"
+            formControlName="montoBs"
             min="0"
             step="0.01"
+            placeholder="Opcional"
             appSelectOnFocus
             appPositiveDecimal
           />
-          @if (form.controls.monto.invalid && form.controls.monto.touched) {
-            <span class="field__error">El monto no puede estar vacío.</span>
-          }
         </label>
-      </div>
-
-      <label class="field">
-        <span>Monto (Bs)</span>
-        <input
-          type="number"
-          formControlName="montoBs"
-          min="0"
-          step="0.01"
-          placeholder="Opcional"
-          appSelectOnFocus
-          appPositiveDecimal
-        />
-      </label>
+      }
 
       <label class="field">
         <span>Tasa</span>
@@ -150,6 +181,9 @@
 
       @if (errorMessage) {
         <p class="modal__error">{{ errorMessage }}</p>
+      }
+      @if (submitError()) {
+        <p class="modal__error">{{ submitError() }}</p>
       }
 
       <div class="modal__actions">

@@ -6,6 +6,7 @@ import { PagosService } from '../../pagos/pagos.service';
 import { EmpresasService } from '../../locales/empresas.service';
 import { LocalesService } from '../../locales/locales.service';
 import { EgresosService } from '../../egresos/egresos.service';
+import { TasasCambioService } from '../../tasas-cambio/tasas-cambio.service';
 import { BarChart, BarDatum } from '../../../shared/components/bar-chart/bar-chart';
 import { PieChart, PieSegment } from '../../../shared/components/pie-chart/pie-chart';
 
@@ -28,6 +29,7 @@ export class DashboardPage implements OnInit {
   private readonly empresasService = inject(EmpresasService);
   private readonly pagosService = inject(PagosService);
   private readonly egresosService = inject(EgresosService);
+  private readonly tasasCambioService = inject(TasasCambioService);
 
   protected readonly categoriaEgresoLabel: Record<CategoriaEgreso, string> = {
     administrativo: 'Administrativo',
@@ -60,14 +62,28 @@ export class DashboardPage implements OnInit {
       .filter((egreso) => egreso.fecha.startsWith(yearMonth))
       .reduce((sum, egreso) => sum + egreso.monto, 0);
 
+    const balanceDelMes = ingresosDelMes - egresosDelMes;
+
+    // No monto_bs on egresos (unlike pagos), so there's nothing real to sum —
+    // this is an estimate off today's BCV rate, marked with "≈" to keep it
+    // visually distinct from ingresosDelMesBs above, which is an exact sum of
+    // what tenants actually transferred.
+    const bcv = this.tasasCambioService.current()?.bcv;
+
     return [
       {
         label: 'Balance del mes',
-        value: this.formatUsd(ingresosDelMes - egresosDelMes),
-        tone: ingresosDelMes - egresosDelMes < 0 ? 'danger' : 'default',
+        value: this.formatUsd(balanceDelMes),
+        tone: balanceDelMes < 0 ? 'danger' : 'default',
+        secondary: bcv ? this.formatBsApprox(balanceDelMes * bcv) : undefined,
       },
       { label: 'Empresas activas', value: `${empresasActivas}`, tone: 'default' },
-      { label: 'Egresos del mes', value: this.formatUsd(egresosDelMes), tone: 'danger' },
+      {
+        label: 'Egresos del mes',
+        value: this.formatUsd(egresosDelMes),
+        tone: 'danger',
+        secondary: bcv ? this.formatBsApprox(egresosDelMes * bcv) : undefined,
+      },
       {
         label: 'Ingresos del mes',
         value: this.formatUsd(ingresosDelMes),
@@ -180,13 +196,19 @@ export class DashboardPage implements OnInit {
     this.empresasService.load();
     this.pagosService.load();
     this.egresosService.load();
+    this.tasasCambioService.load();
   }
 
   private formatUsd(value: number): string {
-    return `$ ${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `$ ${value.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
   private formatBs(value: number): string {
     return `${value.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs`;
+  }
+
+  /** Same as formatBs, but marked "≈" — a BCV-rate conversion, not a real transferred amount. */
+  private formatBsApprox(value: number): string {
+    return `≈ ${this.formatBs(value)}`;
   }
 }

@@ -8,7 +8,9 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { DecimalPipe } from '@angular/common';
 import { Empresa } from '../../../core/models/empresa.model';
 import { Local } from '../../../core/models/local.model';
 import {
@@ -20,6 +22,7 @@ import {
 } from '../../../core/models/pago.model';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
+import { TasasCambioService } from '../../tasas-cambio/tasas-cambio.service';
 
 export interface PagoFormPayload {
   concepto: PagoConcepto;
@@ -44,7 +47,7 @@ function todayLocalIso(): string {
 
 @Component({
   selector: 'app-pago-form-modal',
-  imports: [ReactiveFormsModule, SelectOnFocusDirective, PositiveDecimalDirective],
+  imports: [ReactiveFormsModule, SelectOnFocusDirective, PositiveDecimalDirective, DecimalPipe],
   templateUrl: './pago-form-modal.html',
   styleUrl: './pago-form-modal.scss',
 })
@@ -63,6 +66,7 @@ export class PagoFormModal implements OnInit {
   @Output() saved = new EventEmitter<PagoFormPayload>();
 
   private readonly fb = inject(FormBuilder);
+  private readonly tasasCambioService = inject(TasasCambioService);
 
   protected comprobanteFile: File | null = null;
 
@@ -92,6 +96,13 @@ export class PagoFormModal implements OnInit {
    *  the chosen empresa actually rents. */
   protected readonly pideLocal = computed(() => esConceptoPorLocal(this.concepto()));
 
+  /** Condominio/Corpoelec/Hidrocapital are collected in bolívares, so those
+   *  three are typed in Bs; USD is shown only as a live BCV estimate and
+   *  never typed by hand (unlike canon, where USD stays authoritative). */
+  protected readonly esServicio = computed(() => this.concepto() !== 'canon');
+
+  protected readonly bcvRate = computed(() => this.tasasCambioService.current()?.bcv ?? null);
+
   protected readonly localesDeEmpresa = computed(() =>
     this.locales.filter((local) => local.empresaId === this.empresaId()),
   );
@@ -117,7 +128,24 @@ export class PagoFormModal implements OnInit {
     descripcion: [''],
   });
 
+  private readonly montoBsValue = toSignal(this.form.controls.montoBs.valueChanges, {
+    initialValue: this.form.controls.montoBs.value,
+  });
+
+  /** Preview only — recomputed at submit() from that moment's rate, never
+   *  read back from here. */
+  protected readonly montoUsdEstimado = computed(() => {
+    const rate = this.bcvRate();
+    const bs = this.montoBsValue();
+    if (!rate || !bs) return null;
+    return bs / rate;
+  });
+
   ngOnInit(): void {
+    if (!this.tasasCambioService.current()) {
+      this.tasasCambioService.load();
+    }
+
     this.form.controls.concepto.setValue(this.conceptosPermitidos[0]);
     this.concepto.set(this.conceptosPermitidos[0]);
 
@@ -137,11 +165,30 @@ export class PagoFormModal implements OnInit {
     }
 
     this.syncLocalValidator();
+    this.syncMontoValidators();
   }
 
   protected onConceptoChange(value: string): void {
     this.concepto.set(value as PagoConcepto);
     this.syncLocalValidator();
+    this.syncMontoValidators();
+  }
+
+  /** Canon: USD required, Bs optional. Services: Bs required, USD computed at
+   *  submit time from the day's BCV rate, so it carries no validators of its own. */
+  private syncMontoValidators(): void {
+    const montoControl = this.form.controls.monto;
+    const montoBsControl = this.form.controls.montoBs;
+
+    if (this.esServicio()) {
+      montoControl.clearValidators();
+      montoBsControl.setValidators([Validators.required, Validators.min(0.01)]);
+    } else {
+      montoControl.setValidators([Validators.required, Validators.min(0.01)]);
+      montoBsControl.clearValidators();
+    }
+    montoControl.updateValueAndValidity();
+    montoBsControl.updateValueAndValidity();
   }
 
   protected onEmpresaChange(value: string): void {
@@ -170,20 +217,36 @@ export class PagoFormModal implements OnInit {
     this.comprobanteFile = null;
   }
 
+  protected readonly submitError = signal<string | null>(null);
+
   protected submit(): void {
+    this.submitError.set(null);
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
     const value = this.form.getRawValue();
+    let monto = value.monto;
+
+    if (this.esServicio()) {
+      const rate = this.bcvRate();
+      if (!rate) {
+        this.submitError.set('No se pudo obtener la tasa BCV del día. Intenta de nuevo en un momento.');
+        return;
+      }
+      monto = Math.round((value.montoBs / rate) * 100) / 100;
+    }
+
     this.saved.emit({
       concepto: value.concepto,
       empresaId: value.empresaId,
       localId: value.localId || null,
       fecha: value.fecha,
-      monto: value.monto,
-      // Optional: a payment made in cash dollars has no bolívar side.
+      monto,
+      // Optional for canon (a payment made in cash dollars has no bolívar
+      // side); required for services, enforced by syncMontoValidators.
       montoBs: value.montoBs || null,
       tipoTasa: value.tipoTasa,
       descripcion: value.descripcion || null,

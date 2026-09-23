@@ -158,6 +158,13 @@ export class PagosPage implements OnInit {
     this.pagosFiltrados().reduce((sum, pago) => sum + pago.monto, 0),
   );
 
+  // Real sum of what was actually transferred in bolívares — not a conversion
+  // of `total`, same reasoning as montoBs on the model: payments made in cash
+  // dollars carry no montoBs, so this covers only the transfers that recorded one.
+  protected readonly totalBs = computed(() =>
+    this.pagosFiltrados().reduce((sum, pago) => sum + (pago.montoBs ?? 0), 0),
+  );
+
   ngOnInit(): void {
     this.pagosService.load();
     this.localesService.load();

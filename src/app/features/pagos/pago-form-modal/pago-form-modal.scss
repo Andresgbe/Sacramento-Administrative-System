@@ -119,6 +119,13 @@
   gap: 16px;
 }
 
+.field-hint {
+  margin-top: -8px;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
 .file-picker__dropzone {
   display: flex;
   align-items: center;

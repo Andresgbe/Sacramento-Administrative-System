@@ -30,6 +30,14 @@
     variable used to be called `--font-mono` and aliased `--font-body`, which
     is why nothing here is monospaced. **Any new amount uses this variable** —
     never hard-code a face on a figure.
+- **Number formatting is Venezuelan, not US**: `.` as the thousands separator,
+  `,` as the decimal one (`2.850,00`, `2.735.054,40 Bs`). The app's `LOCALE_ID`
+  is set to `es-VE` in `app.config.ts` (with `registerLocaleData` for
+  `@angular/common/locales/es-VE`), so every Angular `number`/`currency`/`date`
+  pipe picks this up automatically — **never pass a hardcoded locale like
+  `'en-US'` to a pipe or to `toLocaleString`/`Intl.NumberFormat`**, and don't
+  format a money figure by hand (string concatenation, manual grouping) instead
+  of the pipe or `toLocaleString('es-VE', …)`.
 - SCSS structure: organized global partials (variables, mixins, typography, etc.)
 - Favicon (`public/favicon.ico`) is a tight circular crop of `public/images/logo.jpg`
   (the same building badge used in the sidebar/login), regenerated with Pillow —
@@ -202,13 +210,23 @@ same level — this is why `pagos` carries both `empresa_id` and `local_id`:
 
 - `empresa_id` is **always** set, so grouping and filtering by empresa works
   for every concept; `local_id` only narrows the per-unit ones.
-- A pago carries **two amounts**: `monto` (USD) and `monto_bs` (nullable). USD
-  is authoritative — rent status, every total and the dashboard compare against
-  `locales.monto_alquiler`, which is in dollars. `monto_bs` records what
-  actually left the tenant's account, since the bank reference is in bolívares;
-  it is never an input to a calculation. Null when paid in cash dollars. Both
-  are typed by hand, so the rate is implicit in the pair — don't add a stored
-  rate to `pagos`.
+- A pago carries **two amounts**: `monto` (USD) and `monto_bs` (nullable). For
+  **canon**, USD is authoritative — rent status, every total and the dashboard
+  compare against `locales.monto_alquiler`, which is in dollars. `monto_bs`
+  records what actually left the tenant's account, since the bank reference is
+  in bolívares; it is never an input to a calculation. Null when paid in cash
+  dollars. Both are typed by hand, so the rate is implicit in the pair — don't
+  add a stored rate to `pagos`.
+  **Condominio/Corpoelec/Hidrocapital flip this**: the mall collects these in
+  bolívares, so `monto_bs` is the one typed by hand (required in the form —
+  `PagoFormModal.esServicio()`), and `monto` (USD) is computed automatically
+  from that day's BCV rate at submit time, purely to satisfy the NOT NULL
+  column — it is never read back for display. Every USD figure shown for a
+  service pago (the row, and the "Total cobrado en servicios" card in
+  Servicios) is instead a **live** conversion of `monto_bs` at *today's* BCV
+  rate, marked with "≈", and changes as the rate does — a deliberate
+  divergence from `deudas`' frozen-rate snapshot, chosen because these are
+  live conversions for display, not a debt balance meant to stay stable.
 - A check constraint (`pagos_local_matches_concepto`) enforces the table above,
   because "which local is this water bill for?" has no correct answer. Add a
   new per-unit concept to `CONCEPTOS_POR_LOCAL` in `pago.model.ts` **and** to

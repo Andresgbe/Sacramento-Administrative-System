@@ -2,6 +2,9 @@
   <div class="pagos-total">
     <span class="pagos-total__label">Total cobrado en alquiler</span>
     <span class="pagos-total__value">$ {{ total() | number: '1.2-2' }}</span>
+    @if (totalBs() > 0) {
+      <span class="pagos-monto-bs">{{ totalBs() | number: '1.2-2' }} Bs</span>
+    }
   </div>
 
   @if (isAdmin()) {
