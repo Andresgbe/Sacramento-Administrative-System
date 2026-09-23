@@ -14,6 +14,9 @@
       }
     </span>
     <span class="egresos-total__value">$ {{ total() | number: '1.2-2' }}</span>
+    @if (bsEquivalente(total()); as totalBs) {
+      <span class="egresos-total__bs">≈ {{ totalBs | number: '1.2-2' }} Bs</span>
+    }
   </div>
 
   @if (isAdmin()) {
@@ -134,7 +137,12 @@
                 {{ categoriaLabel[egreso.categoria] }}
               </span>
             </td>
-            <td class="data-table__amount">$ {{ egreso.monto | number: '1.2-2' }}</td>
+            <td class="data-table__amount">
+              $ {{ egreso.monto | number: '1.2-2' }}
+              @if (bsEquivalente(egreso.monto); as montoBs) {
+                <span class="egresos-monto-bs">≈ {{ montoBs | number: '1.2-2' }} Bs</span>
+              }
+            </td>
             <td>{{ egreso.descripcion || '—' }}</td>
             @if (isAdmin()) {
               <td class="data-table__actions">

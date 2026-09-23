@@ -1,41 +1,106 @@
-.coming-soon {
+.reportes-page__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.reportes-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.reportes-totales {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.reportes-total {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 4rem 1.5rem;
+  gap: 6px;
+  padding: 16px 22px;
   text-align: center;
   background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+}
 
-  &__icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 3.5rem;
-    height: 3.5rem;
-    border-radius: 50%;
-    background: var(--color-accent-soft);
-    color: var(--color-accent);
+.reportes-total__label {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
 
-    svg {
-      width: 1.75rem;
-      height: 1.75rem;
-    }
+.reportes-total__value {
+  font-family: var(--font-amount);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+
+  &--ingreso {
+    color: var(--color-success);
   }
 
-  &__title {
-    font-family: var(--font-heading);
-    font-size: 1.25rem;
-    color: var(--color-text-primary);
-    margin: 0;
+  &--egreso {
+    color: var(--color-danger);
+  }
+}
+
+.reportes-page__status {
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.data-table.reportes-table {
+  min-width: 900px;
+}
+
+.reportes-table__amount--ingreso {
+  color: var(--color-success);
+}
+
+.reportes-table__amount--egreso {
+  color: var(--color-danger);
+}
+
+// "≈" marks a live BCV conversion (every egreso) rather than a recorded
+// figure; pagos that stored a real montoBs show it without the sign.
+.reportes-monto-bs {
+  display: block;
+  font-family: var(--font-amount);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.reportes-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+
+  &--ingreso {
+    background: rgb(21 128 61 / 12%);
+    color: var(--color-success);
   }
 
-  &__text {
-    max-width: 28rem;
-    color: var(--color-text-secondary);
-    margin: 0;
+  &--egreso {
+    background: rgb(185 28 28 / 12%);
+    color: var(--color-danger);
   }
 }

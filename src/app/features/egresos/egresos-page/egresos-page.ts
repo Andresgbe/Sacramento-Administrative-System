@@ -15,6 +15,7 @@ import { PositiveDecimalDirective } from '../../../shared/directives/positive-de
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { TasasCambioService } from '../../tasas-cambio/tasas-cambio.service';
 import { EgresoFormModal, EgresoFormPayload } from '../egreso-form-modal/egreso-form-modal';
 import { EgresosService } from '../egresos.service';
 
@@ -37,6 +38,7 @@ type FiltroCategoria = CategoriaEgreso | 'todos';
 })
 export class EgresosPage implements OnInit {
   private readonly egresosService = inject(EgresosService);
+  private readonly tasasCambioService = inject(TasasCambioService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly toastService = inject(ToastService);
   private readonly authService = inject(AuthService);
@@ -58,6 +60,21 @@ export class EgresosPage implements OnInit {
     administrativo: 'Administrativo',
     operativo: 'Operativo',
   };
+
+  protected readonly bcvRate = computed(() => this.tasasCambioService.current()?.bcv ?? null);
+
+  /**
+   * Bolívar equivalent at TODAY's BCV rate — an estimate, not a record.
+   *
+   * Unlike `pagos`, an egreso has no `monto_bs`: nobody types what actually
+   * left the account, so there is no real figure to show and this is a live
+   * conversion that moves with the rate. Always rendered with "≈" so it is
+   * never mistaken for an amount that was really transferred.
+   */
+  protected bsEquivalente(montoUsd: number): number | null {
+    const rate = this.bcvRate();
+    return rate ? montoUsd * rate : null;
+  }
 
   protected readonly searchInput = signal('');
   protected readonly appliedSearch = signal('');
@@ -120,6 +137,7 @@ export class EgresosPage implements OnInit {
 
   ngOnInit(): void {
     this.egresosService.load();
+    this.tasasCambioService.load();
   }
 
   protected setFiltro(filtro: FiltroCategoria): void {

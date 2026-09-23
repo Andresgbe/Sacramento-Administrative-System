@@ -120,8 +120,13 @@
   object-fit: cover;
 }
 
+// Wraps to two lines: the name is far longer than the "Sacramento" it
+// replaced and would otherwise overflow the 260px rail.
 .sidebar__brand-name {
   color: var(--color-accent);
+  font-size: 1rem;
+  line-height: 1.2;
+  min-width: 0;
 }
 
 .sidebar__nav {

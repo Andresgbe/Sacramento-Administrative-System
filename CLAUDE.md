@@ -223,7 +223,7 @@ same level — this is why `pagos` carries both `empresa_id` and `local_id`:
   from that day's BCV rate at submit time, purely to satisfy the NOT NULL
   column — it is never read back for display. Every USD figure shown for a
   service pago (the row, and the "Total cobrado en servicios" card in
-  Servicios) is instead a **live** conversion of `monto_bs` at *today's* BCV
+  Servicios) is instead a **live** conversion of `monto_bs` at _today's_ BCV
   rate, marked with "≈", and changes as the rate does — a deliberate
   divergence from `deudas`' frozen-rate snapshot, chosen because these are
   live conversions for display, not a debt balance meant to stay stable.
@@ -398,6 +398,26 @@ not in the root of app/.
       currency or exchange rate**: the figures live inside the attached
       documents, and the per-empresa numbers belong in `deudas`. Don't reinstate
       a total here — it would be a second place for the same number to drift.
+  - **Reportes** (`/reportes`): every pago and egreso flattened into one
+    searchable list — four summary cards (Ingresos, Egresos, Balance, count),
+    filters for search, año, mes, tipo and empresa (both `<app-multi-select>`)
+    and a monto range, plus **Excel** and **PDF** buttons that export exactly
+    the rows currently on screen. Read-only; nothing is registered here.
+    Both libraries are **`import()`ed inside the click handler**, never at the
+    top of the file: together they are ~900 kB, dwarfing the page itself, and
+    most visits download nothing. Keep it that way — a static import would drag
+    them into the route's main chunk.
+    In the **.xlsx**, amounts are written as real numbers, not preformatted
+    strings, so the client can sum and pivot them; that is the whole reason for
+    shipping Excel over a CSV. The **PDF** is landscape (nine columns do not
+    fit portrait) and drawn with `jspdf-autotable`.
+    `xlsx` is installed **from `cdn.sheetjs.com`, not npm** — the npm `xlsx`
+    package is frozen at 0.18.5 with known CVEs. Don't "fix" it to the registry
+    version. jsPDF pulls `canvg`/`html2canvas` (CommonJS, unused by us), which
+    is why `allowedCommonJsDependencies` exists in `angular.json`.
+    Egreso rows carry no recorded bolívar figure, so their Bs column is a live
+    BCV conversion flagged `≈` in the table and with a "Bs estimado" column in
+    the CSV; pago rows show their real `monto_bs` unflagged.
   - **Calculadora**: BCV + paralelo rates from dolarapi.com, USDT from Binance
     P2P, fetched and cached once per day by the `tasas-cambio` Edge Function
     into the `tasas_cambio` table
@@ -414,7 +434,7 @@ not in the root of app/.
      never written), so a balance can be computed.
   4. Role-based UI restrictions for subadmin — today only RLS enforces it, so a
      subadmin sees buttons that fail with a Supabase error.
-  5. `reportes` module; `remodelaciones` table.
+  5. `remodelaciones` table.
 
 ## Working with the client's documents
 

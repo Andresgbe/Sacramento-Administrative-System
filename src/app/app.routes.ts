@@ -63,7 +63,7 @@ export const routes: Routes = [
         path: 'reportes',
         loadComponent: () =>
           import('./features/reportes/reportes-page/reportes-page').then((m) => m.ReportesPage),
-        data: { title: 'Reportes', subtitle: 'Generación de reportes' },
+        data: { title: 'Reportes', subtitle: 'Todas las transacciones, filtrables y descargables' },
       },
       {
         path: 'servicios-basicos',
