@@ -6,7 +6,12 @@ import {
   SERVICIO_CONCEPTOS,
   ServicioConcepto,
 } from '../../../core/models/factura-servicio.model';
-import { CONCEPTO_LABEL, Pago, PagoConcepto } from '../../../core/models/pago.model';
+import {
+  CONCEPTO_LABEL,
+  Pago,
+  PagoConcepto,
+  esConceptoDeIngreso,
+} from '../../../core/models/pago.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { EmpresasService } from '../../locales/empresas.service';
 import { LocalesService } from '../../locales/locales.service';
@@ -58,15 +63,14 @@ export class ServiciosBasicosPage implements OnInit {
     { id: 'facturas', label: 'Facturas del mes' },
   ];
 
-  /** Canon is the mall's own income and belongs in Reporte de pagos; these
-   *  three are collected and forwarded, so they are registered here. */
+  /** Canon and condominio are the mall's own income and belong in Reporte de
+   *  pagos; these two are collected and forwarded, so they live here. */
   protected readonly conceptosPermitidos: PagoConcepto[] = SERVICIO_CONCEPTOS;
 
   protected readonly servicio = signal<FiltroServicio>('todos');
 
   protected readonly servicioTabs: TabItem<FiltroServicio>[] = [
     { id: 'todos', label: 'Todos' },
-    { id: 'condominio', label: 'Condominio' },
     { id: 'corpoelec', label: 'Corpoelec' },
     { id: 'hidrocapital', label: 'Hidrocapital' },
   ];
@@ -105,7 +109,7 @@ export class ServiciosBasicosPage implements OnInit {
     const mes = this.mes();
 
     return this.pagosService.all().filter((pago) => {
-      if (pago.concepto === 'canon') {
+      if (esConceptoDeIngreso(pago.concepto)) {
         return false;
       }
       if (servicio !== 'todos' && pago.concepto !== servicio) {
@@ -194,9 +198,7 @@ export class ServiciosBasicosPage implements OnInit {
   }
 
   protected async deletePago(pago: Pago): Promise<void> {
-    const monto = pago.montoBs
-      ? `${pago.montoBs.toFixed(2)} Bs`
-      : `$ ${pago.monto.toFixed(2)}`;
+    const monto = pago.montoBs ? `${pago.montoBs.toFixed(2)} Bs` : `$ ${pago.monto.toFixed(2)}`;
     const confirmed = await this.confirmDialog.confirm({
       title: 'Eliminar pago',
       message: `¿Eliminar el pago de ${CONCEPTO_LABEL[pago.concepto]} de "${pago.empresaNombre}" por ${monto}? Esta acción no se puede deshacer.`,

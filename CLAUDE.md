@@ -201,15 +201,20 @@ A business can rent more than one unit in the mall, so the two are separate:
 Every business pays **four** different things, and they are not billed at the
 same level — this is why `pagos` carries both `empresa_id` and `local_id`:
 
-| concepto           | billed per                             | `local_id` |
-| ------------------ | -------------------------------------- | ---------- |
-| `canon` (alquiler) | **local** — 2 units = 2 canons a month | required   |
-| `condominio`       | empresa — one a month                  | null       |
-| `corpoelec`        | empresa — one a month                  | null       |
-| `hidrocapital`     | empresa — one a month                  | null       |
+| concepto           | billed per                             | `empresa_id` | `local_id` |
+| ------------------ | -------------------------------------- | ------------ | ---------- |
+| `canon` (alquiler) | **local** — 2 units = 2 canons a month | required     | required   |
+| `condominio`       | **nobody** — one lump sum for the mall | null         | null       |
+| `corpoelec`        | empresa — its share of a shared bill   | required     | null       |
+| `hidrocapital`     | empresa — idem                         | required     | null       |
 
-- `empresa_id` is **always** set, so grouping and filtering by empresa works
-  for every concept; `local_id` only narrows the per-unit ones.
+`empresa_id` is **nullable** because of condominio: it is collected as a single
+monthly figure and is not broken down per tenant, so it has no business and no
+unit. The check constraint `pagos_local_matches_concepto` enforces the whole
+table above — both columns, per concepto — so nothing can land without the
+reference it should have. `requiereEmpresa()` in `pago.model.ts` is the
+front-end half of the same rule.
+
 - A pago carries **two amounts**: `monto` (USD) and `monto_bs` (nullable). For
   **canon**, USD is authoritative — rent status, every total and the dashboard
   compare against `locales.monto_alquiler`, which is in dollars. `monto_bs`
@@ -241,16 +246,18 @@ same level — this is why `pagos` carries both `empresa_id` and `local_id`:
   Only canon counts: a company can be current on its water bill and still owe
   rent. With no `montoAlquiler` on record it falls back to paid/unpaid, since
   there is nothing to compare against.
-- **Canon and the other three live in different screens.** `Reporte de pagos`
-  is the rent ledger and shows **canon only**; condominio, Corpoelec and
-  Hidrocapital are registered under `Servicios`, because they are money the
-  mall collects and forwards, not its income. One table, two pages: each
-  passes `conceptosPermitidos` to the shared `<app-pago-form-modal>` so neither
-  can write the other's rows.
-- **The Dashboard counts canon only** — "Ingresos del mes", the "Ingresos
-  mensuales" chart and "Últimos pagos" all filter to canon. Counting the
-  pass-through utilities there inflated income against expenses already
-  recorded in `egresos`.
+- **Income vs pass-through splits the screens.** `CONCEPTOS_DE_INGRESO`
+  (`canon` + `condominio`) is the mall's own money and lives in **Reporte de
+  pagos**, which has tabs Todos / Canon / Condominio. `corpoelec` and
+  `hidrocapital` are collected and forwarded and live in **Servicios**. One
+  table, two pages: each passes `conceptosPermitidos` to the shared
+  `<app-pago-form-modal>`, so neither can write the other's rows.
+- **Everything that sums income filters through `esConceptoDeIngreso()`** —
+  the Dashboard tiles, the "Ingresos mensuales" chart, "Últimos pagos", and
+  Balance. Never hard-code `concepto === 'canon'` for an income total again:
+  that is exactly what had to be changed in five places when condominio moved.
+  The one deliberate canon-only filter left is `canonPagadoEsteMes()`, because
+  rent status must not be satisfied by a condominio payment.
 
 ### deudas y facturas de servicio
 

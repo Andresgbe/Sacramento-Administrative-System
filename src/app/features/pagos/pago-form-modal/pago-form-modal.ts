@@ -19,6 +19,7 @@ import {
   PagoConcepto,
   TipoTasa,
   esConceptoPorLocal,
+  requiereEmpresa,
 } from '../../../core/models/pago.model';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
@@ -26,7 +27,7 @@ import { TasasCambioService } from '../../tasas-cambio/tasas-cambio.service';
 
 export interface PagoFormPayload {
   concepto: PagoConcepto;
-  empresaId: string;
+  empresaId: string | null;
   localId: string | null;
   fecha: string;
   monto: number;
@@ -96,6 +97,10 @@ export class PagoFormModal implements OnInit {
    *  the chosen empresa actually rents. */
   protected readonly pideLocal = computed(() => esConceptoPorLocal(this.concepto()));
 
+  /** Condominio is one lump sum for the mall, not billed to any tenant, so it
+   *  asks for no empresa at all. */
+  protected readonly pideEmpresa = computed(() => requiereEmpresa(this.concepto()));
+
   /** Condominio/Corpoelec/Hidrocapital are collected in bolívares, so those
    *  three are typed in Bs; USD is shown only as a live BCV estimate and
    *  never typed by hand (unlike canon, where USD stays authoritative). */
@@ -152,7 +157,7 @@ export class PagoFormModal implements OnInit {
     if (this.pago) {
       this.form.patchValue({
         concepto: this.pago.concepto,
-        empresaId: this.pago.empresaId,
+        empresaId: this.pago.empresaId ?? '',
         localId: this.pago.localId ?? '',
         fecha: this.pago.fecha,
         monto: this.pago.monto,
@@ -161,17 +166,30 @@ export class PagoFormModal implements OnInit {
         descripcion: this.pago.descripcion ?? '',
       });
       this.concepto.set(this.pago.concepto);
-      this.empresaId.set(this.pago.empresaId);
+      this.empresaId.set(this.pago.empresaId ?? '');
     }
 
+    this.syncEmpresaValidator();
     this.syncLocalValidator();
     this.syncMontoValidators();
   }
 
   protected onConceptoChange(value: string): void {
     this.concepto.set(value as PagoConcepto);
+    this.syncEmpresaValidator();
     this.syncLocalValidator();
     this.syncMontoValidators();
+  }
+
+  private syncEmpresaValidator(): void {
+    const control = this.form.controls.empresaId;
+    if (this.pideEmpresa()) {
+      control.addValidators(Validators.required);
+    } else {
+      control.removeValidators(Validators.required);
+      control.setValue('');
+    }
+    control.updateValueAndValidity();
   }
 
   /** Canon: USD required, Bs optional. Services: Bs required, USD computed at
@@ -233,7 +251,9 @@ export class PagoFormModal implements OnInit {
     if (this.esServicio()) {
       const rate = this.bcvRate();
       if (!rate) {
-        this.submitError.set('No se pudo obtener la tasa BCV del día. Intenta de nuevo en un momento.');
+        this.submitError.set(
+          'No se pudo obtener la tasa BCV del día. Intenta de nuevo en un momento.',
+        );
         return;
       }
       monto = Math.round((value.montoBs / rate) * 100) / 100;
@@ -241,7 +261,7 @@ export class PagoFormModal implements OnInit {
 
     this.saved.emit({
       concepto: value.concepto,
-      empresaId: value.empresaId,
+      empresaId: value.empresaId || null,
       localId: value.localId || null,
       fecha: value.fecha,
       monto,

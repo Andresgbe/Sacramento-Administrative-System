@@ -4,7 +4,9 @@ import { PagoConcepto } from './pago.model';
  *  bill the mall has to split. */
 export type ServicioConcepto = Exclude<PagoConcepto, 'canon'>;
 
-export const SERVICIO_CONCEPTOS: ServicioConcepto[] = ['condominio', 'corpoelec', 'hidrocapital'];
+/** Condominio is NOT here: it is the mall's own income and is registered in
+ *  Reporte de pagos. These two are bills the mall collects and forwards. */
+export const SERVICIO_CONCEPTOS: ServicioConcepto[] = ['corpoelec', 'hidrocapital'];
 
 export interface FacturaFoto {
   id: string;

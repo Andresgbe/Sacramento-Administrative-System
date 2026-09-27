@@ -25,21 +25,25 @@
         </label>
       }
 
-      <label
-        class="field"
-        [class.field--invalid]="form.controls.empresaId.invalid && form.controls.empresaId.touched"
-      >
-        <span>Empresa</span>
-        <select formControlName="empresaId" (change)="onEmpresaChange($any($event.target).value)">
-          <option value="" disabled>Selecciona una empresa</option>
-          @for (empresa of empresasDisponibles(); track empresa.id) {
-            <option [value]="empresa.id">{{ empresa.nombreComercial }}</option>
+      @if (pideEmpresa()) {
+        <label
+          class="field"
+          [class.field--invalid]="
+            form.controls.empresaId.invalid && form.controls.empresaId.touched
+          "
+        >
+          <span>Empresa</span>
+          <select formControlName="empresaId" (change)="onEmpresaChange($any($event.target).value)">
+            <option value="" disabled>Selecciona una empresa</option>
+            @for (empresa of empresasDisponibles(); track empresa.id) {
+              <option [value]="empresa.id">{{ empresa.nombreComercial }}</option>
+            }
+          </select>
+          @if (form.controls.empresaId.invalid && form.controls.empresaId.touched) {
+            <span class="field__error">Debes seleccionar una empresa.</span>
           }
-        </select>
-        @if (form.controls.empresaId.invalid && form.controls.empresaId.touched) {
-          <span class="field__error">Debes seleccionar una empresa.</span>
-        }
-      </label>
+        </label>
+      }
 
       @if (pideLocal()) {
         <label

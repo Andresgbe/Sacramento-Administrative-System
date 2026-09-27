@@ -1,13 +1,19 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { PagoStatus } from '../../core/models/local.model';
-import { Pago, PagoConcepto, TipoTasa, esConceptoPorLocal } from '../../core/models/pago.model';
+import {
+  Pago,
+  PagoConcepto,
+  TipoTasa,
+  esConceptoPorLocal,
+  requiereEmpresa,
+} from '../../core/models/pago.model';
 import { SupabaseService } from '../../core/services/supabase.service';
 
 interface PagoRow {
   id: string;
   numero: number;
   concepto: PagoConcepto;
-  empresa_id: string;
+  empresa_id: string | null;
   local_id: string | null;
   fecha: string;
   monto: number;
@@ -25,7 +31,7 @@ const SELECT_WITH_REFS = '*, empresas(nombre_comercial), locales(numero_local)';
 
 export interface PagoInput {
   concepto: PagoConcepto;
-  empresaId: string;
+  empresaId: string | null;
   localId: string | null;
   fecha: string;
   monto: number;
@@ -38,7 +44,9 @@ export interface PagoInput {
 function toRow(pago: PagoInput) {
   return {
     concepto: pago.concepto,
-    empresa_id: pago.empresaId,
+    // The DB rejects an empresa on condominio, so this normalises rather than
+    // trusting the form to have cleared it.
+    empresa_id: requiereEmpresa(pago.concepto) ? pago.empresaId : null,
     // The DB rejects a local on an empresa-wide concept, so this normalises
     // rather than trusting the form to have cleared it.
     local_id: esConceptoPorLocal(pago.concepto) ? pago.localId : null,

@@ -6,7 +6,9 @@
       <span class="servicios-total__label">Total cobrado en servicios</span>
       <span class="servicios-total__value">{{ totalPagosBs() | number: '1.2-2' }} Bs</span>
       @if (totalPagosUsdEquivalente() !== null) {
-        <span class="servicios-monto-bs">≈ $ {{ totalPagosUsdEquivalente() | number: '1.2-2' }}</span>
+        <span class="servicios-monto-bs"
+          >≈ $ {{ totalPagosUsdEquivalente() | number: '1.2-2' }}</span
+        >
       }
     </div>
   }

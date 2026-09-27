@@ -1,6 +1,6 @@
 <div class="pagos-page__header">
   <div class="pagos-total">
-    <span class="pagos-total__label">Total cobrado en alquiler</span>
+    <span class="pagos-total__label">{{ totalLabel() }}</span>
     <span class="pagos-total__value">$ {{ total() | number: '1.2-2' }}</span>
     @if (totalBs() > 0) {
       <span class="pagos-monto-bs">{{ totalBs() | number: '1.2-2' }} Bs</span>
@@ -16,6 +16,8 @@
     </button>
   }
 </div>
+
+<app-tabs [tabs]="conceptoTabs" [active]="concepto()" (selected)="setConcepto($event)" />
 
 <div class="filters-bar">
   <div class="filters-field filters-field--search">
@@ -145,7 +147,7 @@
           <tr>
             <td>{{ pago.numero }}</td>
             <td>{{ pago.fecha | date: 'dd/MM/yyyy' : 'UTC' }}</td>
-            <td>{{ pago.empresaNombre }}</td>
+            <td>{{ pago.empresaNombre || '—' }}</td>
             <td>{{ pago.localNumero || '—' }}</td>
             <td class="data-table__amount">
               $ {{ pago.monto | number: '1.2-2' }}

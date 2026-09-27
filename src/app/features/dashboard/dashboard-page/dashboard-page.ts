@@ -2,6 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CategoriaEgreso } from '../../../core/models/egreso.model';
+import { esConceptoDeIngreso } from '../../../core/models/pago.model';
 import { PagosService } from '../../pagos/pagos.service';
 import { EmpresasService } from '../../locales/empresas.service';
 import { LocalesService } from '../../locales/locales.service';
@@ -44,19 +45,19 @@ export class DashboardPage implements OnInit {
 
     const now = new Date();
     const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    // Canon only. Condominio and the utilities are money the mall collects and
-    // forwards, so counting them here would inflate income against expenses
-    // that are already recorded separately.
-    const canonDelMes = this.pagosService
+    // Canon and condominio — the mall's own income. Corpoelec and Hidrocapital
+    // are collected and forwarded, and the forwarding already shows up in
+    // `egresos`, so counting them here would inflate income against itself.
+    const ingresosPagos = this.pagosService
       .all()
-      .filter((pago) => pago.concepto === 'canon' && pago.fecha.startsWith(yearMonth));
+      .filter((pago) => esConceptoDeIngreso(pago.concepto) && pago.fecha.startsWith(yearMonth));
 
-    const ingresosDelMes = canonDelMes.reduce((sum, pago) => sum + pago.monto, 0);
+    const ingresosDelMes = ingresosPagos.reduce((sum, pago) => sum + pago.monto, 0);
 
     // Sum of what was actually transferred in bolívares, NOT a conversion of
     // the dollar total: payments made in cash dollars carry no `montoBs`, so
     // this figure covers only the transfers that recorded one.
-    const ingresosDelMesBs = canonDelMes.reduce((sum, pago) => sum + (pago.montoBs ?? 0), 0);
+    const ingresosDelMesBs = ingresosPagos.reduce((sum, pago) => sum + (pago.montoBs ?? 0), 0);
     const egresosDelMes = this.egresosService
       .all()
       .filter((egreso) => egreso.fecha.startsWith(yearMonth))
@@ -93,11 +94,11 @@ export class DashboardPage implements OnInit {
     ];
   });
 
-  // Live: most recent rent payments, already sorted newest-first.
+  // Live: most recent income payments, already sorted newest-first.
   protected readonly recentPayments = computed(() =>
     this.pagosService
       .all()
-      .filter((pago) => pago.concepto === 'canon')
+      .filter((pago) => esConceptoDeIngreso(pago.concepto))
       .slice(0, 3),
   );
 
@@ -168,7 +169,7 @@ export class DashboardPage implements OnInit {
 
     const pagos = this.pagosService
       .all()
-      .filter((pago) => pago.concepto === 'canon' && pago.fecha.startsWith(`${year}-`));
+      .filter((pago) => esConceptoDeIngreso(pago.concepto) && pago.fecha.startsWith(`${year}-`));
 
     const primerMesConDatos = pagos.reduce(
       (earliest, pago) => Math.min(earliest, Number(pago.fecha.slice(5, 7))),
