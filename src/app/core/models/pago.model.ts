@@ -12,6 +12,18 @@ export const CONCEPTO_LABEL: Record<PagoConcepto, string> = {
 /** Canon is billed per unit; the other three are billed once per empresa. */
 export const CONCEPTOS_POR_LOCAL: readonly PagoConcepto[] = ['canon'];
 
+/** Registered in Reporte de pagos and counted as the mall's income. */
+export const CONCEPTOS_DE_INGRESO: readonly PagoConcepto[] = ['canon', 'condominio'];
+
+/** Condominio is a single monthly figure for the mall, not billed per tenant. */
+export function requiereEmpresa(concepto: PagoConcepto): boolean {
+  return concepto !== 'condominio';
+}
+
+export function esConceptoDeIngreso(concepto: PagoConcepto): boolean {
+  return CONCEPTOS_DE_INGRESO.includes(concepto);
+}
+
 export function esConceptoPorLocal(concepto: PagoConcepto): boolean {
   return CONCEPTOS_POR_LOCAL.includes(concepto);
 }
@@ -20,7 +32,9 @@ export interface Pago {
   id: string;
   numero: number;
   concepto: PagoConcepto;
-  empresaId: string;
+  /** Null for `condominio`, which is collected as one lump sum for the mall
+   *  rather than billed to any particular business. */
+  empresaId: string | null;
   empresaNombre: string;
   /** Only set for per-unit concepts (canon); null for empresa-wide services. */
   localId: string | null;

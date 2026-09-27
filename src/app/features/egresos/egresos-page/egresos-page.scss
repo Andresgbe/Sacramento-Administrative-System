@@ -31,6 +31,25 @@
   white-space: nowrap;
 }
 
+// "≈" everywhere: egresos have no recorded bolívar figure, so these are live
+// conversions at today's BCV rate, not what actually left the account.
+.egresos-total__bs {
+  font-family: var(--font-amount);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.egresos-monto-bs {
+  display: block;
+  font-family: var(--font-amount);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
 .egresos-page__status {
   padding: 20px;
   border-radius: var(--radius-lg);

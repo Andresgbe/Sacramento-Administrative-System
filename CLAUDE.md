@@ -30,6 +30,14 @@
     variable used to be called `--font-mono` and aliased `--font-body`, which
     is why nothing here is monospaced. **Any new amount uses this variable** —
     never hard-code a face on a figure.
+- **Number formatting is Venezuelan, not US**: `.` as the thousands separator,
+  `,` as the decimal one (`2.850,00`, `2.735.054,40 Bs`). The app's `LOCALE_ID`
+  is set to `es-VE` in `app.config.ts` (with `registerLocaleData` for
+  `@angular/common/locales/es-VE`), so every Angular `number`/`currency`/`date`
+  pipe picks this up automatically — **never pass a hardcoded locale like
+  `'en-US'` to a pipe or to `toLocaleString`/`Intl.NumberFormat`**, and don't
+  format a money figure by hand (string concatenation, manual grouping) instead
+  of the pipe or `toLocaleString('es-VE', …)`.
 - SCSS structure: organized global partials (variables, mixins, typography, etc.)
 - Favicon (`public/favicon.ico`) is a tight circular crop of `public/images/logo.jpg`
   (the same building badge used in the sidebar/login), regenerated with Pillow —
@@ -193,22 +201,37 @@ A business can rent more than one unit in the mall, so the two are separate:
 Every business pays **four** different things, and they are not billed at the
 same level — this is why `pagos` carries both `empresa_id` and `local_id`:
 
-| concepto           | billed per                             | `local_id` |
-| ------------------ | -------------------------------------- | ---------- |
-| `canon` (alquiler) | **local** — 2 units = 2 canons a month | required   |
-| `condominio`       | empresa — one a month                  | null       |
-| `corpoelec`        | empresa — one a month                  | null       |
-| `hidrocapital`     | empresa — one a month                  | null       |
+| concepto           | billed per                             | `empresa_id` | `local_id` |
+| ------------------ | -------------------------------------- | ------------ | ---------- |
+| `canon` (alquiler) | **local** — 2 units = 2 canons a month | required     | required   |
+| `condominio`       | **nobody** — one lump sum for the mall | null         | null       |
+| `corpoelec`        | empresa — its share of a shared bill   | required     | null       |
+| `hidrocapital`     | empresa — idem                         | required     | null       |
 
-- `empresa_id` is **always** set, so grouping and filtering by empresa works
-  for every concept; `local_id` only narrows the per-unit ones.
-- A pago carries **two amounts**: `monto` (USD) and `monto_bs` (nullable). USD
-  is authoritative — rent status, every total and the dashboard compare against
-  `locales.monto_alquiler`, which is in dollars. `monto_bs` records what
-  actually left the tenant's account, since the bank reference is in bolívares;
-  it is never an input to a calculation. Null when paid in cash dollars. Both
-  are typed by hand, so the rate is implicit in the pair — don't add a stored
-  rate to `pagos`.
+`empresa_id` is **nullable** because of condominio: it is collected as a single
+monthly figure and is not broken down per tenant, so it has no business and no
+unit. The check constraint `pagos_local_matches_concepto` enforces the whole
+table above — both columns, per concepto — so nothing can land without the
+reference it should have. `requiereEmpresa()` in `pago.model.ts` is the
+front-end half of the same rule.
+
+- A pago carries **two amounts**: `monto` (USD) and `monto_bs` (nullable). For
+  **canon**, USD is authoritative — rent status, every total and the dashboard
+  compare against `locales.monto_alquiler`, which is in dollars. `monto_bs`
+  records what actually left the tenant's account, since the bank reference is
+  in bolívares; it is never an input to a calculation. Null when paid in cash
+  dollars. Both are typed by hand, so the rate is implicit in the pair — don't
+  add a stored rate to `pagos`.
+  **Condominio/Corpoelec/Hidrocapital flip this**: the mall collects these in
+  bolívares, so `monto_bs` is the one typed by hand (required in the form —
+  `PagoFormModal.esServicio()`), and `monto` (USD) is computed automatically
+  from that day's BCV rate at submit time, purely to satisfy the NOT NULL
+  column — it is never read back for display. Every USD figure shown for a
+  service pago (the row, and the "Total cobrado en servicios" card in
+  Servicios) is instead a **live** conversion of `monto_bs` at _today's_ BCV
+  rate, marked with "≈", and changes as the rate does — a deliberate
+  divergence from `deudas`' frozen-rate snapshot, chosen because these are
+  live conversions for display, not a debt balance meant to stay stable.
 - A check constraint (`pagos_local_matches_concepto`) enforces the table above,
   because "which local is this water bill for?" has no correct answer. Add a
   new per-unit concept to `CONCEPTOS_POR_LOCAL` in `pago.model.ts` **and** to
@@ -223,16 +246,18 @@ same level — this is why `pagos` carries both `empresa_id` and `local_id`:
   Only canon counts: a company can be current on its water bill and still owe
   rent. With no `montoAlquiler` on record it falls back to paid/unpaid, since
   there is nothing to compare against.
-- **Canon and the other three live in different screens.** `Reporte de pagos`
-  is the rent ledger and shows **canon only**; condominio, Corpoelec and
-  Hidrocapital are registered under `Servicios`, because they are money the
-  mall collects and forwards, not its income. One table, two pages: each
-  passes `conceptosPermitidos` to the shared `<app-pago-form-modal>` so neither
-  can write the other's rows.
-- **The Dashboard counts canon only** — "Ingresos del mes", the "Ingresos
-  mensuales" chart and "Últimos pagos" all filter to canon. Counting the
-  pass-through utilities there inflated income against expenses already
-  recorded in `egresos`.
+- **Income vs pass-through splits the screens.** `CONCEPTOS_DE_INGRESO`
+  (`canon` + `condominio`) is the mall's own money and lives in **Reporte de
+  pagos**, which has tabs Todos / Canon / Condominio. `corpoelec` and
+  `hidrocapital` are collected and forwarded and live in **Servicios**. One
+  table, two pages: each passes `conceptosPermitidos` to the shared
+  `<app-pago-form-modal>`, so neither can write the other's rows.
+- **Everything that sums income filters through `esConceptoDeIngreso()`** —
+  the Dashboard tiles, the "Ingresos mensuales" chart, "Últimos pagos", and
+  Balance. Never hard-code `concepto === 'canon'` for an income total again:
+  that is exactly what had to be changed in five places when condominio moved.
+  The one deliberate canon-only filter left is `canonPagadoEsteMes()`, because
+  rent status must not be satisfied by a condominio payment.
 
 ### deudas y facturas de servicio
 
@@ -380,6 +405,26 @@ not in the root of app/.
       currency or exchange rate**: the figures live inside the attached
       documents, and the per-empresa numbers belong in `deudas`. Don't reinstate
       a total here — it would be a second place for the same number to drift.
+  - **Reportes** (`/reportes`): every pago and egreso flattened into one
+    searchable list — four summary cards (Ingresos, Egresos, Balance, count),
+    filters for search, año, mes, tipo and empresa (both `<app-multi-select>`)
+    and a monto range, plus **Excel** and **PDF** buttons that export exactly
+    the rows currently on screen. Read-only; nothing is registered here.
+    Both libraries are **`import()`ed inside the click handler**, never at the
+    top of the file: together they are ~900 kB, dwarfing the page itself, and
+    most visits download nothing. Keep it that way — a static import would drag
+    them into the route's main chunk.
+    In the **.xlsx**, amounts are written as real numbers, not preformatted
+    strings, so the client can sum and pivot them; that is the whole reason for
+    shipping Excel over a CSV. The **PDF** is landscape (nine columns do not
+    fit portrait) and drawn with `jspdf-autotable`.
+    `xlsx` is installed **from `cdn.sheetjs.com`, not npm** — the npm `xlsx`
+    package is frozen at 0.18.5 with known CVEs. Don't "fix" it to the registry
+    version. jsPDF pulls `canvg`/`html2canvas` (CommonJS, unused by us), which
+    is why `allowedCommonJsDependencies` exists in `angular.json`.
+    Egreso rows carry no recorded bolívar figure, so their Bs column is a live
+    BCV conversion flagged `≈` in the table and with a "Bs estimado" column in
+    the CSV; pago rows show their real `monto_bs` unflagged.
   - **Calculadora**: BCV + paralelo rates from dolarapi.com, USDT from Binance
     P2P, fetched and cached once per day by the `tasas-cambio` Edge Function
     into the `tasas_cambio` table
@@ -396,7 +441,7 @@ not in the root of app/.
      never written), so a balance can be computed.
   4. Role-based UI restrictions for subadmin — today only RLS enforces it, so a
      subadmin sees buttons that fail with a Supabase error.
-  5. `reportes` module; `remodelaciones` table.
+  5. `remodelaciones` table.
 
 ## Working with the client's documents
 

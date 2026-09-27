@@ -1,7 +1,14 @@
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CONCEPTO_LABEL, Pago, PagoConcepto, TipoTasa } from '../../../core/models/pago.model';
+import {
+  CONCEPTOS_DE_INGRESO,
+  CONCEPTO_LABEL,
+  Pago,
+  PagoConcepto,
+  TipoTasa,
+  esConceptoDeIngreso,
+} from '../../../core/models/pago.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
@@ -23,6 +30,9 @@ import { LocalesService } from '../../locales/locales.service';
 import { ComprobantePreviewModal } from '../comprobante-preview-modal/comprobante-preview-modal';
 import { PagoFormModal, PagoFormPayload } from '../pago-form-modal/pago-form-modal';
 import { PagosService } from '../pagos.service';
+import { TabItem, Tabs } from '../../../shared/components/tabs/tabs';
+
+type FiltroConcepto = PagoConcepto | 'todos';
 
 @Component({
   selector: 'app-pagos-page',
@@ -36,6 +46,7 @@ import { PagosService } from '../pagos.service';
     PositiveDecimalDirective,
     MultiSelect,
     PeriodFilter,
+    Tabs,
   ],
   templateUrl: './pagos-page.html',
   styleUrl: './pagos-page.scss',
@@ -75,9 +86,32 @@ export class PagosPage implements OnInit {
   protected readonly comprobanteLoading = signal(false);
   protected readonly comprobanteError = signal<string | null>(null);
 
-  /** This page is the rent ledger. Condominio and the two utilities are money
-   *  the mall collects and forwards, not income, so they live in Servicios. */
-  protected readonly conceptosPermitidos: PagoConcepto[] = ['canon'];
+  /** The mall's own income: rent plus condominio. Corpoelec and Hidrocapital
+   *  are collected and forwarded, so they stay in Servicios. */
+  protected readonly conceptosPermitidos: PagoConcepto[] = [...CONCEPTOS_DE_INGRESO];
+
+  protected readonly concepto = signal<FiltroConcepto>('todos');
+
+  protected readonly conceptoTabs: TabItem<FiltroConcepto>[] = [
+    { id: 'todos', label: 'Todos' },
+    { id: 'canon', label: 'Canon' },
+    { id: 'condominio', label: 'Condominio' },
+  ];
+
+  protected readonly totalLabel = computed(() => {
+    switch (this.concepto()) {
+      case 'canon':
+        return 'Total cobrado en alquiler';
+      case 'condominio':
+        return 'Total cobrado en condominio';
+      default:
+        return 'Total cobrado';
+    }
+  });
+
+  protected setConcepto(concepto: FiltroConcepto): void {
+    this.concepto.set(concepto);
+  }
 
   protected readonly searchInput = signal('');
   protected readonly appliedSearch = signal('');
@@ -124,7 +158,10 @@ export class PagosPage implements OnInit {
     const empresaIds = this.selectedEmpresaIds();
 
     return this.pagos().filter((pago) => {
-      if (pago.concepto !== 'canon') {
+      if (!esConceptoDeIngreso(pago.concepto)) {
+        return false;
+      }
+      if (this.concepto() !== 'todos' && pago.concepto !== this.concepto()) {
         return false;
       }
       if (
@@ -143,7 +180,8 @@ export class PagosPage implements OnInit {
       if (max !== null && pago.monto > max) {
         return false;
       }
-      if (empresaIds.size > 0 && !empresaIds.has(pago.empresaId)) {
+      // Condominio belongs to no empresa, so an empresa filter excludes it.
+      if (empresaIds.size > 0 && (!pago.empresaId || !empresaIds.has(pago.empresaId))) {
         return false;
       }
       // Empresa-wide concepts have no local, so a local filter excludes them.
@@ -156,6 +194,13 @@ export class PagosPage implements OnInit {
 
   protected readonly total = computed(() =>
     this.pagosFiltrados().reduce((sum, pago) => sum + pago.monto, 0),
+  );
+
+  // Real sum of what was actually transferred in bolívares — not a conversion
+  // of `total`, same reasoning as montoBs on the model: payments made in cash
+  // dollars carry no montoBs, so this covers only the transfers that recorded one.
+  protected readonly totalBs = computed(() =>
+    this.pagosFiltrados().reduce((sum, pago) => sum + (pago.montoBs ?? 0), 0),
   );
 
   ngOnInit(): void {
@@ -246,7 +291,7 @@ export class PagosPage implements OnInit {
   protected async deletePago(pago: Pago): Promise<void> {
     const confirmed = await this.confirmDialog.confirm({
       title: 'Eliminar pago',
-      message: `¿Estás seguro que deseas eliminar el pago de ${CONCEPTO_LABEL[pago.concepto]} de "${pago.empresaNombre}" por $ ${pago.monto.toFixed(2)}? Esta acción no se puede deshacer.`,
+      message: `¿Estás seguro que deseas eliminar el pago de ${CONCEPTO_LABEL[pago.concepto]}${pago.empresaNombre ? ` de "${pago.empresaNombre}"` : ''} por $ ${pago.monto.toFixed(2)}? Esta acción no se puede deshacer.`,
       confirmLabel: 'Eliminar',
       danger: true,
     });

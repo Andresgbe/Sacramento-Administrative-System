@@ -6,12 +6,18 @@ import {
   SERVICIO_CONCEPTOS,
   ServicioConcepto,
 } from '../../../core/models/factura-servicio.model';
-import { CONCEPTO_LABEL, Pago, PagoConcepto } from '../../../core/models/pago.model';
+import {
+  CONCEPTO_LABEL,
+  Pago,
+  PagoConcepto,
+  esConceptoDeIngreso,
+} from '../../../core/models/pago.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { EmpresasService } from '../../locales/empresas.service';
 import { LocalesService } from '../../locales/locales.service';
 import { PagoFormModal, PagoFormPayload } from '../../pagos/pago-form-modal/pago-form-modal';
 import { PagosService } from '../../pagos/pagos.service';
+import { TasasCambioService } from '../../tasas-cambio/tasas-cambio.service';
 import {
   PeriodFilter,
   availableYears,
@@ -39,6 +45,7 @@ export class ServiciosBasicosPage implements OnInit {
   private readonly localesService = inject(LocalesService);
   private readonly empresasService = inject(EmpresasService);
   private readonly authService = inject(AuthService);
+  private readonly tasasCambioService = inject(TasasCambioService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly toastService = inject(ToastService);
 
@@ -56,15 +63,14 @@ export class ServiciosBasicosPage implements OnInit {
     { id: 'facturas', label: 'Facturas del mes' },
   ];
 
-  /** Canon is the mall's own income and belongs in Reporte de pagos; these
-   *  three are collected and forwarded, so they are registered here. */
+  /** Canon and condominio are the mall's own income and belong in Reporte de
+   *  pagos; these two are collected and forwarded, so they live here. */
   protected readonly conceptosPermitidos: PagoConcepto[] = SERVICIO_CONCEPTOS;
 
   protected readonly servicio = signal<FiltroServicio>('todos');
 
   protected readonly servicioTabs: TabItem<FiltroServicio>[] = [
     { id: 'todos', label: 'Todos' },
-    { id: 'condominio', label: 'Condominio' },
     { id: 'corpoelec', label: 'Corpoelec' },
     { id: 'hidrocapital', label: 'Hidrocapital' },
   ];
@@ -103,7 +109,7 @@ export class ServiciosBasicosPage implements OnInit {
     const mes = this.mes();
 
     return this.pagosService.all().filter((pago) => {
-      if (pago.concepto === 'canon') {
+      if (esConceptoDeIngreso(pago.concepto)) {
         return false;
       }
       if (servicio !== 'todos' && pago.concepto !== servicio) {
@@ -113,9 +119,27 @@ export class ServiciosBasicosPage implements OnInit {
     });
   });
 
-  protected readonly totalPagos = computed(() =>
-    this.pagosFiltrados().reduce((sum, pago) => sum + pago.monto, 0),
+  protected readonly bcvRate = computed(() => this.tasasCambioService.current()?.bcv ?? null);
+
+  // Services are collected in Bs, so this is the real, authoritative total —
+  // same reasoning as ingresosDelMesBs on the Dashboard: rows with no montoBs
+  // (paid straight in cash dollars) contribute 0, never an invented estimate.
+  protected readonly totalPagosBs = computed(() =>
+    this.pagosFiltrados().reduce((sum, pago) => sum + (pago.montoBs ?? 0), 0),
   );
+
+  // Live BCV conversion for display only, always today's rate per product
+  // decision — not the rate frozen on each row's `monto` at entry time.
+  protected readonly totalPagosUsdEquivalente = computed(() => {
+    const rate = this.bcvRate();
+    return rate ? this.totalPagosBs() / rate : null;
+  });
+
+  protected montoUsdEquivalente(pago: Pago): number | null {
+    const rate = this.bcvRate();
+    if (!pago.montoBs || !rate) return null;
+    return pago.montoBs / rate;
+  }
 
   protected readonly locales = this.localesService.all;
   protected readonly empresas = this.empresasService.all;
@@ -135,6 +159,7 @@ export class ServiciosBasicosPage implements OnInit {
     this.pagosService.load();
     this.localesService.load();
     this.empresasService.load();
+    this.tasasCambioService.load();
   }
 
   protected setTab(tab: ServiciosTab): void {
@@ -173,9 +198,10 @@ export class ServiciosBasicosPage implements OnInit {
   }
 
   protected async deletePago(pago: Pago): Promise<void> {
+    const monto = pago.montoBs ? `${pago.montoBs.toFixed(2)} Bs` : `$ ${pago.monto.toFixed(2)}`;
     const confirmed = await this.confirmDialog.confirm({
       title: 'Eliminar pago',
-      message: `¿Eliminar el pago de ${CONCEPTO_LABEL[pago.concepto]} de "${pago.empresaNombre}" por $ ${pago.monto.toFixed(2)}? Esta acción no se puede deshacer.`,
+      message: `¿Eliminar el pago de ${CONCEPTO_LABEL[pago.concepto]} de "${pago.empresaNombre}" por ${monto}? Esta acción no se puede deshacer.`,
       confirmLabel: 'Eliminar',
       danger: true,
     });

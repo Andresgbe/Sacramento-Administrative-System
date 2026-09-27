@@ -1,6 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { CategoriaEgreso } from '../../../core/models/egreso.model';
+import { CONCEPTO_LABEL, esConceptoDeIngreso } from '../../../core/models/pago.model';
 import {
   PeriodFilter,
   availableYears,
@@ -61,7 +62,8 @@ export class BalancePage implements OnInit {
     this.pagosService
       .all()
       .filter(
-        (pago) => pago.concepto === 'canon' && matchesPeriod(pago.fecha, this.anio(), this.mes()),
+        (pago) =>
+          esConceptoDeIngreso(pago.concepto) && matchesPeriod(pago.fecha, this.anio(), this.mes()),
       )
       .reduce((sum, pago) => sum + pago.monto, 0),
   );
@@ -82,14 +84,15 @@ export class BalancePage implements OnInit {
 
     const ingresos: Movimiento[] = this.pagosService
       .all()
-      .filter((pago) => pago.concepto === 'canon' && matchesPeriod(pago.fecha, anio, mes))
+      .filter((pago) => esConceptoDeIngreso(pago.concepto) && matchesPeriod(pago.fecha, anio, mes))
       .map((pago) => ({
         id: `pago-${pago.id}`,
         tipo: 'ingreso' as const,
         fecha: pago.fecha,
+        // Condominio has no empresa at all, so it falls back to its label.
         detalle: pago.localNumero
           ? `${pago.empresaNombre} — ${pago.localNumero}`
-          : pago.empresaNombre,
+          : pago.empresaNombre || CONCEPTO_LABEL[pago.concepto],
         monto: pago.monto,
       }));
 

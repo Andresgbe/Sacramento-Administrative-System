@@ -2,10 +2,12 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CategoriaEgreso } from '../../../core/models/egreso.model';
+import { esConceptoDeIngreso } from '../../../core/models/pago.model';
 import { PagosService } from '../../pagos/pagos.service';
 import { EmpresasService } from '../../locales/empresas.service';
 import { LocalesService } from '../../locales/locales.service';
 import { EgresosService } from '../../egresos/egresos.service';
+import { TasasCambioService } from '../../tasas-cambio/tasas-cambio.service';
 import { BarChart, BarDatum } from '../../../shared/components/bar-chart/bar-chart';
 import { PieChart, PieSegment } from '../../../shared/components/pie-chart/pie-chart';
 
@@ -28,6 +30,7 @@ export class DashboardPage implements OnInit {
   private readonly empresasService = inject(EmpresasService);
   private readonly pagosService = inject(PagosService);
   private readonly egresosService = inject(EgresosService);
+  private readonly tasasCambioService = inject(TasasCambioService);
 
   protected readonly categoriaEgresoLabel: Record<CategoriaEgreso, string> = {
     administrativo: 'Administrativo',
@@ -42,32 +45,46 @@ export class DashboardPage implements OnInit {
 
     const now = new Date();
     const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    // Canon only. Condominio and the utilities are money the mall collects and
-    // forwards, so counting them here would inflate income against expenses
-    // that are already recorded separately.
-    const canonDelMes = this.pagosService
+    // Canon and condominio — the mall's own income. Corpoelec and Hidrocapital
+    // are collected and forwarded, and the forwarding already shows up in
+    // `egresos`, so counting them here would inflate income against itself.
+    const ingresosPagos = this.pagosService
       .all()
-      .filter((pago) => pago.concepto === 'canon' && pago.fecha.startsWith(yearMonth));
+      .filter((pago) => esConceptoDeIngreso(pago.concepto) && pago.fecha.startsWith(yearMonth));
 
-    const ingresosDelMes = canonDelMes.reduce((sum, pago) => sum + pago.monto, 0);
+    const ingresosDelMes = ingresosPagos.reduce((sum, pago) => sum + pago.monto, 0);
 
     // Sum of what was actually transferred in bolívares, NOT a conversion of
     // the dollar total: payments made in cash dollars carry no `montoBs`, so
     // this figure covers only the transfers that recorded one.
-    const ingresosDelMesBs = canonDelMes.reduce((sum, pago) => sum + (pago.montoBs ?? 0), 0);
+    const ingresosDelMesBs = ingresosPagos.reduce((sum, pago) => sum + (pago.montoBs ?? 0), 0);
     const egresosDelMes = this.egresosService
       .all()
       .filter((egreso) => egreso.fecha.startsWith(yearMonth))
       .reduce((sum, egreso) => sum + egreso.monto, 0);
 
+    const balanceDelMes = ingresosDelMes - egresosDelMes;
+
+    // No monto_bs on egresos (unlike pagos), so there's nothing real to sum —
+    // this is an estimate off today's BCV rate, marked with "≈" to keep it
+    // visually distinct from ingresosDelMesBs above, which is an exact sum of
+    // what tenants actually transferred.
+    const bcv = this.tasasCambioService.current()?.bcv;
+
     return [
       {
         label: 'Balance del mes',
-        value: this.formatUsd(ingresosDelMes - egresosDelMes),
-        tone: ingresosDelMes - egresosDelMes < 0 ? 'danger' : 'default',
+        value: this.formatUsd(balanceDelMes),
+        tone: balanceDelMes < 0 ? 'danger' : 'default',
+        secondary: bcv ? this.formatBsApprox(balanceDelMes * bcv) : undefined,
       },
       { label: 'Empresas activas', value: `${empresasActivas}`, tone: 'default' },
-      { label: 'Egresos del mes', value: this.formatUsd(egresosDelMes), tone: 'danger' },
+      {
+        label: 'Egresos del mes',
+        value: this.formatUsd(egresosDelMes),
+        tone: 'danger',
+        secondary: bcv ? this.formatBsApprox(egresosDelMes * bcv) : undefined,
+      },
       {
         label: 'Ingresos del mes',
         value: this.formatUsd(ingresosDelMes),
@@ -77,11 +94,11 @@ export class DashboardPage implements OnInit {
     ];
   });
 
-  // Live: most recent rent payments, already sorted newest-first.
+  // Live: most recent income payments, already sorted newest-first.
   protected readonly recentPayments = computed(() =>
     this.pagosService
       .all()
-      .filter((pago) => pago.concepto === 'canon')
+      .filter((pago) => esConceptoDeIngreso(pago.concepto))
       .slice(0, 3),
   );
 
@@ -152,7 +169,7 @@ export class DashboardPage implements OnInit {
 
     const pagos = this.pagosService
       .all()
-      .filter((pago) => pago.concepto === 'canon' && pago.fecha.startsWith(`${year}-`));
+      .filter((pago) => esConceptoDeIngreso(pago.concepto) && pago.fecha.startsWith(`${year}-`));
 
     const primerMesConDatos = pagos.reduce(
       (earliest, pago) => Math.min(earliest, Number(pago.fecha.slice(5, 7))),
@@ -180,13 +197,19 @@ export class DashboardPage implements OnInit {
     this.empresasService.load();
     this.pagosService.load();
     this.egresosService.load();
+    this.tasasCambioService.load();
   }
 
   private formatUsd(value: number): string {
-    return `$ ${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `$ ${value.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
   private formatBs(value: number): string {
     return `${value.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs`;
+  }
+
+  /** Same as formatBs, but marked "≈" — a BCV-rate conversion, not a real transferred amount. */
+  private formatBsApprox(value: number): string {
+    return `≈ ${this.formatBs(value)}`;
   }
 }

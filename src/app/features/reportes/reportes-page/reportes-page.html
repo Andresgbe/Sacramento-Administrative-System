@@ -1,18 +1,209 @@
-<div class="coming-soon">
-  <span class="coming-soon__icon">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-      <path
-        d="M4 19V5a1 1 0 0 1 1-1h9l6 6v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-      <path d="M14 4v5a1 1 0 0 0 1 1h5" stroke-linecap="round" stroke-linejoin="round" />
-      <path d="M8 13h8M8 17h5" stroke-linecap="round" />
-    </svg>
-  </span>
-  <h2 class="coming-soon__title">Próximamente</h2>
-  <p class="coming-soon__text">
-    El módulo de reportes está en construcción. Pronto podrás generar y descargar reportes de pagos,
-    egresos y servicios desde aquí.
-  </p>
+<div class="reportes-page__header">
+  <div class="reportes-totales">
+    <div class="reportes-total">
+      <span class="reportes-total__label">Ingresos</span>
+      <span class="reportes-total__value reportes-total__value--ingreso">
+        $ {{ totalIngresos() | number: '1.2-2' }}
+      </span>
+    </div>
+
+    <div class="reportes-total">
+      <span class="reportes-total__label">Egresos</span>
+      <span class="reportes-total__value reportes-total__value--egreso">
+        $ {{ totalEgresos() | number: '1.2-2' }}
+      </span>
+    </div>
+
+    <div class="reportes-total">
+      <span class="reportes-total__label">Balance</span>
+      <span class="reportes-total__value" [class.reportes-total__value--egreso]="balance() < 0">
+        $ {{ balance() | number: '1.2-2' }}
+      </span>
+    </div>
+
+    <div class="reportes-total">
+      <span class="reportes-total__label">Transacciones</span>
+      <span class="reportes-total__value">{{ resultados().length }}</span>
+    </div>
+  </div>
+
+  <div class="reportes-acciones">
+    <button
+      type="button"
+      class="btn btn--secondary"
+      [disabled]="resultados().length === 0 || exportando()"
+      (click)="descargarExcel()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 4v11m0 0-4-4m4 4 4-4" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" stroke-linecap="round" />
+      </svg>
+      Excel
+    </button>
+
+    <button
+      type="button"
+      class="btn btn--primary"
+      [disabled]="resultados().length === 0 || exportando()"
+      (click)="descargarPdf()"
+    >
+      @if (exportando()) {
+        <span class="spinner"></span>
+      } @else {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 4v11m0 0-4-4m4 4 4-4" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" stroke-linecap="round" />
+        </svg>
+      }
+      PDF
+    </button>
+  </div>
 </div>
+
+<div class="filters-bar">
+  <div class="filters-field filters-field--search">
+    <span>Buscar</span>
+    <div class="filters-search">
+      <input
+        type="text"
+        placeholder="Empresa, concepto o descripción…"
+        [ngModel]="searchInput()"
+        (ngModelChange)="setSearchInput($event)"
+        (keydown.enter)="applySearch()"
+      />
+      <button
+        type="button"
+        class="filters-search__button"
+        (click)="applySearch()"
+        aria-label="Buscar"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <app-period-filter
+    [anio]="anio()"
+    [mes]="mes()"
+    [anios]="aniosDisponibles()"
+    (anioChange)="setAnio($event)"
+    (mesChange)="setMes($event)"
+  />
+
+  <div class="filters-field">
+    <span>Tipo</span>
+    <app-multi-select
+      [options]="tipoOptions"
+      [selected]="selectedTipos()"
+      allLabel="Todos los tipos"
+      countLabel="tipos seleccionados"
+      (selectionChange)="setSelectedTipos($event)"
+    />
+  </div>
+
+  <div class="filters-field">
+    <span>Empresa</span>
+    <app-multi-select
+      [options]="empresaOptions()"
+      [selected]="selectedEmpresaIds()"
+      allLabel="Todas las empresas"
+      countLabel="empresas seleccionadas"
+      (selectionChange)="setSelectedEmpresaIds($event)"
+    />
+  </div>
+
+  <div class="filters-field">
+    <span>Monto (USD)</span>
+    <div class="filters-field__amount-row">
+      <input
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="Mín."
+        appSelectOnFocus
+        appPositiveDecimal
+        [ngModel]="montoMin()"
+        (ngModelChange)="setMontoMin($event)"
+      />
+      <span>—</span>
+      <input
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="Máx."
+        appSelectOnFocus
+        appPositiveDecimal
+        [ngModel]="montoMax()"
+        (ngModelChange)="setMontoMax($event)"
+      />
+    </div>
+  </div>
+
+  <button
+    type="button"
+    class="filters-clear"
+    [disabled]="!hasActiveFilters()"
+    (click)="clearAllFilters()"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+    </svg>
+    Limpiar filtros
+  </button>
+</div>
+
+@if (isLoading()) {
+  <p class="reportes-page__status">Cargando transacciones…</p>
+} @else if (resultados().length === 0) {
+  <p class="reportes-page__status">Ninguna transacción coincide con los filtros aplicados.</p>
+} @else {
+  <div class="data-table-wrapper">
+    <table class="data-table reportes-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Concepto</th>
+          <th>Empresa</th>
+          <th>Local</th>
+          <th>Descripción</th>
+          <th>Monto</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (transaccion of resultados(); track transaccion.id) {
+          <tr>
+            <td>{{ transaccion.fecha | date: 'dd/MM/yyyy' : 'UTC' }}</td>
+            <td>
+              <span class="reportes-badge reportes-badge--{{ transaccion.tipo }}">
+                {{ transaccion.tipo === 'ingreso' ? 'Ingreso' : 'Egreso' }}
+              </span>
+            </td>
+            <td>{{ transaccion.conceptoLabel }}</td>
+            <td>{{ transaccion.empresa || '—' }}</td>
+            <td>{{ transaccion.local || '—' }}</td>
+            <td>{{ transaccion.descripcion || '—' }}</td>
+            <td
+              class="data-table__amount"
+              [class.reportes-table__amount--ingreso]="transaccion.tipo === 'ingreso'"
+              [class.reportes-table__amount--egreso]="transaccion.tipo === 'egreso'"
+            >
+              {{ transaccion.tipo === 'ingreso' ? '+' : '−' }} $
+              {{ transaccion.montoUsd | number: '1.2-2' }}
+              @if (transaccion.montoBs !== null) {
+                <span class="reportes-monto-bs">
+                  {{ transaccion.bsEstimado ? '≈ ' : ''
+                  }}{{ transaccion.montoBs | number: '1.2-2' }}
+                  Bs
+                </span>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
