@@ -47,6 +47,7 @@ interface Transaccion {
 
 const EGRESO_LABEL: Record<CategoriaEgreso, string> = {
   administrativo: 'Gasto administrativo',
+  remodelacion: 'Remodelación',
   operativo: 'Gasto operativo',
 };
 
@@ -95,6 +96,7 @@ export class ReportesPage implements OnInit {
     })),
     { id: 'egreso-administrativo', label: EGRESO_LABEL.administrativo },
     { id: 'egreso-operativo', label: EGRESO_LABEL.operativo },
+    { id: 'egreso-remodelacion', label: EGRESO_LABEL.remodelacion },
   ];
 
   protected readonly empresaOptions = computed<MultiSelectOption[]>(() =>
@@ -217,6 +219,18 @@ export class ReportesPage implements OnInit {
   );
 
   protected readonly balance = computed(() => this.totalIngresos() - this.totalEgresos());
+
+  /**
+   * Remodelación spend among the rows on screen. A subset of `totalEgresos`,
+   * not a fourth side of the balance — it is shown beside it so the client
+   * can see how much of the month's outflow went to works, without having to
+   * switch to the Egresos tab and filter.
+   */
+  protected readonly totalRemodelacion = computed(() =>
+    this.resultados()
+      .filter((transaccion) => transaccion.clave === 'egreso-remodelacion')
+      .reduce((sum, transaccion) => sum + transaccion.montoRealizado, 0),
+  );
 
   ngOnInit(): void {
     this.pagosService.load();

@@ -73,6 +73,15 @@
     background: var(--color-accent-soft);
     color: var(--color-accent);
   }
+
+  // Blue: the third category needed a tint that is neither the neutral grey
+  // of administrativo nor the accent orange of operativo, and the palette's
+  // only other committed colours are the green/red of balance signs, which
+  // would read as good/bad rather than as a category.
+  &--remodelacion {
+    background: rgb(37 99 235 / 12%);
+    color: #1d4ed8;
+  }
 }
 
 .egresos-comprobante-link {

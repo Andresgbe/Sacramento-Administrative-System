@@ -1,28 +1,28 @@
 <div class="pagos-page__header">
   <div class="pagos-page__totales">
-  <div class="pagos-total">
-    <span class="pagos-total__label">{{ totalLabel() }}</span>
-    <span class="pagos-total__value">$ {{ total() | number: '1.2-2' }}</span>
-    <span class="monto-moneda">USDT/Cash</span>
-    <app-monto-equivalencias [monto]="total()" />
-    @if (totalBs() > 0) {
-      <span class="pagos-total__transferido">
-        Transferido: {{ totalBs() | number: '1.2-2' }} Bs
-      </span>
-    }
-  </div>
-
-  @if (muestraSinConvertir()) {
-    <div class="pagos-total pagos-total--pendiente">
-      <span class="pagos-total__label">Balance sin convertir</span>
-      <span class="pagos-total__value">$ {{ totalSinConvertir() | number: '1.2-2' }}</span>
-      <span class="monto-moneda">Nominal</span>
-      <span class="pagos-total__transferido">
-        {{ cantidadSinConvertir() }}
-        {{ cantidadSinConvertir() === 1 ? 'pago pendiente' : 'pagos pendientes' }}
-      </span>
+    <div class="pagos-total">
+      <span class="pagos-total__label">{{ totalLabel() }}</span>
+      <span class="pagos-total__value">$ {{ total() | number: '1.2-2' }}</span>
+      <span class="monto-moneda">USDT/Cash</span>
+      <app-monto-equivalencias [monto]="total()" />
+      @if (totalBs() > 0) {
+        <span class="pagos-total__transferido">
+          Transferido: {{ totalBs() | number: '1.2-2' }} Bs
+        </span>
+      }
     </div>
-  }
+
+    @if (muestraSinConvertir()) {
+      <div class="pagos-total pagos-total--pendiente">
+        <span class="pagos-total__label">Balance sin convertir</span>
+        <span class="pagos-total__value">$ {{ totalSinConvertir() | number: '1.2-2' }}</span>
+        <span class="monto-moneda">Nominal</span>
+        <span class="pagos-total__transferido">
+          {{ cantidadSinConvertir() }}
+          {{ cantidadSinConvertir() === 1 ? 'pago pendiente' : 'pagos pendientes' }}
+        </span>
+      </div>
+    }
   </div>
 
   @if (isAdmin()) {
@@ -38,98 +38,108 @@
 <app-tabs [tabs]="conceptoTabs" [active]="concepto()" (selected)="setConcepto($event)" />
 
 <div class="filters-bar">
-  <div class="filters-field filters-field--search">
-    <span>Buscar</span>
-    <div class="filters-search">
-      <input
-        type="text"
-        placeholder="Local o descripción…"
-        [ngModel]="searchInput()"
-        (ngModelChange)="setSearchInput($event)"
-        (keydown.enter)="applySearch()"
-      />
-      <button
-        type="button"
-        class="filters-search__button"
-        (click)="applySearch()"
-        aria-label="Buscar"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="7" />
-          <path d="m20 20-3.5-3.5" stroke-linecap="round" />
-        </svg>
-      </button>
+  <div class="filters-bar__header">
+    <span class="filters-bar__title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 5h18l-7 8v6l-4 2v-8Z" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      Filtros
+    </span>
+  </div>
+
+  <div class="filters-bar__grid">
+    <div class="filters-field filters-field--search">
+      <span>Buscar</span>
+      <div class="filters-search">
+        <input
+          type="text"
+          placeholder="Local o descripción…"
+          [ngModel]="searchInput()"
+          (ngModelChange)="setSearchInput($event)"
+          (keydown.enter)="applySearch()"
+        />
+        <button
+          type="button"
+          class="filters-search__button"
+          (click)="applySearch()"
+          aria-label="Buscar"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
     </div>
-  </div>
 
-  <app-period-filter
-    [anio]="anio()"
-    [mes]="mes()"
-    [anios]="aniosDisponibles()"
-    (anioChange)="setAnio($event)"
-    (mesChange)="setMes($event)"
-  />
+    <app-period-filter
+      [anio]="anio()"
+      [mes]="mes()"
+      [anios]="aniosDisponibles()"
+      (anioChange)="setAnio($event)"
+      (mesChange)="setMes($event)"
+    />
 
-  <div class="filters-field">
-    <span>Monto</span>
-    <div class="filters-field__amount-row">
-      <input
-        type="number"
-        min="0"
-        step="0.01"
-        placeholder="Mín."
-        appSelectOnFocus
-        appPositiveDecimal
-        [ngModel]="montoMin()"
-        (ngModelChange)="setMontoMin($event)"
-      />
-      <span>—</span>
-      <input
-        type="number"
-        min="0"
-        step="0.01"
-        placeholder="Máx."
-        appSelectOnFocus
-        appPositiveDecimal
-        [ngModel]="montoMax()"
-        (ngModelChange)="setMontoMax($event)"
+    <div class="filters-field">
+      <span>Monto</span>
+      <div class="filters-field__amount-row">
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Mín."
+          appSelectOnFocus
+          appPositiveDecimal
+          [ngModel]="montoMin()"
+          (ngModelChange)="setMontoMin($event)"
+        />
+        <span>—</span>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Máx."
+          appSelectOnFocus
+          appPositiveDecimal
+          [ngModel]="montoMax()"
+          (ngModelChange)="setMontoMax($event)"
+        />
+      </div>
+    </div>
+
+    <div class="filters-field">
+      <span>Empresa</span>
+      <app-multi-select
+        [options]="empresaOptions()"
+        [selected]="selectedEmpresaIds()"
+        allLabel="Todas las empresas"
+        countLabel="empresas seleccionadas"
+        (selectionChange)="setSelectedEmpresaIds($event)"
       />
     </div>
-  </div>
 
-  <div class="filters-field">
-    <span>Empresa</span>
-    <app-multi-select
-      [options]="empresaOptions()"
-      [selected]="selectedEmpresaIds()"
-      allLabel="Todas las empresas"
-      countLabel="empresas seleccionadas"
-      (selectionChange)="setSelectedEmpresaIds($event)"
-    />
+    <div class="filters-field">
+      <span>Local</span>
+      <app-multi-select
+        [options]="localOptions()"
+        [selected]="selectedLocalIds()"
+        allLabel="Todos los locales"
+        countLabel="locales seleccionados"
+        (selectionChange)="setSelectedLocalIds($event)"
+      />
+    </div>
+    <button
+      type="button"
+      class="filters-clear"
+      [disabled]="!hasActiveFilters()"
+      (click)="clearAllFilters()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+      </svg>
+      Limpiar filtros
+    </button>
   </div>
-
-  <div class="filters-field">
-    <span>Local</span>
-    <app-multi-select
-      [options]="localOptions()"
-      [selected]="selectedLocalIds()"
-      allLabel="Todos los locales"
-      countLabel="locales seleccionados"
-      (selectionChange)="setSelectedLocalIds($event)"
-    />
-  </div>
-
-  <button
-    type="button"
-    class="filters-clear"
-    [disabled]="!hasActiveFilters()"
-    (click)="clearAllFilters()"
-  >
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
-    </svg>
-    Limpiar filtros
-  </button>
 </div>
 
 @if (isLoading()) {
@@ -196,7 +206,10 @@
             </td>
             <td>
               @if (!requiereConversion(pago)) {
-                <span class="pagos-conversion__automatica" title="Registrado en bolívares y valorado a tasa USDT/Cash del día">
+                <span
+                  class="pagos-conversion__automatica"
+                  title="Registrado en bolívares y valorado a tasa USDT/Cash del día"
+                >
                   Automática
                 </span>
               } @else if (pago.usdtConvertido !== null) {

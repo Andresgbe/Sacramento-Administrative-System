@@ -40,6 +40,7 @@ export class DashboardPage implements OnInit {
   protected readonly categoriaEgresoLabel: Record<CategoriaEgreso, string> = {
     administrativo: 'Administrativo',
     operativo: 'Operativo',
+    remodelacion: 'Remodelación',
   };
 
   protected readonly stats = computed<DashboardStat[]>(() => {

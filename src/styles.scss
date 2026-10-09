@@ -287,16 +287,50 @@ button {
 // leave ragged gaps, which is what made the bar look tangled on narrow
 // screens. auto-fit gives every field the same width and drops cleanly to one
 // column on a phone; min() keeps the track from overflowing below 190px.
+// The card is a header row plus a grid of fields. The two are separate
+// because "Limpiar filtros" belongs with the card's title, not in the field
+// grid: as one more grid cell it sat wherever the auto-fit happened to put
+// it, which moved every time a filter was added to a page.
 .filters-bar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
-  align-items: end;
-  gap: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   margin-bottom: 20px;
   padding: 16px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
+}
+
+.filters-bar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.filters-bar__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+
+  svg {
+    width: 15px;
+    height: 15px;
+    color: var(--color-text-muted);
+  }
+}
+
+.filters-bar__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  align-items: end;
+  gap: 14px 16px;
 }
 
 .filters-field {
@@ -380,18 +414,25 @@ button {
   }
 }
 
+// The last item in the field grid, so it lands beside the last row of
+// filters rather than in the header: up there it read as part of the card's
+// title instead of as an action on the fields below it.
+//
+// `align-self: end` puts it on the inputs' baseline — the grid rows are
+// taller than the button, since every other cell carries a label above it.
 .filters-clear {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   justify-self: start;
   align-self: end;
   gap: 6px;
-  padding: 9px 14px;
+  padding: 9px 16px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  // Filled, not a bare text link: on the white filter card a transparent
+  // Grey fill, not a bare text link: on the white filter card a transparent
   // button with muted text disappeared and didn't read as clickable.
-  background: var(--color-bg);
+  background: var(--color-surface-muted);
   color: var(--color-text-primary);
   font-family: var(--font-body);
   font-size: 0.825rem;
@@ -450,7 +491,6 @@ button {
   white-space: nowrap;
 }
 
-
 // Size modifier for the button system — a button that lives inside a table
 // row, where the default padding would set the row height.
 .btn--sm {
@@ -458,7 +498,6 @@ button {
   font-size: 0.78rem;
   white-space: nowrap;
 }
-
 
 // ---------------------------------------------------------------------------
 // File attachment pattern — a dashed upload block plus the list of attached
@@ -597,4 +636,3 @@ button {
   font-style: normal;
   color: var(--color-text-muted);
 }
-

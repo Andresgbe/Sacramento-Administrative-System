@@ -52,6 +52,7 @@ export class BalancePage implements OnInit {
   protected readonly categoriaLabel: Record<CategoriaEgreso, string> = {
     administrativo: 'Administrativo',
     operativo: 'Operativo',
+    remodelacion: 'Remodelación',
   };
 
   protected readonly anio = signal(currentYear());

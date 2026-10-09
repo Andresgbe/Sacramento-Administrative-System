@@ -136,17 +136,32 @@ directives and services under `src/app/shared/`.
   Used by Locales (Locales/Empresas) and Egresos (Total/administrativos/
   operativos). **Every new switch or tab set uses this component** — never
   hand-roll tab markup or a pill/segmented control in a feature's SCSS.
-- **`.filters-bar` / `.filters-field` / `.filters-field--search` /
+- **`.filters-bar` + `.filters-bar__header` / `.filters-bar__title` /
+  `.filters-bar__grid` / `.filters-field` / `.filters-field--search` /
   `.filters-field__amount-row` / `.filters-clear`** — the filter card above
-  every report table (Pagos, Egresos, Balance, Servicios). It's a white card whose
-  fields sit on a **CSS grid** (`repeat(auto-fit, minmax(min(190px, 100%), 1fr))`),
-  not flex-wrap: wrapped flex items kept their own widths and left ragged gaps,
-  which is what made the bar look tangled on phones. Search spans two columns
-  where there's room. Add a new filter as one more `.filters-field` — it lands
-  in the grid automatically, no width tuning needed. `.filters-clear` is
-  **always rendered** and `[disabled]="!hasActiveFilters()"` — never wrap it in
-  an `@if`: it used to vanish the moment it did its job, which read as the
-  button deleting itself, and it reflowed the grid on every click.
+  every report table (Pagos, Egresos, Balance, Servicios, Reportes). Two
+  parts, and the split is the point:
+  - **`.filters-bar__header`** — just a "Filtros" label with a funnel icon.
+    It carries no controls: "Limpiar filtros" was tried up there and read as
+    part of the card's title rather than as an action on the fields below it.
+  - **`.filters-bar__grid`** — the fields, on a **CSS grid**
+    (`repeat(auto-fit, minmax(min(190px, 100%), 1fr))`), not flex-wrap:
+    wrapped flex items kept their own widths and left ragged gaps, which is
+    what made the bar look tangled on phones. Search spans two columns where
+    there's room.
+
+  Add a new filter as one more `.filters-field` inside the grid — it lands
+  automatically, no width tuning needed.
+
+  **`.filters-clear` is the grid's last item**, so it sits beside the final
+  row of filters. It is a **grey fill** (`--color-surface-muted`) with a
+  border, turning red-tinted on hover: transparent with muted text, it
+  vanished against the white card and did not read as clickable.
+  `align-self: end` puts it on the inputs' baseline, since every other cell
+  is a label stacked over a control and so is taller. It is **always
+  rendered** and `[disabled]="!hasActiveFilters()"` — never wrap it in an
+  `@if`: it used to vanish the moment it did its job, which read as the
+  button deleting itself.
 - **`<app-period-filter>`** (`src/app/shared/components/period-filter/`) —
   the Año + Mes filter pair, used by every report page (Pagos, Egresos,
   Balance, Servicios). They are two **independent** selects, not one
@@ -183,6 +198,14 @@ directives and services under `src/app/shared/`.
   `loading` and `errorMessage`; the caller fetches the signed URL. Used by both
   Reporte de pagos and Reporte de egresos — it lived under `features/pagos/`
   until the second caller appeared.
+- **`<app-toggle>`** (`src/app/shared/components/toggle/`) — the app's on/off
+  switch, for a boolean the user flips in place with no save step. Takes
+  `checked`, optional `disabled` and `label` (screen readers only — the
+  switch has no visible text), and emits `toggled`. It calls
+  `stopPropagation()` and `preventDefault()` itself, because the cards it
+  sits in are often `routerLink`s and flipping the switch must not navigate.
+  Distinct from `<app-tabs>`, which picks one of several options. Used by the
+  locales card's condominio status.
 - **`<app-multi-select>`** (`src/app/shared/components/multi-select/`) — the
   checkbox dropdown used for the Empresa and Local filters in Pagos. Takes
   `options` (`{ id, label }[]`), the current `selected` `Set<string>`,
@@ -306,9 +329,10 @@ directives and services under `src/app/shared/`.
 ## Database (PostgreSQL via Supabase)
 
 Implemented (migration + RLS in `supabase/migrations/`): usuarios, empresas,
-locales, pagos, pagos_comprobantes, deudas, facturas_servicio,
+locales, pagos, pagos_comprobantes, condominio_estado, deudas, facturas_servicio,
 facturas_servicio_fotos, egresos_servicio, documentos, tasas_cambio, egresos.
-Not built: `remodelaciones`.
+Not built: `remodelaciones` (the works themselves — their *cost* is already
+covered by the `remodelacion` egreso category).
 
 - `caja_chica` still exists in the database but **nothing reads it**: the Caja
   chica module was removed in favour of Balance. Drop the table only on an
@@ -449,6 +473,30 @@ actually thinks in, which the old single column did not follow:
   first — the row does not cascade to the file); the modal emits
   `comprobanteEliminado` and the page calls the service, so the modal keeps
   no data access of its own.
+
+### Condominio por local — marcado a mano
+
+The locales grid shows, under each unit's rent status, whether that unit has
+paid its **condominio** this month, with a switch the admin flips.
+
+- **It cannot be computed.** A condominio `pago` carries neither `empresa_id`
+  nor `local_id` — it is one lump sum for the mall, enforced by
+  `pagos_local_matches_concepto` — so there is no per-unit row to derive a
+  status from. `condominio_estado` is the admin's own record of it, and is
+  deliberately unconnected to `pagos`: marking a unit paid moves no money and
+  changes no total.
+- **Keyed by period (`'YYYY-MM'`), not a plain boolean on `locales`.** A flag
+  with no period would still read "pagado" every following month and somebody
+  would have to switch every unit back off on the 1st. One row per unit per
+  month also keeps the history.
+- **Absence means unpaid.** The service loads only the `pagado = true` rows
+  for the period into a `Set<string>` of local ids, so a unit that has never
+  been touched needs no row written. Toggling upserts on the
+  `(local_id, periodo)` unique key, so switching on and off reuses one row.
+- The signal updates **before** the write and rolls back if it fails, so the
+  switch responds immediately instead of waiting on a round trip.
+- The label is plain text, never the coloured chip treatment the computed
+  rent status gets — a chip would imply the app worked it out.
 
 ### Conversión a USDT — qué cuenta como ingreso
 
@@ -619,9 +667,20 @@ not in the root of app/.
     the conversion receipt and `Editar` / `Anular`. Anular is confirmed
     through `ConfirmDialogService` and puts the row back in the queue. The form picks concepto first; the Local field only appears for
     canon and lists just that empresa's units
-  - **Reporte de egresos**: transactions split into administrativo / operativo,
-    plus a combined total view (tabs order: Total, Gastos administrativos,
-    Gastos operativos); full edit and delete. Each row can carry a
+  - **Reporte de egresos**: transactions split into administrativo /
+    operativo / remodelación, plus a combined total view (tabs order: Total,
+    Gastos administrativos, Gastos operativos, Remodelación); full edit and
+    delete. The three are values of the `egreso_categoria` **Postgres enum**,
+    so a fourth needs `alter type egreso_categoria add value` in a migration
+    plus the label in all five places that enumerate them — the tab list and
+    `categoriaLabel` in Egresos, the form's `<select>`, `categoriaEgresoLabel`
+    on the Dashboard, `categoriaLabel` in Balance, and `EGRESO_LABEL` plus the
+    `egreso-<categoria>` filter option in Reportes.
+    **A category, not a table**: remodelación is the same kind of fact as the
+    other two (money paid out, counted in Balance), unlike `egresos_servicio`
+    which earned its own table precisely because it must stay out. Not to be
+    confused with the planned `remodelaciones` table, which would track the
+    works themselves rather than what they cost. Each row can carry a
     **comprobante** — same arrangement as pagos: the file goes to the private
     `documentos` bucket under `egresos/<id>/`, the row keeps `comprobante_ruta`
     - `comprobante_nombre`, and the table opens it through a signed URL with
@@ -681,7 +740,10 @@ not in the root of app/.
       documents, and the per-empresa numbers belong in `deudas`. Don't reinstate
       a total here — it would be a second place for the same number to drift.
   - **Reportes** (`/reportes`): every pago and egreso flattened into one
-    searchable list — four summary cards (Ingresos, Egresos, Balance, count),
+    searchable list — five summary cards (Ingresos, Egresos, Balance,
+    Remodelaciones, count; Remodelaciones is a **subset of Egresos**, not a
+    fourth side of the balance, shown so the works spend is visible without
+    switching to Egresos and filtering),
     filters for search, año, mes, tipo and empresa (both `<app-multi-select>`)
     and a monto range, plus **Excel** and **PDF** buttons that export exactly
     the rows currently on screen. Read-only; nothing is registered here.
