@@ -10,9 +10,6 @@ import {
 import {
   PeriodFilter,
   availableYears,
-  esPeriodoActual,
-  currentMonth,
-  currentYear,
   matchesPeriod,
 } from '../../../shared/components/period-filter/period-filter';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
@@ -83,10 +80,12 @@ export class ReportesPage implements OnInit {
 
   protected readonly searchInput = signal('');
   protected readonly appliedSearch = signal('');
-  // Empty by default: a report page should open showing everything on record,
-  // not silently scoped to the current month.
-  protected readonly anio = signal(currentYear());
-  protected readonly mes = signal(currentMonth());
+  // Reportes opens on EVERY period, unlike the monthly report pages: it is
+  // the complete ledger, and the point of it is searching across months.
+  // "Todos" is what the selects show, and now actually what they apply —
+  // they used to read "Todos" while a month was silently in force.
+  protected readonly anio = signal('');
+  protected readonly mes = signal('');
   protected readonly montoMin = signal<number | null>(null);
   protected readonly montoMax = signal<number | null>(null);
   protected readonly selectedTipos = signal<Set<string>>(new Set());
@@ -159,7 +158,8 @@ export class ReportesPage implements OnInit {
   protected readonly hasActiveFilters = computed(
     () =>
       this.appliedSearch() !== '' ||
-      !esPeriodoActual(this.anio(), this.mes()) ||
+      this.anio() !== '' ||
+      this.mes() !== '' ||
       this.montoMin() !== null ||
       this.montoMax() !== null ||
       this.selectedTipos().size > 0 ||
@@ -280,11 +280,10 @@ export class ReportesPage implements OnInit {
   protected clearAllFilters(): void {
     this.searchInput.set('');
     this.appliedSearch.set('');
-    // Back to the current month, not "todos": that is the page's resting
-    // state, and clearing into an all-time view silently changed what the
-    // totals above were counting.
-    this.anio.set(currentYear());
-    this.mes.set(currentMonth());
+    // Back to every period — this page's resting state, unlike the monthly
+    // report pages that clear to the current month.
+    this.anio.set('');
+    this.mes.set('');
     this.montoMin.set(null);
     this.montoMax.set(null);
     this.selectedTipos.set(new Set());

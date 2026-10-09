@@ -62,7 +62,7 @@
             </label>
           }
 
-          @if (pideLocal()) {
+          @if (pideLocal() && !esCondominioMultiple) {
             <label
               class="field"
               [class.field--invalid]="
@@ -88,7 +88,55 @@
 
       <!-- 3. Monto Bs + Monto USD. Services are collected in bolívares, so
            there the Bs figure is the required one and the dollar is computed. -->
-      @if (esServicio()) {
+      @if (esCondominioMultiple) {
+        <div class="field">
+          <span>Condominio por local</span>
+          @if (!form.controls.empresaId.value) {
+            <p class="field-hint">Selecciona una empresa para ver sus locales.</p>
+          } @else if (localesDeEmpresa().length === 0) {
+            <p class="field-hint">Esta empresa no tiene locales registrados.</p>
+          } @else {
+            <ul class="condominio-locales">
+              @for (local of localesDeEmpresa(); track local.id) {
+                <li class="condominio-locales__item">
+                  <label class="condominio-locales__check">
+                    <input
+                      type="checkbox"
+                      [checked]="estaSeleccionado(local.id)"
+                      (change)="toggleLocalCondominio(local.id, $any($event.target).checked)"
+                    />
+                    <span>{{ local.numeroLocal }}</span>
+                  </label>
+                  <input
+                    type="number"
+                    class="condominio-locales__monto"
+                    min="0"
+                    step="0.01"
+                    placeholder="Monto en Bs"
+                    [disabled]="!estaSeleccionado(local.id)"
+                    [value]="montoDe(local.id) || ''"
+                    (input)="setMontoCondominio(local.id, $any($event.target).value)"
+                    appSelectOnFocus
+                    appPositiveDecimal
+                  />
+                </li>
+              }
+            </ul>
+            <p class="field-hint">
+              Marca los locales que cubre esta transferencia y escribe lo que paga cada uno. Se
+              registra un pago por local.
+              @if (totalCondominio() > 0) {
+                <strong>
+                  Total: {{ totalCondominio() | number: '1.2-2' }} Bs
+                  @if (usdtRate()) {
+                    · $ {{ totalCondominio() / usdtRate()! | number: '1.2-2' }} USDT/Cash
+                  }
+                </strong>
+              }
+            </p>
+          }
+        </div>
+      } @else if (esServicio()) {
         <label
           class="field"
           [class.field--invalid]="form.controls.montoBs.invalid && form.controls.montoBs.touched"

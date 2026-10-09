@@ -65,7 +65,12 @@ export class PagoFormModal implements OnInit {
   @Input({ required: true }) conceptosPermitidos: PagoConcepto[] = [];
 
   @Output() closed = new EventEmitter<void>();
-  @Output() saved = new EventEmitter<PagoFormPayload>();
+  /**
+   * A list, because one condominio submission can cover several units — the
+   * company settles both in a single transfer but each unit owes its own
+   * amount, so each becomes its own row. Every other case emits one.
+   */
+  @Output() saved = new EventEmitter<PagoFormPayload[]>();
 
   private readonly fb = inject(FormBuilder);
   private readonly tasasCambioService = inject(TasasCambioService);
@@ -111,6 +116,48 @@ export class PagoFormModal implements OnInit {
    *  three are typed in Bs; USD is shown only as a live BCV estimate and
    *  never typed by hand (unlike canon, where USD stays authoritative). */
   protected readonly esServicio = computed(() => this.concepto() !== 'canon');
+
+  /**
+   * Condominio being registered fresh: the form lists the empresa's units
+   * with a tick and an amount each, instead of one local and one amount.
+   *
+   * Editing stays single — an existing row is one unit's payment, and
+   * turning it into several would be a different operation.
+   */
+  protected get esCondominioMultiple(): boolean {
+    return this.concepto() === 'condominio' && !this.pago;
+  }
+
+  /** `localId` -> bolívares typed for it. A key present means it is ticked. */
+  protected readonly condominioPorLocal = signal<Record<string, number>>({});
+
+  protected estaSeleccionado(localId: string): boolean {
+    return localId in this.condominioPorLocal();
+  }
+
+  protected montoDe(localId: string): number {
+    return this.condominioPorLocal()[localId] ?? 0;
+  }
+
+  protected toggleLocalCondominio(localId: string, marcado: boolean): void {
+    this.condominioPorLocal.update((actual) => {
+      const siguiente = { ...actual };
+      if (marcado) {
+        siguiente[localId] = 0;
+      } else {
+        delete siguiente[localId];
+      }
+      return siguiente;
+    });
+  }
+
+  protected setMontoCondominio(localId: string, valor: string): void {
+    this.condominioPorLocal.update((actual) => ({ ...actual, [localId]: Number(valor) || 0 }));
+  }
+
+  protected readonly totalCondominio = computed(() =>
+    Object.values(this.condominioPorLocal()).reduce((suma, monto) => suma + monto, 0),
+  );
 
   /**
    * Services are typed in bolívares and their USD side is computed. It is
@@ -218,12 +265,17 @@ export class PagoFormModal implements OnInit {
   }
 
   /** Canon: USD required, Bs optional. Services: Bs required, USD computed at
-   *  submit time from the day's BCV rate, so it carries no validators of its own. */
+   *  submit time from the day's USDT/Cash rate, so it carries no validators
+   *  of its own. Multi-unit condominio uses neither control — the amounts
+   *  live in `condominioPorLocal` and are validated in `submit()`. */
   private syncMontoValidators(): void {
     const montoControl = this.form.controls.monto;
     const montoBsControl = this.form.controls.montoBs;
 
-    if (this.esServicio()) {
+    if (this.esCondominioMultiple) {
+      montoControl.clearValidators();
+      montoBsControl.clearValidators();
+    } else if (this.esServicio()) {
       montoControl.clearValidators();
       montoBsControl.setValidators([Validators.required, Validators.min(0.01)]);
     } else {
@@ -238,11 +290,13 @@ export class PagoFormModal implements OnInit {
     this.empresaId.set(value);
     // The previously picked local may belong to a different empresa.
     this.form.controls.localId.setValue('');
+    this.condominioPorLocal.set({});
   }
 
   private syncLocalValidator(): void {
     const control = this.form.controls.localId;
-    if (this.pideLocal()) {
+    // Multi-unit condominio picks its units with tickboxes, not this select.
+    if (this.pideLocal() && !this.esCondominioMultiple) {
       control.addValidators(Validators.required);
     } else {
       control.removeValidators(Validators.required);
@@ -284,29 +338,69 @@ export class PagoFormModal implements OnInit {
     const value = this.form.getRawValue();
     let monto = value.monto;
 
-    if (this.esServicio()) {
-      const rate = this.usdtRate();
-      if (!rate) {
-        this.submitError.set(
-          'No se pudo obtener la tasa USDT/Cash del día. Intenta de nuevo en un momento.',
-        );
-        return;
-      }
-      monto = Math.round((value.montoBs / rate) * 100) / 100;
+    // Every concept but canon is typed in bolívares, so its USD side is
+    // computed here at the day's USDT/Cash rate.
+    const rate = this.usdtRate();
+    if (this.esServicio() && !rate) {
+      this.submitError.set(
+        'No se pudo obtener la tasa USDT/Cash del día. Intenta de nuevo en un momento.',
+      );
+      return;
     }
 
-    this.saved.emit({
-      concepto: value.concepto,
-      empresaId: value.empresaId || null,
-      localId: value.localId || null,
-      fecha: value.fecha,
-      monto,
-      // Optional for canon (a payment made in cash dollars has no bolívar
-      // side); required for services, enforced by syncMontoValidators.
-      montoBs: value.montoBs || null,
-      tipoTasa: value.tipoTasa,
-      descripcion: value.descripcion || null,
-      comprobanteFiles: this.comprobanteFiles,
-    });
+    const enUsdtCash = (montoBs: number) => Math.round((montoBs / rate!) * 100) / 100;
+
+    if (this.esCondominioMultiple) {
+      const porLocal = Object.entries(this.condominioPorLocal());
+
+      if (porLocal.length === 0) {
+        this.submitError.set('Selecciona al menos un local.');
+        return;
+      }
+      if (porLocal.some(([, montoBs]) => montoBs <= 0)) {
+        this.submitError.set('Indica el monto de cada local seleccionado.');
+        return;
+      }
+
+      // One row per unit: the company settles them in a single transfer, but
+      // each unit owes its own amount and is reported on its own.
+      this.saved.emit(
+        porLocal.map(([localId, montoBs], indice) => ({
+          concepto: value.concepto,
+          empresaId: value.empresaId || null,
+          localId,
+          fecha: value.fecha,
+          monto: enUsdtCash(montoBs),
+          montoBs,
+          tipoTasa: value.tipoTasa,
+          descripcion: value.descripcion || null,
+          // The receipt belongs to the transfer, not to each unit, so it is
+          // attached to the first row only — uploading the same file once
+          // per unit would duplicate it in Storage.
+          comprobanteFiles: indice === 0 ? this.comprobanteFiles : [],
+        })),
+      );
+      return;
+    }
+
+    if (this.esServicio()) {
+      monto = enUsdtCash(value.montoBs);
+    }
+
+    this.saved.emit([
+      {
+        concepto: value.concepto,
+        empresaId: value.empresaId || null,
+        localId: value.localId || null,
+        fecha: value.fecha,
+        monto,
+        // Optional for canon (a payment made in cash dollars has no bolívar
+        // side); required for services, enforced by syncMontoValidators.
+        montoBs: value.montoBs || null,
+        tipoTasa: value.tipoTasa,
+        descripcion: value.descripcion || null,
+        comprobanteFiles: this.comprobanteFiles,
+      },
+    ]);
   }
 }
