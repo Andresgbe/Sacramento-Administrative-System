@@ -220,6 +220,18 @@ export class ReportesPage implements OnInit {
 
   protected readonly balance = computed(() => this.totalIngresos() - this.totalEgresos());
 
+  /**
+   * Remodelación spend among the rows on screen. A subset of `totalEgresos`,
+   * not a fourth side of the balance — it is shown beside it so the client
+   * can see how much of the month's outflow went to works, without having to
+   * switch to the Egresos tab and filter.
+   */
+  protected readonly totalRemodelacion = computed(() =>
+    this.resultados()
+      .filter((transaccion) => transaccion.clave === 'egreso-remodelacion')
+      .reduce((sum, transaccion) => sum + transaccion.montoRealizado, 0),
+  );
+
   ngOnInit(): void {
     this.pagosService.load();
     this.egresosService.load();

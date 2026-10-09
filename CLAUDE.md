@@ -740,7 +740,10 @@ not in the root of app/.
       documents, and the per-empresa numbers belong in `deudas`. Don't reinstate
       a total here — it would be a second place for the same number to drift.
   - **Reportes** (`/reportes`): every pago and egreso flattened into one
-    searchable list — four summary cards (Ingresos, Egresos, Balance, count),
+    searchable list — five summary cards (Ingresos, Egresos, Balance,
+    Remodelaciones, count; Remodelaciones is a **subset of Egresos**, not a
+    fourth side of the balance, shown so the works spend is visible without
+    switching to Egresos and filtering),
     filters for search, año, mes, tipo and empresa (both `<app-multi-select>`)
     and a monto range, plus **Excel** and **PDF** buttons that export exactly
     the rows currently on screen. Read-only; nothing is registered here.

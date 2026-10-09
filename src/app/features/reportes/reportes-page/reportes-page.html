@@ -22,6 +22,13 @@
     </div>
 
     <div class="reportes-total">
+      <span class="reportes-total__label">Remodelaciones</span>
+      <span class="reportes-total__value reportes-total__value--egreso">
+        $ {{ totalRemodelacion() | number: '1.2-2' }}
+      </span>
+    </div>
+
+    <div class="reportes-total">
       <span class="reportes-total__label">Transacciones</span>
       <span class="reportes-total__value">{{ resultados().length }}</span>
     </div>
