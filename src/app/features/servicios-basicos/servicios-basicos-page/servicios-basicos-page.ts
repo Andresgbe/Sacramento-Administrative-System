@@ -281,14 +281,24 @@ export class ServiciosBasicosPage implements OnInit {
     this.editingPago.set(null);
   }
 
-  protected async onPagoSaved(payload: PagoFormPayload): Promise<void> {
+  protected async onPagoSaved(payloads: PagoFormPayload[]): Promise<void> {
     this.saving.set(true);
     this.saveError.set(null);
 
     const editing = this.editingPago();
-    const { error } = editing
-      ? await this.pagosService.update(editing.id, payload)
-      : await this.pagosService.add(payload);
+
+    // A list only because the shared modal can emit several for a
+    // multi-unit condominio; this page never offers that concepto, so in
+    // practice it is always one.
+    let error: string | null = null;
+    if (editing) {
+      ({ error } = await this.pagosService.update(editing.id, payloads[0]));
+    } else {
+      for (const payload of payloads) {
+        ({ error } = await this.pagosService.add(payload));
+        if (error) break;
+      }
+    }
 
     this.saving.set(false);
 

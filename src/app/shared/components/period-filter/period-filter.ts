@@ -1,4 +1,5 @@
 import { Component, input, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
 /** Shared by the filter's month select and any form that enters a period. */
 export const MESES = [
@@ -66,7 +67,12 @@ export function esPeriodoActual(anio: string, mes: string): boolean {
 
 @Component({
   selector: 'app-period-filter',
-  imports: [],
+  // FormsModule for `[ngModel]`, NOT a plain `[value]` binding: Angular
+  // applies a property binding on the <select> before the `@for` has created
+  // its <option> children, so on first render the browser finds no matching
+  // option and falls back to the first one — the current month was being
+  // filtered on while the select read "Todos".
+  imports: [FormsModule],
   templateUrl: './period-filter.html',
   styleUrl: './period-filter.scss',
 })
@@ -80,11 +86,11 @@ export class PeriodFilter {
 
   protected readonly meses = MESES;
 
-  protected onAnio(event: Event): void {
-    this.anioChange.emit((event.target as HTMLSelectElement).value);
+  protected onAnio(valor: string): void {
+    this.anioChange.emit(valor);
   }
 
-  protected onMes(event: Event): void {
-    this.mesChange.emit((event.target as HTMLSelectElement).value);
+  protected onMes(valor: string): void {
+    this.mesChange.emit(valor);
   }
 }

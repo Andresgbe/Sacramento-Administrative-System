@@ -181,8 +181,11 @@ directives and services under `src/app/shared/`.
   dates through these, never by hand-rolling `fecha.startsWith(...)`.
 
   **Every report page opens on the current month, and "Limpiar filtros"
-  returns it there — never to "todos".** Three rules that have to move
-  together, or the card misbehaves:
+  returns it there — never to "todos".** The one exception is **Reportes**,
+  which opens on every period and clears back to it: it is the complete
+  ledger and the point of it is searching across months, so it keeps the
+  plain `anio() !== ''` test instead. Three rules that have to move together
+  on the monthly pages, or the card misbehaves:
   - `anio`/`mes` initialise to `currentYear()` / `currentMonth()`.
   - `clearAllFilters()` sets them back to those, not to `''`. Clearing into
     an all-time view silently changed what the totals above the table were
@@ -194,6 +197,15 @@ directives and services under `src/app/shared/`.
 
   `''` still means "todos" on either select — it is reachable, just not where
   the page starts or where clearing lands.
+
+  Both selects are driven by **`[ngModel]`, never a plain `[value]`
+  binding**. Angular applies a property binding on the `<select>` before the
+  `@for` has created its `<option>` children, so on first render the browser
+  finds no matching option and falls back to the first one. That is how the
+  filter spent a while actually filtering on the current month while the
+  select read "Todos" — a silent mismatch between what the page showed and
+  what it was doing. Same rule for any new `<select>` whose options are
+  rendered by a loop.
 - **`<app-monto-equivalencias>`**
   (`src/app/shared/components/monto-equivalencias/`) — the two lines that sit
   under every big money figure: `≈ … Bs` and `≈ $ … a tasa BCV`, both derived
@@ -400,19 +412,37 @@ A business can rent more than one unit in the mall, so the two are separate:
 Every business pays **four** different things, and they are not billed at the
 same level — this is why `pagos` carries both `empresa_id` and `local_id`:
 
-| concepto           | billed per                             | `empresa_id` | `local_id` |
-| ------------------ | -------------------------------------- | ------------ | ---------- |
-| `canon` (alquiler) | **local** — 2 units = 2 canons a month | required     | required   |
-| `condominio`       | **nobody** — one lump sum for the mall | null         | null       |
-| `corpoelec`        | empresa — its share of a shared bill   | required     | null       |
-| `hidrocapital`     | empresa — idem                         | required     | null       |
+| concepto           | billed per                              | `empresa_id` | `local_id` |
+| ------------------ | --------------------------------------- | ------------ | ---------- |
+| `canon` (alquiler) | **local** — 2 units = 2 canons a month  | required     | required   |
+| `condominio`       | **local** — 2 units = 2 condominios     | required     | required   |
+| `corpoelec`        | empresa — its share of a shared bill    | required     | null       |
+| `hidrocapital`     | empresa — idem                          | required     | null       |
 
-`empresa_id` is **nullable** because of condominio: it is collected as a single
-monthly figure and is not broken down per tenant, so it has no business and no
-unit. The check constraint `pagos_local_matches_concepto` enforces the whole
-table above — both columns, per concepto — so nothing can land without the
-reference it should have. `requiereEmpresa()` in `pago.model.ts` is the
-front-end half of the same rule.
+Corpoelec and Hidrocapital are the odd ones: one shared meter per business, so
+"which unit is this water bill for?" has no answer and `local_id` stays null.
+
+`empresa_id` is still **nullable**, for one reason only: condominio was
+modelled as a single monthly lump sum for the mall before it was billed per
+unit, and **those rows are still on record with both columns null**. The
+check constraint `pagos_local_matches_concepto` accepts both shapes for
+condominio — empresa+local set, or both null — so the old rows stay valid and
+keep their comprobantes while the admin assigns them one by one from the Pagos
+table. Anything registered now carries both. `requiereEmpresa()` and
+`CONCEPTOS_POR_LOCAL` in `pago.model.ts` are the front-end half of the rule.
+
+- **One condominio transfer can cover several units.** A company renting two
+  pays both at once, but each unit owes its own figure, so the form lists the
+  empresa's locales with a tick and an **amount each**, and `submit()` emits
+  one payload per ticked unit — `PagoFormModal.saved` is therefore
+  `EventEmitter<PagoFormPayload[]>`, and the pages loop over it. The split is
+  never computed: dividing one total equally would be wrong the moment two
+  units have different condominios. The comprobante is attached to the
+  **first row only** — it belongs to the transfer, and uploading it once per
+  unit would duplicate the file in Storage.
+- **Editing stays single.** An existing row is one unit's payment; turning it
+  into several would be a different operation, so the multi-unit list only
+  appears when registering (`esCondominioMultiple`).
 
 - A pago carries **two amounts**: `monto` (USD) and `monto_bs` (nullable). For
   **canon**, USD is authoritative — rent status, every total and the dashboard

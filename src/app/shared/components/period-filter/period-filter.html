@@ -1,6 +1,6 @@
 <label class="filters-field">
   <span>Año</span>
-  <select [value]="anio()" (change)="onAnio($event)">
+  <select [ngModel]="anio()" (ngModelChange)="onAnio($event)">
     <option value="">Todos</option>
     @for (year of anios(); track year) {
       <option [value]="year">{{ year }}</option>
@@ -10,7 +10,7 @@
 
 <label class="filters-field">
   <span>Mes</span>
-  <select [value]="mes()" (change)="onMes($event)">
+  <select [ngModel]="mes()" (ngModelChange)="onMes($event)">
     <option value="">Todos</option>
     @for (m of meses; track m.value) {
       <option [value]="m.value">{{ m.label }}</option>

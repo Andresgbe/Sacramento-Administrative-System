@@ -324,14 +324,26 @@ export class PagosPage implements OnInit {
     this.modalOpen.set(false);
   }
 
-  protected async onPagoSaved(payload: PagoFormPayload): Promise<void> {
+  protected async onPagoSaved(payloads: PagoFormPayload[]): Promise<void> {
     this.saving.set(true);
     this.saveError.set(null);
 
     const editing = this.editingPago();
-    const { error } = editing
-      ? await this.pagosService.update(editing.id, payload)
-      : await this.pagosService.add(payload);
+
+    // Editing touches exactly one row; registering may create several, when a
+    // condominio transfer covers more than one of a company's units.
+    let error: string | null = null;
+    if (editing) {
+      ({ error } = await this.pagosService.update(editing.id, payloads[0]));
+    } else {
+      // Sequential, not parallel: each insert reads back the row it created
+      // to attach its receipt, and a half-finished batch is easier to make
+      // sense of than a scatter of concurrent failures.
+      for (const payload of payloads) {
+        ({ error } = await this.pagosService.add(payload));
+        if (error) break;
+      }
+    }
 
     this.saving.set(false);
 
@@ -341,7 +353,13 @@ export class PagosPage implements OnInit {
     }
 
     this.closeModal();
-    this.toastService.success(editing ? 'Pago actualizado.' : 'Pago registrado.');
+    this.toastService.success(
+      editing
+        ? 'Pago actualizado.'
+        : payloads.length > 1
+          ? `${payloads.length} pagos registrados.`
+          : 'Pago registrado.',
+    );
   }
 
   protected async deletePago(pago: Pago): Promise<void> {

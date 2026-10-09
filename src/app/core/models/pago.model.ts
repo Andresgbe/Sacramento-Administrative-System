@@ -9,15 +9,19 @@ export const CONCEPTO_LABEL: Record<PagoConcepto, string> = {
   hidrocapital: 'Hidrocapital',
 };
 
-/** Canon is billed per unit; the other three are billed once per empresa. */
-export const CONCEPTOS_POR_LOCAL: readonly PagoConcepto[] = ['canon'];
+/**
+ * Billed per unit: a company renting two units owes two of these a month.
+ * Corpoelec and Hidrocapital are the exception — one shared meter per
+ * business, so they are billed per empresa and carry no local.
+ */
+export const CONCEPTOS_POR_LOCAL: readonly PagoConcepto[] = ['canon', 'condominio'];
 
 /** Registered in Reporte de pagos and counted as the mall's income. */
 export const CONCEPTOS_DE_INGRESO: readonly PagoConcepto[] = ['canon', 'condominio'];
 
-/** Condominio is a single monthly figure for the mall, not billed per tenant. */
-export function requiereEmpresa(concepto: PagoConcepto): boolean {
-  return concepto !== 'condominio';
+/** Every concepto is billed to a business. */
+export function requiereEmpresa(_concepto: PagoConcepto): boolean {
+  return true;
 }
 
 export function esConceptoDeIngreso(concepto: PagoConcepto): boolean {
@@ -39,11 +43,15 @@ export interface Pago {
   id: string;
   numero: number;
   concepto: PagoConcepto;
-  /** Null for `condominio`, which is collected as one lump sum for the mall
-   *  rather than billed to any particular business. */
+  /**
+   * Nullable only for the legacy condominio rows, collected as one lump sum
+   * for the mall before it was billed per unit. Everything registered now
+   * carries an empresa.
+   */
   empresaId: string | null;
   empresaNombre: string;
-  /** Only set for per-unit concepts (canon); null for empresa-wide services. */
+  /** Set for the per-unit concepts (canon, condominio); null for the two
+   *  shared-meter services, and on the legacy lump-sum condominio rows. */
   localId: string | null;
   localNumero: string | null;
   fecha: string;
