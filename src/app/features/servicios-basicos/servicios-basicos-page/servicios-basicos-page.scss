@@ -12,6 +12,12 @@
   }
 }
 
+.servicios-totales {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
 .servicios-total {
   display: inline-flex;
   flex-direction: column;
@@ -150,4 +156,15 @@
     background: rgb(185 28 28 / 10%);
     color: var(--color-danger);
   }
+}
+
+// Paid out against what was collected: red when the tenants' payments did not
+// cover the providers' bills.
+.servicios-total__value--negativo {
+  color: var(--color-danger);
+}
+
+.servicios-total__hint {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
 }

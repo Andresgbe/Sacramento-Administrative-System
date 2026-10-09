@@ -427,3 +427,155 @@ button {
     }
   }
 }
+
+// ---------------------------------------------------------------------------
+// Rate tag — names the rate a figure is denominated in.
+//
+// The app handles three dollars (USDT/Cash, BCV, Euro) and they are different
+// numbers for the same money, so a bare "$ 467,01" is ambiguous. Every big
+// money figure carries one of these, and `<app-monto-equivalencias>` restates
+// it underneath in the other two.
+// ---------------------------------------------------------------------------
+.monto-moneda {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+
+// Size modifier for the button system — a button that lives inside a table
+// row, where the default padding would set the row height.
+.btn--sm {
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+
+// ---------------------------------------------------------------------------
+// File attachment pattern — a dashed upload block plus the list of attached
+// files. Global because more than one form needs it; see CLAUDE.md.
+// ---------------------------------------------------------------------------
+// The upload target is the last thing in the form and the easiest to miss,
+// so it is a block with its own affordance rather than another thin field.
+.upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 20px 16px;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  cursor: pointer;
+  text-align: center;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+
+  &:hover {
+    border-color: var(--color-accent);
+    background: var(--color-accent-soft);
+  }
+}
+
+.upload-zone__icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.upload-zone__title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.upload-zone__hint {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.upload-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.upload-list__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.upload-list__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+// Marks a file that is still only picked, not uploaded: removing it costs
+// nothing, while removing one without the badge deletes a stored file.
+.upload-list__badge {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--color-accent-soft);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-accent);
+}
+
+.upload-list__remove {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  font-size: 0.8rem;
+  line-height: 1;
+  color: var(--color-text-muted);
+  cursor: pointer;
+
+  &:hover {
+    background: rgb(185 28 28 / 10%);
+    color: var(--color-danger);
+  }
+}
+
+// Optional-field marker in a label, so "Monto (Bs)" says plainly that it can
+// be left empty instead of the reader having to find out by submitting.
+.field__opcional {
+  margin-left: 4px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+

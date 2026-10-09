@@ -5,7 +5,7 @@
 >
   <div class="modal">
     <div class="modal__header">
-      <h2>{{ egreso ? 'Editar gasto' : 'Registrar gasto' }}</h2>
+      <h2>{{ pago.usdtConvertido !== null ? 'Editar conversión' : 'Convertir a USDT' }}</h2>
       <button type="button" class="modal__close" (click)="closed.emit()" aria-label="Cerrar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
@@ -14,43 +14,48 @@
     </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()" class="modal__form">
-      <label class="field">
-        <span>Categoría</span>
-        <select formControlName="categoria">
-          <option value="administrativo">Gastos administrativos</option>
-          <option value="operativo">Gastos operativos</option>
-        </select>
-      </label>
-
-      <div class="field-row">
-        <label class="field">
-          <span>Fecha</span>
-          <input type="date" formControlName="fecha" />
-        </label>
-
-        <label class="field">
-          <span>Monto (USDT/Cash)</span>
-          <input
-            type="number"
-            formControlName="monto"
-            min="0"
-            step="0.01"
-            appSelectOnFocus
-            appPositiveDecimal
-          />
-        </label>
+      <div class="conversion-origen">
+        <span class="conversion-origen__label">Pago a convertir</span>
+        <span class="conversion-origen__monto">$ {{ pago.monto | number: '1.2-2' }}</span>
+        <span class="conversion-origen__detalle">
+          #{{ pago.numero }} · {{ conceptoLabel[pago.concepto] }}
+          @if (pago.empresaNombre) {
+            · {{ pago.empresaNombre }}
+          }
+          @if (pago.montoBs !== null) {
+            · {{ pago.montoBs | number: '1.2-2' }} Bs
+          }
+        </span>
       </div>
 
       <label class="field">
-        <span>Descripción</span>
-        <textarea formControlName="descripcion" placeholder="Opcional" rows="4"></textarea>
+        <span>USDT comprados</span>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          formControlName="usdtConvertido"
+          appSelectOnFocus
+          appPositiveDecimal
+        />
+      </label>
+
+      <p class="conversion-hint">
+        Escribe los USDT que recibiste realmente, no los que deberían salir por tasa. Esta es la
+        cifra que suma al balance.
+      </p>
+
+      <label class="field">
+        <span>Fecha de la conversión</span>
+        <input type="date" formControlName="fecha" />
       </label>
 
       <div class="field">
-        <span>Comprobante</span>
+        <span>Comprobante de la conversión</span>
 
-        <!-- Single file: `egresos` holds one `comprobante_ruta`, so there is
-             nowhere to put a second. Same visual pattern either way. -->
+        <!-- Single file, unlike the pago form: `pagos` holds one
+             `conversion_comprobante_ruta`, so there is nowhere to put a
+             second. Same visual pattern either way. -->
         <label class="upload-zone">
           <input
             type="file"
@@ -60,7 +65,7 @@
           />
           <span class="upload-zone__icon" aria-hidden="true">&#128228;</span>
           <span class="upload-zone__title">Subir comprobante</span>
-          <span class="upload-zone__hint">Imagen o PDF del gasto</span>
+          <span class="upload-zone__hint">Imagen o PDF de la compra de USDT</span>
         </label>
 
         @if (comprobanteDisplayName) {
@@ -86,6 +91,9 @@
       @if (errorMessage) {
         <p class="modal__error">{{ errorMessage }}</p>
       }
+      @if (submitError()) {
+        <p class="modal__error">{{ submitError() }}</p>
+      }
 
       <div class="modal__actions">
         <button type="button" class="btn btn--secondary" (click)="closed.emit()">Cancelar</button>
@@ -93,7 +101,7 @@
           @if (saving) {
             <span class="spinner"></span>
           }
-          {{ saving ? 'Guardando…' : egreso ? 'Guardar cambios' : 'Registrar gasto' }}
+          {{ saving ? 'Guardando…' : 'Registrar conversión' }}
         </button>
       </div>
     </form>

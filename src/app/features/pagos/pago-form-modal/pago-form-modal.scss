@@ -12,7 +12,7 @@
 
 .modal {
   width: 100%;
-  max-width: 480px;
+  max-width: var(--modal-width);
   max-height: 90vh;
   overflow-y: auto;
   padding: 24px;
@@ -197,4 +197,54 @@
   justify-content: flex-end;
   gap: 12px;
   margin-top: 8px;
+}
+
+
+// Amount + rate as one control. The wrapper carries the border and focus
+// ring; the two children are borderless so it reads as a single field.
+.monto-combo {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  overflow: hidden;
+
+  &:focus-within {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    border-radius: 0;
+    background: none;
+
+    &:focus {
+      outline: none;
+      border: none;
+      box-shadow: none;
+    }
+  }
+
+  select {
+    width: auto;
+    flex-shrink: 0;
+    border: none;
+    border-left: 1px solid var(--color-border);
+    border-radius: 0;
+    background-color: var(--color-surface-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-border);
+      box-shadow: none;
+    }
+  }
 }

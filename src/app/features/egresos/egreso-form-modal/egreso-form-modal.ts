@@ -9,6 +9,9 @@ export interface EgresoFormPayload {
   monto: number;
   categoria: CategoriaEgreso;
   descripcion: string | null;
+  comprobanteFile: File | null;
+  /** The stored receipt was removed and no new one replaces it. */
+  eliminarComprobante: boolean;
 }
 
 // `toISOString()` reports UTC, which can roll over to tomorrow's date for
@@ -35,6 +38,36 @@ export class EgresoFormModal implements OnInit {
   @Output() saved = new EventEmitter<EgresoFormPayload>();
 
   private readonly fb = inject(FormBuilder);
+
+  protected comprobanteFile: File | null = null;
+  /** Set when the ✕ removes the receipt already on the row; applied on save. */
+  private comprobanteEliminado = false;
+
+  /** Falls back to the stored filename so editing shows what is already
+   *  attached, without re-downloading it. */
+  protected get comprobanteDisplayName(): string | null {
+    if (this.comprobanteFile) {
+      return this.comprobanteFile.name;
+    }
+    return this.comprobanteEliminado ? null : (this.egreso?.comprobanteNombre ?? null);
+  }
+
+  protected onComprobanteSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.comprobanteFile = input.files?.[0] ?? null;
+    // Let the same file be picked again after being removed.
+    input.value = '';
+  }
+
+  protected removeComprobante(): void {
+    // Dropping a freshly picked file just falls back to whatever was stored;
+    // only the second ✕ marks the stored one for removal.
+    if (this.comprobanteFile) {
+      this.comprobanteFile = null;
+      return;
+    }
+    this.comprobanteEliminado = true;
+  }
 
   private mouseDownOnBackdrop = false;
 
@@ -79,6 +112,8 @@ export class EgresoFormModal implements OnInit {
       monto: value.monto,
       categoria: value.categoria,
       descripcion: value.descripcion || null,
+      comprobanteFile: this.comprobanteFile,
+      eliminarComprobante: this.comprobanteEliminado && !this.comprobanteFile,
     });
   }
 }

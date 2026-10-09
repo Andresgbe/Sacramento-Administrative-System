@@ -14,103 +14,99 @@
     </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()" class="modal__form">
-      @if (conceptosPermitidos.length > 1) {
-        <label class="field">
-          <span>Concepto</span>
-          <select formControlName="concepto" (change)="onConceptoChange($any($event.target).value)">
-            @for (c of conceptosPermitidos; track c) {
-              <option [value]="c">{{ conceptoLabel[c] }}</option>
-            }
-          </select>
-        </label>
-      }
-
-      @if (pideEmpresa()) {
-        <label
-          class="field"
-          [class.field--invalid]="
-            form.controls.empresaId.invalid && form.controls.empresaId.touched
-          "
-        >
-          <span>Empresa</span>
-          <select formControlName="empresaId" (change)="onEmpresaChange($any($event.target).value)">
-            <option value="" disabled>Selecciona una empresa</option>
-            @for (empresa of empresasDisponibles(); track empresa.id) {
-              <option [value]="empresa.id">{{ empresa.nombreComercial }}</option>
-            }
-          </select>
-          @if (form.controls.empresaId.invalid && form.controls.empresaId.touched) {
-            <span class="field__error">Debes seleccionar una empresa.</span>
-          }
-        </label>
-      }
-
-      @if (pideLocal()) {
-        <label
-          class="field"
-          [class.field--invalid]="form.controls.localId.invalid && form.controls.localId.touched"
-        >
-          <span>Local</span>
-          <select formControlName="localId">
-            <option value="" disabled>Selecciona un local</option>
-            @for (local of localesDeEmpresa(); track local.id) {
-              <option [value]="local.id">{{ local.numeroLocal }}</option>
-            }
-          </select>
-          @if (form.controls.empresaId.valid && localesDeEmpresa().length === 0) {
-            <span class="field__error">Esta empresa no tiene locales registrados.</span>
-          } @else if (form.controls.localId.invalid && form.controls.localId.touched) {
-            <span class="field__error">Debes seleccionar un local.</span>
-          }
-        </label>
-      }
-
+      <!-- 1. Concepto + Fecha -->
       <div class="field-row">
+        @if (conceptosPermitidos.length > 1) {
+          <label class="field">
+            <span>Concepto</span>
+            <select
+              formControlName="concepto"
+              (change)="onConceptoChange($any($event.target).value)"
+            >
+              @for (c of conceptosPermitidos; track c) {
+                <option [value]="c">{{ conceptoLabel[c] }}</option>
+              }
+            </select>
+          </label>
+        }
+
         <label class="field">
           <span>Fecha</span>
           <input type="date" formControlName="fecha" />
         </label>
-
-        @if (esServicio()) {
-          <label
-            class="field"
-            [class.field--invalid]="form.controls.montoBs.invalid && form.controls.montoBs.touched"
-          >
-            <span>Monto (Bs)</span>
-            <input
-              type="number"
-              formControlName="montoBs"
-              min="0"
-              step="0.01"
-              appSelectOnFocus
-              appPositiveDecimal
-            />
-            @if (form.controls.montoBs.invalid && form.controls.montoBs.touched) {
-              <span class="field__error">El monto no puede estar vacío.</span>
-            }
-          </label>
-        } @else {
-          <label
-            class="field"
-            [class.field--invalid]="form.controls.monto.invalid && form.controls.monto.touched"
-          >
-            <span>Monto (USD)</span>
-            <input
-              type="number"
-              formControlName="monto"
-              min="0"
-              step="0.01"
-              appSelectOnFocus
-              appPositiveDecimal
-            />
-            @if (form.controls.monto.invalid && form.controls.monto.touched) {
-              <span class="field__error">El monto no puede estar vacío.</span>
-            }
-          </label>
-        }
       </div>
 
+      <!-- 2. Empresa + Local. Condominio has neither, so the row collapses. -->
+      @if (pideEmpresa() || pideLocal()) {
+        <div class="field-row">
+          @if (pideEmpresa()) {
+            <label
+              class="field"
+              [class.field--invalid]="
+                form.controls.empresaId.invalid && form.controls.empresaId.touched
+              "
+            >
+              <span>Empresa</span>
+              <select
+                formControlName="empresaId"
+                (change)="onEmpresaChange($any($event.target).value)"
+              >
+                <option value="" disabled>Selecciona una empresa</option>
+                @for (empresa of empresasDisponibles(); track empresa.id) {
+                  <option [value]="empresa.id">{{ empresa.nombreComercial }}</option>
+                }
+              </select>
+              @if (form.controls.empresaId.invalid && form.controls.empresaId.touched) {
+                <span class="field__error">Debes seleccionar una empresa.</span>
+              }
+            </label>
+          }
+
+          @if (pideLocal()) {
+            <label
+              class="field"
+              [class.field--invalid]="
+                form.controls.localId.invalid && form.controls.localId.touched
+              "
+            >
+              <span>Local</span>
+              <select formControlName="localId">
+                <option value="" disabled>Selecciona un local</option>
+                @for (local of localesDeEmpresa(); track local.id) {
+                  <option [value]="local.id">{{ local.numeroLocal }}</option>
+                }
+              </select>
+              @if (form.controls.empresaId.valid && localesDeEmpresa().length === 0) {
+                <span class="field__error">Esta empresa no tiene locales registrados.</span>
+              } @else if (form.controls.localId.invalid && form.controls.localId.touched) {
+                <span class="field__error">Debes seleccionar un local.</span>
+              }
+            </label>
+          }
+        </div>
+      }
+
+      <!-- 3. Monto Bs + Monto USD. Services are collected in bolívares, so
+           there the Bs figure is the required one and the dollar is computed. -->
       @if (esServicio()) {
+        <label
+          class="field"
+          [class.field--invalid]="form.controls.montoBs.invalid && form.controls.montoBs.touched"
+        >
+          <span>Monto (Bs)</span>
+          <input
+            type="number"
+            formControlName="montoBs"
+            min="0"
+            step="0.01"
+            appSelectOnFocus
+            appPositiveDecimal
+          />
+          @if (form.controls.montoBs.invalid && form.controls.montoBs.touched) {
+            <span class="field__error">El monto no puede estar vacío.</span>
+          }
+        </label>
+
         <p class="field-hint">
           @if (bcvRate() && montoUsdEstimado() !== null) {
             Equivalente: $ {{ montoUsdEstimado() | number: '1.2-2' }} (tasa BCV
@@ -120,66 +116,104 @@
           }
         </p>
       } @else {
-        <label class="field">
-          <span>Monto (Bs)</span>
-          <input
-            type="number"
-            formControlName="montoBs"
-            min="0"
-            step="0.01"
-            placeholder="Opcional"
-            appSelectOnFocus
-            appPositiveDecimal
-          />
-        </label>
+        <div class="field-row">
+          <label class="field">
+            <span>Monto (Bs) <em class="field__opcional">Opcional</em></span>
+            <input
+              type="number"
+              formControlName="montoBs"
+              min="0"
+              step="0.01"
+              placeholder="0,00"
+              appSelectOnFocus
+              appPositiveDecimal
+            />
+          </label>
+
+          <label
+            class="field"
+            [class.field--invalid]="form.controls.monto.invalid && form.controls.monto.touched"
+          >
+            <span>Monto (USD)</span>
+            <!-- The rate sits inside the amount control: the two are one
+                 statement ("120 at BCV"), and as separate fields the rate was
+                 routinely left on whatever the previous payment used. -->
+            <div class="monto-combo">
+              <input
+                type="number"
+                formControlName="monto"
+                min="0"
+                step="0.01"
+                appSelectOnFocus
+                appPositiveDecimal
+              />
+              <select formControlName="tipoTasa" aria-label="Tasa">
+                <option value="USD">USDT/Cash</option>
+                <option value="BCV">BCV</option>
+                <option value="EUR">Euro</option>
+                <option value="otra">Otra</option>
+              </select>
+            </div>
+            @if (form.controls.monto.invalid && form.controls.monto.touched) {
+              <span class="field__error">El monto no puede estar vacío.</span>
+            }
+          </label>
+        </div>
       }
 
-      <label class="field">
-        <span>Tasa</span>
-        <select formControlName="tipoTasa">
-          <option value="BCV">BCV</option>
-          <option value="EUR">Euro</option>
-          <option value="USD">USDT/Cash</option>
-          <option value="otra">Otra</option>
-        </select>
-      </label>
-
+      <!-- 4. Descripción -->
       <label class="field">
         <span>Descripción</span>
-        <textarea formControlName="descripcion" placeholder="Opcional" rows="4"></textarea>
+        <textarea formControlName="descripcion" placeholder="Opcional" rows="3"></textarea>
       </label>
 
+      <!-- 5. Comprobantes -->
       <div class="field">
         <span>Comprobante de pago</span>
-        @if (comprobanteDisplayName) {
-          <div class="file-picker__selected">
-            <span class="file-picker__name">{{ comprobanteDisplayName }}</span>
-            @if (comprobanteFile) {
-              <button type="button" class="file-picker__remove" (click)="removeComprobante()">
-                Quitar
-              </button>
-            } @else {
-              <label class="file-picker__remove">
-                Reemplazar
-                <input
-                  type="file"
-                  accept="image/*,.pdf"
-                  (change)="onComprobanteSelected($event)"
-                  hidden
-                />
-              </label>
+
+        <label class="upload-zone">
+          <input
+            type="file"
+            accept="image/*,.pdf"
+            multiple
+            (change)="onComprobantesSelected($event)"
+            hidden
+          />
+          <span class="upload-zone__icon" aria-hidden="true">&#128228;</span>
+          <span class="upload-zone__title">Subir comprobantes</span>
+          <span class="upload-zone__hint">Imágenes o PDF · puedes anexar varios</span>
+        </label>
+
+        @if (comprobantesExistentes.length > 0 || comprobanteFiles.length > 0) {
+          <ul class="upload-list">
+            @for (c of comprobantesExistentes; track c.id) {
+              <li class="upload-list__item">
+                <span class="upload-list__name">{{ c.nombre }}</span>
+                <button
+                  type="button"
+                  class="upload-list__remove"
+                  (click)="removeComprobanteExistente(c)"
+                  [attr.aria-label]="'Eliminar ' + c.nombre"
+                >
+                  &#10005;
+                </button>
+              </li>
             }
-          </div>
-        } @else {
-          <label class="file-picker__dropzone">
-            <input
-              type="file"
-              accept="image/*,.pdf"
-              (change)="onComprobanteSelected($event)"
-              hidden
-            />
-            Subir comprobante
-          </label>
+            @for (file of comprobanteFiles; track file.name + file.size) {
+              <li class="upload-list__item upload-list__item--nuevo">
+                <span class="upload-list__name">{{ file.name }}</span>
+                <span class="upload-list__badge">Nuevo</span>
+                <button
+                  type="button"
+                  class="upload-list__remove"
+                  (click)="removeComprobanteFile(file)"
+                  [attr.aria-label]="'Quitar ' + file.name"
+                >
+                  &#10005;
+                </button>
+              </li>
+            }
+          </ul>
         }
       </div>
 

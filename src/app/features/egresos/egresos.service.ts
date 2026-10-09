@@ -9,6 +9,8 @@ interface EgresoRow {
   monto: number;
   categoria: CategoriaEgreso;
   descripcion: string | null;
+  comprobante_ruta: string | null;
+  comprobante_nombre: string | null;
   created_at: string;
 }
 
@@ -20,7 +22,32 @@ function fromRow(row: EgresoRow): Egreso {
     monto: row.monto,
     categoria: row.categoria,
     descripcion: row.descripcion,
+    comprobanteRuta: row.comprobante_ruta,
+    comprobanteNombre: row.comprobante_nombre,
     createdAt: row.created_at,
+  };
+}
+
+export interface EgresoInput {
+  fecha: string;
+  monto: number;
+  categoria: CategoriaEgreso;
+  descripcion: string | null;
+  comprobanteFile: File | null;
+  eliminarComprobante: boolean;
+}
+
+function toRow(egreso: EgresoInput) {
+  return {
+    fecha: egreso.fecha,
+    monto: egreso.monto,
+    categoria: egreso.categoria,
+    descripcion: egreso.descripcion,
+    // Only when the form says so: spreading an unconditional null here would
+    // wipe the receipt on every ordinary edit.
+    ...(egreso.eliminarComprobante
+      ? { comprobante_ruta: null, comprobante_nombre: null }
+      : {}),
   };
 }
 
@@ -56,52 +83,81 @@ export class EgresosService {
     this.loading.set(false);
   }
 
-  async add(egreso: {
-    fecha: string;
-    monto: number;
-    categoria: CategoriaEgreso;
-    descripcion: string | null;
-  }): Promise<{ error: string | null }> {
-    const { error } = await this.supabase.from('egresos').insert({
-      fecha: egreso.fecha,
-      monto: egreso.monto,
-      categoria: egreso.categoria,
-      descripcion: egreso.descripcion,
-    });
+  async add(egreso: EgresoInput): Promise<{ error: string | null }> {
+    const { data, error } = await this.supabase
+      .from('egresos')
+      .insert(toRow(egreso))
+      .select('id')
+      .single();
 
     if (error) {
       return { error: error.message };
+    }
+
+    if (egreso.comprobanteFile) {
+      const { error: uploadError } = await this.uploadComprobante(data.id, egreso.comprobanteFile);
+      if (uploadError) {
+        return { error: uploadError };
+      }
     }
 
     await this.load();
     return { error: null };
   }
 
-  async update(
-    id: string,
-    egreso: {
-      fecha: string;
-      monto: number;
-      categoria: CategoriaEgreso;
-      descripcion: string | null;
-    },
-  ): Promise<{ error: string | null }> {
-    const { error } = await this.supabase
-      .from('egresos')
-      .update({
-        fecha: egreso.fecha,
-        monto: egreso.monto,
-        categoria: egreso.categoria,
-        descripcion: egreso.descripcion,
-      })
-      .eq('id', id);
+  async update(id: string, egreso: EgresoInput): Promise<{ error: string | null }> {
+    const { error } = await this.supabase.from('egresos').update(toRow(egreso)).eq('id', id);
 
     if (error) {
       return { error: error.message };
     }
 
+    if (egreso.comprobanteFile) {
+      const { error: uploadError } = await this.uploadComprobante(id, egreso.comprobanteFile);
+      if (uploadError) {
+        return { error: uploadError };
+      }
+    }
+
     await this.load();
     return { error: null };
+  }
+
+  /** Same arrangement as pago comprobantes: private bucket, path on the row. */
+  private async uploadComprobante(egresoId: string, file: File): Promise<{ error: string | null }> {
+    const extension = file.name.split('.').pop();
+    const path = `egresos/${egresoId}/${crypto.randomUUID()}.${extension}`;
+
+    const { error: uploadError } = await this.supabase.storage
+      .from('documentos')
+      .upload(path, file);
+
+    if (uploadError) {
+      return { error: uploadError.message };
+    }
+
+    const { error: updateError } = await this.supabase
+      .from('egresos')
+      .update({ comprobante_ruta: path, comprobante_nombre: file.name })
+      .eq('id', egresoId);
+
+    if (updateError) {
+      return { error: updateError.message };
+    }
+
+    return { error: null };
+  }
+
+  async getComprobanteUrl(ruta: string): Promise<{ url: string | null; error: string | null }> {
+    const { data, error } = await this.supabase.storage
+      .from('documentos')
+      .createSignedUrl(ruta, 60 * 60);
+
+    if (error) {
+      return { url: null, error: error.message };
+    }
+
+    return { url: data.signedUrl, error: null };
   }
 
   async delete(id: string): Promise<{ error: string | null }> {

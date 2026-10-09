@@ -7,5 +7,8 @@ export interface Egreso {
   monto: number;
   categoria: CategoriaEgreso;
   descripcion: string | null;
+  /** Receipt in the private `documentos` bucket; opened through a signed URL. */
+  comprobanteRuta: string | null;
+  comprobanteNombre: string | null;
   createdAt: string;
 }

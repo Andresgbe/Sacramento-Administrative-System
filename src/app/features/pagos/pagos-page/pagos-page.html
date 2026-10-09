@@ -1,10 +1,26 @@
 <div class="pagos-page__header">
+  <div class="pagos-page__totales">
   <div class="pagos-total">
     <span class="pagos-total__label">{{ totalLabel() }}</span>
     <span class="pagos-total__value">$ {{ total() | number: '1.2-2' }}</span>
+    <span class="monto-moneda">USDT/Cash</span>
+    <app-monto-equivalencias [monto]="total()" />
     @if (totalBs() > 0) {
-      <span class="pagos-monto-bs">{{ totalBs() | number: '1.2-2' }} Bs</span>
+      <span class="pagos-total__transferido">
+        Transferido: {{ totalBs() | number: '1.2-2' }} Bs
+      </span>
     }
+  </div>
+
+  <div class="pagos-total pagos-total--pendiente">
+    <span class="pagos-total__label">Balance sin convertir</span>
+    <span class="pagos-total__value">$ {{ totalSinConvertir() | number: '1.2-2' }}</span>
+    <span class="monto-moneda">Nominal</span>
+    <span class="pagos-total__transferido">
+      {{ cantidadSinConvertir() }}
+      {{ cantidadSinConvertir() === 1 ? 'pago pendiente' : 'pagos pendientes' }}
+    </span>
+  </div>
   </div>
 
   @if (isAdmin()) {
@@ -137,6 +153,7 @@
           <th>Tasa</th>
           <th>Descripción</th>
           <th>Comprobante</th>
+          <th>Conversión</th>
           @if (isAdmin()) {
             <th class="data-table__actions"></th>
           }
@@ -158,16 +175,71 @@
             <td>{{ tasaLabel[pago.tipoTasa] }}</td>
             <td>{{ pago.descripcion || '—' }}</td>
             <td>
-              @if (pago.comprobanteRuta) {
-                <button
-                  type="button"
-                  class="pagos-comprobante-link"
-                  (click)="openComprobante(pago)"
-                >
-                  Ver comprobante
-                </button>
+              @if (pago.comprobantes.length > 0) {
+                <div class="pagos-comprobantes">
+                  @for (c of pago.comprobantes; track c.id) {
+                    <button
+                      type="button"
+                      class="pagos-comprobante-link"
+                      (click)="openComprobante(c)"
+                      [title]="c.nombre"
+                    >
+                      {{ c.nombre }}
+                    </button>
+                  }
+                </div>
               } @else {
                 —
+              }
+            </td>
+            <td>
+              @if (pago.usdtConvertido !== null) {
+                <div class="pagos-conversion">
+                  <span class="pagos-conversion__monto">
+                    {{ pago.usdtConvertido | number: '1.2-2' }} USDT
+                  </span>
+                  <span class="pagos-conversion__fecha">
+                    {{ pago.conversionFecha | date: 'dd/MM/yyyy' : 'UTC' }}
+                  </span>
+                  @if (pago.conversionComprobanteRuta) {
+                    <button
+                      type="button"
+                      class="pagos-comprobante-link"
+                      (click)="openComprobanteConversion(pago)"
+                    >
+                      Ver comprobante
+                    </button>
+                  }
+                  @if (isAdmin()) {
+                    <div class="pagos-conversion__acciones">
+                      <button
+                        type="button"
+                        class="pagos-conversion__link"
+                        (click)="openConversionModal(pago)"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        class="pagos-conversion__link pagos-conversion__link--danger"
+                        [disabled]="anulandoId() === pago.id"
+                        (click)="anularConversion(pago)"
+                      >
+                        Anular
+                      </button>
+                    </div>
+                  }
+                </div>
+              } @else if (isAdmin()) {
+                <button
+                  type="button"
+                  class="btn btn--secondary btn--sm"
+                  (click)="openConversionModal(pago)"
+                >
+                  Convertir
+                </button>
+              } @else {
+                <span class="pagos-conversion__pendiente">Sin convertir</span>
               }
             </td>
             @if (isAdmin()) {
@@ -226,15 +298,26 @@
     [pago]="editingPago()"
     (closed)="closeModal()"
     (saved)="onPagoSaved($event)"
+    (comprobanteEliminado)="onComprobanteEliminado($event)"
   />
 }
 
 @if (comprobanteTarget(); as target) {
   <app-comprobante-preview-modal
-    [nombreArchivo]="target.comprobanteNombre || 'Comprobante'"
+    [nombreArchivo]="target.nombre"
     [url]="comprobanteUrl()"
     [loading]="comprobanteLoading()"
     [errorMessage]="comprobanteError()"
     (closed)="closeComprobante()"
+  />
+}
+
+@if (conversionTarget(); as target) {
+  <app-conversion-modal
+    [pago]="target"
+    [saving]="savingConversion()"
+    [errorMessage]="conversionError()"
+    (closed)="closeConversionModal()"
+    (saved)="onConversionSaved($event)"
   />
 }

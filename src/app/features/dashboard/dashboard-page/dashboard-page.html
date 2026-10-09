@@ -5,8 +5,9 @@
       <span class="stat-card__value" [class]="'stat-card__value--' + stat.tone">
         {{ stat.value }}
       </span>
-      @if (stat.secondary) {
-        <span class="stat-card__secondary">{{ stat.secondary }}</span>
+      @if (stat.montoUsdtCash !== undefined) {
+        <span class="monto-moneda">USDT/Cash</span>
+        <app-monto-equivalencias [monto]="stat.montoUsdtCash" />
       }
     </div>
   }

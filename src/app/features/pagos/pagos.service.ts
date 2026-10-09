@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { PagoStatus } from '../../core/models/local.model';
 import {
+  ComprobantePago,
   Pago,
   PagoConcepto,
   TipoTasa,
@@ -19,15 +20,21 @@ interface PagoRow {
   monto: number;
   monto_bs: number | null;
   tipo_tasa: TipoTasa;
+  usdt_convertido: number | null;
+  conversion_fecha: string | null;
+  conversion_comprobante_ruta: string | null;
+  conversion_comprobante_nombre: string | null;
   descripcion: string | null;
   comprobante_ruta: string | null;
   comprobante_nombre: string | null;
   created_at: string;
   empresas: { nombre_comercial: string } | null;
   locales: { numero_local: string } | null;
+  pagos_comprobantes: { id: string; ruta: string; nombre: string }[] | null;
 }
 
-const SELECT_WITH_REFS = '*, empresas(nombre_comercial), locales(numero_local)';
+const SELECT_WITH_REFS =
+  '*, empresas(nombre_comercial), locales(numero_local), pagos_comprobantes(id, ruta, nombre)';
 
 export interface PagoInput {
   concepto: PagoConcepto;
@@ -38,7 +45,16 @@ export interface PagoInput {
   montoBs: number | null;
   tipoTasa: TipoTasa;
   descripcion: string | null;
+  /** Files to attach on save; the ones already stored are left alone. */
+  comprobanteFiles: File[];
+}
+
+export interface ConversionInput {
+  /** USDT actually bought with this payment. */
+  usdtConvertido: number;
+  fecha: string;
   comprobanteFile: File | null;
+  eliminarComprobante: boolean;
 }
 
 function toRow(pago: PagoInput) {
@@ -71,9 +87,14 @@ function fromRow(row: PagoRow): Pago {
     monto: row.monto,
     montoBs: row.monto_bs,
     tipoTasa: row.tipo_tasa,
+    usdtConvertido: row.usdt_convertido,
+    conversionFecha: row.conversion_fecha,
+    conversionComprobanteRuta: row.conversion_comprobante_ruta,
+    conversionComprobanteNombre: row.conversion_comprobante_nombre,
     descripcion: row.descripcion,
-    comprobanteRuta: row.comprobante_ruta,
-    comprobanteNombre: row.comprobante_nombre,
+    comprobantes: (row.pagos_comprobantes ?? []).map(
+      (c): ComprobantePago => ({ id: c.id, ruta: c.ruta, nombre: c.nombre }),
+    ),
     createdAt: row.created_at,
   };
 }
@@ -121,11 +142,9 @@ export class PagosService {
       return { error: error.message };
     }
 
-    if (pago.comprobanteFile) {
-      const { error: uploadError } = await this.uploadComprobante(data.id, pago.comprobanteFile);
-      if (uploadError) {
-        return { error: uploadError };
-      }
+    const uploadError = await this.uploadComprobantes(data.id, pago.comprobanteFiles);
+    if (uploadError) {
+      return { error: uploadError };
     }
 
     await this.load();
@@ -139,8 +158,43 @@ export class PagosService {
       return { error: error.message };
     }
 
-    if (pago.comprobanteFile) {
-      const { error: uploadError } = await this.uploadComprobante(id, pago.comprobanteFile);
+    const uploadError = await this.uploadComprobantes(id, pago.comprobanteFiles);
+    if (uploadError) {
+      return { error: uploadError };
+    }
+
+    await this.load();
+    return { error: null };
+  }
+
+  /**
+   * Record what the mall actually got for this payment. Until this runs the
+   * row counts for nothing in any balance — see `montoRealizado()`.
+   */
+  async registrarConversion(
+    id: string,
+    conversion: ConversionInput,
+  ): Promise<{ error: string | null }> {
+    const { error } = await this.supabase
+      .from('pagos')
+      .update({
+        usdt_convertido: conversion.usdtConvertido,
+        conversion_fecha: conversion.fecha,
+        ...(conversion.eliminarComprobante
+          ? { conversion_comprobante_ruta: null, conversion_comprobante_nombre: null }
+          : {}),
+      })
+      .eq('id', id);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    if (conversion.comprobanteFile) {
+      const { error: uploadError } = await this.uploadComprobanteConversion(
+        id,
+        conversion.comprobanteFile,
+      );
       if (uploadError) {
         return { error: uploadError };
       }
@@ -150,9 +204,29 @@ export class PagosService {
     return { error: null };
   }
 
-  private async uploadComprobante(pagoId: string, file: File): Promise<{ error: string | null }> {
+  /** Undo a conversion: the row goes back to the "sin convertir" queue. */
+  async anularConversion(id: string): Promise<{ error: string | null }> {
+    const { error } = await this.supabase
+      .from('pagos')
+      // Both halves together: the check constraint rejects one without the other.
+      .update({ usdt_convertido: null, conversion_fecha: null })
+      .eq('id', id);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    await this.load();
+    return { error: null };
+  }
+
+  /** Separate folder from the payment receipt: two different documents. */
+  private async uploadComprobanteConversion(
+    pagoId: string,
+    file: File,
+  ): Promise<{ error: string | null }> {
     const extension = file.name.split('.').pop();
-    const path = `pagos/${pagoId}/${crypto.randomUUID()}.${extension}`;
+    const path = `conversiones/${pagoId}/${crypto.randomUUID()}.${extension}`;
 
     const { error: uploadError } = await this.supabase.storage
       .from('documentos')
@@ -164,13 +238,68 @@ export class PagosService {
 
     const { error: updateError } = await this.supabase
       .from('pagos')
-      .update({ comprobante_ruta: path, comprobante_nombre: file.name })
+      .update({ conversion_comprobante_ruta: path, conversion_comprobante_nombre: file.name })
       .eq('id', pagoId);
 
     if (updateError) {
       return { error: updateError.message };
     }
 
+    return { error: null };
+  }
+
+  /**
+   * Uploads every selected file and registers one `pagos_comprobantes` row
+   * each. Returns the first error, or null. Sequential rather than parallel:
+   * a failure halfway leaves the files already uploaded registered, which is
+   * recoverable, instead of a scatter of orphaned Storage objects.
+   */
+  private async uploadComprobantes(pagoId: string, files: File[]): Promise<string | null> {
+    for (const file of files) {
+      const extension = file.name.split('.').pop();
+      const path = `pagos/${pagoId}/${crypto.randomUUID()}.${extension}`;
+
+      const { error: uploadError } = await this.supabase.storage
+        .from('documentos')
+        .upload(path, file);
+
+      if (uploadError) {
+        return uploadError.message;
+      }
+
+      const { error: insertError } = await this.supabase
+        .from('pagos_comprobantes')
+        .insert({ pago_id: pagoId, ruta: path, nombre: file.name });
+
+      if (insertError) {
+        return insertError.message;
+      }
+    }
+
+    return null;
+  }
+
+  /** Removes one attachment, Storage object first — the row does not cascade
+   *  to the file. */
+  async deleteComprobante(comprobante: ComprobantePago): Promise<{ error: string | null }> {
+    const { error: storageError } = await this.supabase.storage
+      .from('documentos')
+      .remove([comprobante.ruta]);
+
+    if (storageError) {
+      return { error: storageError.message };
+    }
+
+    const { error } = await this.supabase
+      .from('pagos_comprobantes')
+      .delete()
+      .eq('id', comprobante.id);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    await this.load();
     return { error: null };
   }
 
@@ -202,6 +331,11 @@ export class PagosService {
    *
    * Only canon counts: a company can be up to date on its water bill and still
    * owe rent, so counting every concept would mark it as al día.
+   *
+   * Deliberately sums `monto`, NOT `montoRealizado()`: this answers "did the
+   * tenant pay?", and whether the mall has converted the money into USDT yet
+   * is the mall's business, not the tenant's. Using the converted figure here
+   * would mark every tenant moroso until the admin got round to converting.
    *
    * Matched on the "YYYY-MM" prefix rather than `Date` arithmetic — `fecha` is
    * a date-only string (no time), so parsing it with `new Date()` reads it as

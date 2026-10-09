@@ -6,6 +6,10 @@
 -- primary key (kept as-is, since it's referenced by RLS/FKs) —
 -- existing rows are backfilled in creation order (1, 2, 3, ...) and
 -- new rows get the next number automatically via an owned sequence.
+--
+-- setval takes three arguments on purpose: a sequence's minimum is 1, so
+-- seeding an empty table with 0 is rejected. `is_called = false` makes the
+-- first nextval() hand back the value itself, i.e. start at 1.
 -- ============================================================
 
 -- pagos
@@ -22,10 +26,15 @@ from numbered n
 where p.id = n.id;
 
 alter table public.pagos alter column numero set not null;
-alter table public.pagos add constraint pagos_numero_key unique (numero);
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'pagos_numero_key') then
+    alter table public.pagos add constraint pagos_numero_key unique (numero);
+  end if;
+end $$;
 
 create sequence if not exists pagos_numero_seq owned by public.pagos.numero;
-select setval('pagos_numero_seq', coalesce((select max(numero) from public.pagos), 0));
+select setval('pagos_numero_seq', coalesce((select max(numero) from public.pagos), 1), exists (select 1 from public.pagos));
 alter table public.pagos alter column numero set default nextval('pagos_numero_seq');
 
 -- egresos
@@ -42,10 +51,15 @@ from numbered n
 where e.id = n.id;
 
 alter table public.egresos alter column numero set not null;
-alter table public.egresos add constraint egresos_numero_key unique (numero);
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'egresos_numero_key') then
+    alter table public.egresos add constraint egresos_numero_key unique (numero);
+  end if;
+end $$;
 
 create sequence if not exists egresos_numero_seq owned by public.egresos.numero;
-select setval('egresos_numero_seq', coalesce((select max(numero) from public.egresos), 0));
+select setval('egresos_numero_seq', coalesce((select max(numero) from public.egresos), 1), exists (select 1 from public.egresos));
 alter table public.egresos alter column numero set default nextval('egresos_numero_seq');
 
 -- caja_chica
@@ -62,8 +76,13 @@ from numbered n
 where c.id = n.id;
 
 alter table public.caja_chica alter column numero set not null;
-alter table public.caja_chica add constraint caja_chica_numero_key unique (numero);
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'caja_chica_numero_key') then
+    alter table public.caja_chica add constraint caja_chica_numero_key unique (numero);
+  end if;
+end $$;
 
 create sequence if not exists caja_chica_numero_seq owned by public.caja_chica.numero;
-select setval('caja_chica_numero_seq', coalesce((select max(numero) from public.caja_chica), 0));
+select setval('caja_chica_numero_seq', coalesce((select max(numero) from public.caja_chica), 1), exists (select 1 from public.caja_chica));
 alter table public.caja_chica alter column numero set default nextval('caja_chica_numero_seq');
