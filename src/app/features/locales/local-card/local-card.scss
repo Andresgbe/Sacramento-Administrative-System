@@ -159,3 +159,25 @@
   font-weight: 700;
   color: var(--color-text-primary);
 }
+
+
+// Sits right under the rent badge, as its quieter counterpart: condominio is
+// marked by hand, so it never carries the coloured chip treatment that the
+// computed rent status does — that would imply the app worked it out.
+.local-card__condominio {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: -2px;
+}
+
+.local-card__condominio-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+
+  &--pagado {
+    color: var(--color-success);
+  }
+}

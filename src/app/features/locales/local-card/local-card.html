@@ -28,6 +28,22 @@
       {{ pagoStatusLabel[pagoStatus] }}
     </span>
 
+    <div class="local-card__condominio">
+      <span
+        class="local-card__condominio-label"
+        [class.local-card__condominio-label--pagado]="condominioPagado"
+      >
+        {{ condominioPagado ? 'Condominio pagado' : 'Condominio pendiente' }}
+      </span>
+      @if (puedeEditarCondominio) {
+        <app-toggle
+          [checked]="condominioPagado"
+          [label]="'Marcar condominio de ' + local.numeroLocal"
+          (toggled)="condominioToggled.emit($event)"
+        />
+      }
+    </div>
+
     @if (local.montoAlquiler) {
       <span class="local-card__rent">$ {{ local.montoAlquiler | number: '1.2-2' }}</span>
     }

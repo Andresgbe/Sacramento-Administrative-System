@@ -58,11 +58,13 @@ export class EgresosPage implements OnInit {
     { id: 'todos', label: 'Total' },
     { id: 'administrativo', label: 'Gastos administrativos' },
     { id: 'operativo', label: 'Gastos operativos' },
+    { id: 'remodelacion', label: 'Remodelación' },
   ];
 
   protected readonly categoriaLabel: Record<CategoriaEgreso, string> = {
     administrativo: 'Administrativo',
     operativo: 'Operativo',
+    remodelacion: 'Remodelación',
   };
 
   /**

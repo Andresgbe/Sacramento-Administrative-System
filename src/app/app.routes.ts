@@ -37,7 +37,7 @@ export const routes: Routes = [
         path: 'pagos',
         loadComponent: () =>
           import('./features/pagos/pagos-page/pagos-page').then((m) => m.PagosPage),
-        data: { title: 'Reporte de pagos', subtitle: 'Alquileres cobrados por local' },
+        data: { title: 'Reporte de pagos'},
       },
       {
         path: 'calculadora',
@@ -47,18 +47,23 @@ export const routes: Routes = [
           ),
         data: { title: 'Calculadora', subtitle: 'Conversión USD ↔ Bs con tasas del día' },
       },
-
+      {
+        path: 'egresos',
+        loadComponent: () =>
+          import('./features/egresos/egresos-page/egresos-page').then((m) => m.EgresosPage),
+        data: { title: 'Reporte de egresos', subtitle: 'Gastos administrativos, operativos y de remodelación' },
+      },
       {
         path: 'balance',
         loadComponent: () =>
           import('./features/balance/balance-page/balance-page').then((m) => m.BalancePage),
-        data: { title: 'Balance', subtitle: 'Ingresos y egresos del período' },
+        data: { title: 'Balance'},
       },
       {
         path: 'reportes',
         loadComponent: () =>
           import('./features/reportes/reportes-page/reportes-page').then((m) => m.ReportesPage),
-        data: { title: 'Reportes', subtitle: 'Todas las transacciones, filtrables y descargables' },
+        data: { title: 'Reportes'},
       },
       {
         path: 'servicios-basicos',

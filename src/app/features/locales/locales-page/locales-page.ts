@@ -6,6 +6,7 @@ import { TabItem, Tabs } from '../../../shared/components/tabs/tabs';
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { PagosService } from '../../pagos/pagos.service';
+import { CondominioEstadoService } from '../condominio-estado.service';
 import { DocumentosService } from '../documentos.service';
 import { EmpresaFormModal, EmpresaFormPayload } from '../empresa-form-modal/empresa-form-modal';
 import { EmpresasService } from '../empresas.service';
@@ -26,6 +27,7 @@ export class LocalesPage implements OnInit {
   private readonly empresasService = inject(EmpresasService);
   private readonly documentosService = inject(DocumentosService);
   private readonly pagosService = inject(PagosService);
+  private readonly condominioEstadoService = inject(CondominioEstadoService);
   private readonly authService = inject(AuthService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly toastService = inject(ToastService);
@@ -72,6 +74,7 @@ export class LocalesPage implements OnInit {
     this.localesService.load();
     this.empresasService.load();
     this.pagosService.load();
+    this.condominioEstadoService.load();
   }
 
   protected setTab(tab: LocalesTab): void {
@@ -88,6 +91,17 @@ export class LocalesPage implements OnInit {
 
   protected pagado(local: Local): number {
     return this.pagosService.canonPagadoEsteMes(local.id);
+  }
+
+  protected condominioPagado(local: Local): boolean {
+    return this.condominioEstadoService.haPagado(local.id);
+  }
+
+  protected async setCondominioPagado(local: Local, pagado: boolean): Promise<void> {
+    const { error } = await this.condominioEstadoService.setPagado(local.id, pagado);
+    if (error) {
+      this.toastService.error(error);
+    }
   }
 
   protected localesCount(empresaId: string): number {

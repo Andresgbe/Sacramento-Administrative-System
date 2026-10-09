@@ -28,6 +28,9 @@
           [pagoStatus]="pagoStatus(local)"
           [faltante]="faltante(local)"
           [pagado]="pagado(local)"
+          [condominioPagado]="condominioPagado(local)"
+          [puedeEditarCondominio]="isAdmin()"
+          (condominioToggled)="setCondominioPagado(local, $event)"
         />
       }
     </div>

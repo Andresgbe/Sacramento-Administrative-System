@@ -1,4 +1,4 @@
-export type CategoriaEgreso = 'administrativo' | 'operativo';
+export type CategoriaEgreso = 'administrativo' | 'operativo' | 'remodelacion';
 
 export interface Egreso {
   id: string;

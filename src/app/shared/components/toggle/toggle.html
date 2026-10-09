@@ -1,0 +1,12 @@
+<button
+  type="button"
+  role="switch"
+  class="toggle"
+  [class.toggle--on]="checked()"
+  [attr.aria-checked]="checked()"
+  [attr.aria-label]="label() || null"
+  [disabled]="disabled()"
+  (click)="onClick($event)"
+>
+  <span class="toggle__knob"></span>
+</button>

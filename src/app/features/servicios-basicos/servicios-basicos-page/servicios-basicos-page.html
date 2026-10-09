@@ -66,25 +66,36 @@
 <app-tabs [tabs]="servicioTabs" [active]="servicio()" (selected)="setServicio($event)" />
 
 <div class="filters-bar">
-  <app-period-filter
-    [anio]="anio()"
-    [mes]="mes()"
-    [anios]="aniosDisponibles()"
-    (anioChange)="setAnio($event)"
-    (mesChange)="setMes($event)"
-  />
+  <div class="filters-bar__header">
+    <span class="filters-bar__title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 5h18l-7 8v6l-4 2v-8Z" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      Filtros
+    </span>
+    
+  </div>
 
-  <button
-    type="button"
-    class="filters-clear"
-    [disabled]="!hasActiveFilters()"
-    (click)="clearAllFilters()"
-  >
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
-    </svg>
-    Limpiar filtros
-  </button>
+  <div class="filters-bar__grid">
+    <app-period-filter
+      [anio]="anio()"
+      [mes]="mes()"
+      [anios]="aniosDisponibles()"
+      (anioChange)="setAnio($event)"
+      (mesChange)="setMes($event)"
+    />
+    <button
+      type="button"
+      class="filters-clear"
+      [disabled]="!hasActiveFilters()"
+      (click)="clearAllFilters()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+      </svg>
+      Limpiar filtros
+    </button>
+  </div>
 </div>
 
 @if (tab() === 'facturas') {

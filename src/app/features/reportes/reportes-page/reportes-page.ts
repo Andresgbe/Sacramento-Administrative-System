@@ -47,6 +47,7 @@ interface Transaccion {
 
 const EGRESO_LABEL: Record<CategoriaEgreso, string> = {
   administrativo: 'Gasto administrativo',
+  remodelacion: 'Remodelación',
   operativo: 'Gasto operativo',
 };
 
@@ -95,6 +96,7 @@ export class ReportesPage implements OnInit {
     })),
     { id: 'egreso-administrativo', label: EGRESO_LABEL.administrativo },
     { id: 'egreso-operativo', label: EGRESO_LABEL.operativo },
+    { id: 'egreso-remodelacion', label: EGRESO_LABEL.remodelacion },
   ];
 
   protected readonly empresaOptions = computed<MultiSelectOption[]>(() =>
