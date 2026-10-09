@@ -141,11 +141,9 @@ directives and services under `src/app/shared/`.
   `.filters-field__amount-row` / `.filters-clear`** — the filter card above
   every report table (Pagos, Egresos, Balance, Servicios, Reportes). Two
   parts, and the split is the point:
-  - **`.filters-bar__header`** — a "Filtros" label with a funnel icon on the
-    left and `.filters-clear` pinned **top right**. The button used to be one
-    more cell in the field grid, so it sat wherever auto-fit happened to put
-    it and moved every time a page gained a filter. In the header it is
-    always in the same place on every screen.
+  - **`.filters-bar__header`** — just a "Filtros" label with a funnel icon.
+    It carries no controls: "Limpiar filtros" was tried up there and read as
+    part of the card's title rather than as an action on the fields below it.
   - **`.filters-bar__grid`** — the fields, on a **CSS grid**
     (`repeat(auto-fit, minmax(min(190px, 100%), 1fr))`), not flex-wrap:
     wrapped flex items kept their own widths and left ragged gaps, which is
@@ -153,7 +151,14 @@ directives and services under `src/app/shared/`.
     there's room.
 
   Add a new filter as one more `.filters-field` inside the grid — it lands
-  automatically, no width tuning needed. `.filters-clear` is **always
+  automatically, no width tuning needed.
+
+  **`.filters-clear` is the grid's last item**, so it sits beside the final
+  row of filters. It is a **grey fill** (`--color-surface-muted`) with a
+  border, turning red-tinted on hover: transparent with muted text, it
+  vanished against the white card and did not read as clickable.
+  `align-self: end` puts it on the inputs' baseline, since every other cell
+  is a label stacked over a control and so is taller. It is **always
   rendered** and `[disabled]="!hasActiveFilters()"` — never wrap it in an
   `@if`: it used to vanish the moment it did its job, which read as the
   button deleting itself.
