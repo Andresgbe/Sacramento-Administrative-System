@@ -14,9 +14,8 @@
       }
     </span>
     <span class="egresos-total__value">$ {{ total() | number: '1.2-2' }}</span>
-    @if (bsEquivalente(total()); as totalBs) {
-      <span class="egresos-total__bs">≈ {{ totalBs | number: '1.2-2' }} Bs</span>
-    }
+    <span class="monto-moneda">USDT/Cash</span>
+    <app-monto-equivalencias [monto]="total()" />
   </div>
 
   @if (isAdmin()) {
@@ -139,11 +138,26 @@
             </td>
             <td class="data-table__amount">
               $ {{ egreso.monto | number: '1.2-2' }}
-              @if (bsEquivalente(egreso.monto); as montoBs) {
-                <span class="egresos-monto-bs">≈ {{ montoBs | number: '1.2-2' }} Bs</span>
+              @if (bsEquivalente(egreso.monto) !== null) {
+                <span class="egresos-monto-bs">
+                  ≈ {{ bsEquivalente(egreso.monto) | number: '1.2-2' }} Bs
+                </span>
               }
             </td>
             <td>{{ egreso.descripcion || '—' }}</td>
+            <td>
+              @if (egreso.comprobanteRuta) {
+                <button
+                  type="button"
+                  class="egresos-comprobante-link"
+                  (click)="openComprobante(egreso)"
+                >
+                  Ver comprobante
+                </button>
+              } @else {
+                —
+              }
+            </td>
             @if (isAdmin()) {
               <td class="data-table__actions">
                 <div class="data-table__action-group">
@@ -197,5 +211,15 @@
     [egreso]="editingEgreso()"
     (closed)="closeModal()"
     (saved)="onEgresoSaved($event)"
+  />
+}
+
+@if (comprobanteTarget(); as target) {
+  <app-comprobante-preview-modal
+    [nombreArchivo]="target.comprobanteNombre || 'Comprobante'"
+    [url]="comprobanteUrl()"
+    [loading]="comprobanteLoading()"
+    [errorMessage]="comprobanteError()"
+    (closed)="closeComprobante()"
   />
 }

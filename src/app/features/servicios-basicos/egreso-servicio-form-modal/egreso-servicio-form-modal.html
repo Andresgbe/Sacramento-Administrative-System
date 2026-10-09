@@ -1,0 +1,93 @@
+<div
+  class="modal-backdrop"
+  (mousedown)="onBackdropMouseDown($event)"
+  (click)="onBackdropClick($event)"
+>
+  <div class="modal">
+    <div class="modal__header">
+      <h2>{{ egreso ? 'Editar egreso' : 'Registrar egreso' }}</h2>
+      <button type="button" class="modal__close" (click)="closed.emit()" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="modal__form">
+      <label class="field">
+        <span>Servicio</span>
+        <select formControlName="concepto">
+          @for (c of conceptos; track c) {
+            <option [value]="c">{{ conceptoLabel[c] }}</option>
+          }
+        </select>
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span>Fecha</span>
+          <input type="date" formControlName="fecha" />
+        </label>
+
+        <label class="field">
+          <span>Moneda</span>
+          <select formControlName="moneda">
+            <option value="VES">Bolívares (Bs)</option>
+            <option value="USD">Dólares ($)</option>
+          </select>
+        </label>
+      </div>
+
+      <label
+        class="field"
+        [class.field--invalid]="form.controls.monto.invalid && form.controls.monto.touched"
+      >
+        <span>Monto ({{ enDolares() ? '$' : 'Bs' }})</span>
+        <input
+          type="number"
+          formControlName="monto"
+          min="0"
+          step="0.01"
+          appSelectOnFocus
+          appPositiveDecimal
+        />
+        @if (form.controls.monto.invalid && form.controls.monto.touched) {
+          <span class="field__error">El monto no puede estar vacío.</span>
+        }
+      </label>
+
+      @if (enDolares()) {
+        <p class="field-hint">
+          @if (bcvRate() && montoBsResultante() !== null) {
+            Se restarán {{ montoBsResultante() | number: '1.2-2' }} Bs (tasa BCV
+            {{ bcvRate() | number: '1.2-2' }})
+          } @else {
+            Cargando tasa BCV…
+          }
+        </p>
+      }
+
+      <label class="field">
+        <span>Descripción</span>
+        <textarea formControlName="descripcion" placeholder="Opcional" rows="3"></textarea>
+      </label>
+
+      @if (errorMessage) {
+        <p class="modal__error">{{ errorMessage }}</p>
+      }
+      @if (errorTasa) {
+        <p class="modal__error">{{ errorTasa }}</p>
+      }
+
+      <div class="modal__actions">
+        <button type="button" class="btn btn--secondary" (click)="closed.emit()">Cancelar</button>
+        <button type="submit" class="btn btn--primary" [disabled]="saving">
+          @if (saving) {
+            <span class="spinner"></span>
+          }
+          {{ saving ? 'Guardando…' : egreso ? 'Guardar cambios' : 'Registrar egreso' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

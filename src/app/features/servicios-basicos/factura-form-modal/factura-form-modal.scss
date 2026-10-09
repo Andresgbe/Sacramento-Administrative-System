@@ -12,7 +12,7 @@
 
 .modal {
   width: 100%;
-  max-width: 480px;
+  max-width: var(--modal-width);
   max-height: 90vh;
   overflow-y: auto;
   padding: 24px;

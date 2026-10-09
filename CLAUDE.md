@@ -15,6 +15,37 @@
 - Reports: Edge Functions for heavy reports, jsPDF/SheetJS for simple client-side reports
 - Exchange rates: BCV, USDT, EUR via Supabase Edge Functions
 
+## Exchange rates — three different dollars
+
+The app handles **three** dollars and they are different numbers for the same
+money. **Never write "$" or "USD" on a figure without saying which one it is.**
+A bare dollar sign on a screen is a bug: label it, and let
+`<app-monto-equivalencias>` restate it in the others.
+
+| Rate | Where it comes from | What it is |
+| --- | --- | --- |
+| **USDT/Cash** | `tasas_cambio.usdt` — Binance P2P sell ads | The parallel dollar. **The app's unit of account.** |
+| **BCV** | `tasas_cambio.bcv` — dolarapi.com `oficial` | The official rate. A second reading, never a total. |
+| **Euro** | `tasas_cambio.paralelo` is *not* this; the euro is only a `tipoTasa` option on a pago | Recorded per payment when the tenant paid against the euro. |
+
+- **USDT/Cash is the unit of account.** Every `monto` stored anywhere —
+  `pagos.monto`, `egresos.monto`, `locales.monto_alquiler` — is already a
+  USDT/Cash dollar. No stored figure is ever re-valued by a rate; rates only
+  answer "how many bolívares is that" and "what would that be at BCV".
+- **Use `usdt`, not `paralelo`.** `tasas_cambio` carries both. The P2P book is
+  the market the money actually changes hands in; `paralelo` is an average of
+  monitors quoting it. They are close, but only one of them is the rate the
+  mall transacts at, and mixing them makes two totals disagree by a few
+  bolívares for no reason anyone can explain.
+- **The conversions live in `TasasCambioService`, nowhere else** —
+  `usdtCash()`, `bcv()`, `aBolivares(monto)` and `aDolaresBcv(monto)`. Don't
+  multiply by a rate inline in a component: that is how a second, divergent
+  rule gets written. Egresos used to convert at BCV inline and understated
+  every row by the gap between the two rates.
+- `pagos.tipo_tasa` (`BCV` / `EUR` / `USD` / `otra`, where `USD` is labelled
+  **USDT/Cash**) records which rate that particular payment was settled
+  against. It is a record of the transaction, not an input to any total.
+
 ## Design system
 
 - Color palette: white, gray, and orange (#f97316) as accent color
@@ -128,6 +159,30 @@ directives and services under `src/app/shared/`.
   filter predicate, and `currentYear()` / `currentMonth()` for the default
   signals. Any new report page filters its dates through these, never by
   hand-rolling `fecha.startsWith(...)`.
+- **`<app-monto-equivalencias>`**
+  (`src/app/shared/components/monto-equivalencias/`) — the two lines that sit
+  under every big money figure: `≈ … Bs` and `≈ $ … a tasa BCV`, both derived
+  from the USDT/Cash amount above them at today's rates, both marked `≈`.
+  Takes one input, `monto`, and reads `TasasCambioService` itself rather than
+  taking the rates as inputs — the conversion is one rule for the whole app.
+  Its host is `display: contents`, so the two lines land as direct children of
+  whatever card flex column it was dropped into. Used by every total card:
+  Dashboard's four tiles, Reporte de pagos, Reporte de egresos and Balance's
+  three. **Any new money card gets it**, plus a `.monto-moneda` tag naming the
+  rate — never a bare figure, and never a hand-rolled `monto * bcv` sub-line.
+  The page that mounts it must `load()` the rate service; the component does
+  not fetch.
+- **`.monto-moneda`** (`src/styles.scss`) — the small uppercase pill that names
+  the rate a figure is in ("USDT/Cash", "Nominal"). Goes on every big money
+  figure, because the app has three dollars and `$ 467,01` alone is ambiguous.
+- **`.btn--sm`** — size modifier on the button system, for a button inside a
+  table row where the default padding would set the row height.
+- **`<app-comprobante-preview-modal>`
+  (`src/app/shared/components/comprobante-preview-modal/`) — opens a receipt
+  from the private `documentos` bucket. Takes `nombreArchivo`, a signed `url`,
+  `loading` and `errorMessage`; the caller fetches the signed URL. Used by both
+  Reporte de pagos and Reporte de egresos — it lived under `features/pagos/`
+  until the second caller appeared.
 - **`<app-multi-select>`** (`src/app/shared/components/multi-select/`) — the
   checkbox dropdown used for the Empresa and Local filters in Pagos. Takes
   `options` (`{ id, label }[]`), the current `selected` `Set<string>`,
@@ -135,6 +190,105 @@ directives and services under `src/app/shared/`.
   and emits a **new** `Set` on `selectionChange` — never mutate the one passed
   in, or the signal won't see the change. Reuse it for any future multi-value
   filter instead of rebuilding a trigger + panel + backdrop.
+- **Modal width — `--modal-width` (760px), the same for every modal.**
+  Declared in `src/app/styles/_variables.scss`; each modal's `.modal` sets
+  `max-width: var(--modal-width)`. It was 480px, which wasted the desktop
+  viewport and forced every form into one column that had to be scrolled.
+  **A new modal uses the variable, never its own number.** Every modal in the
+  app already does; only the pago form has had its *fields* re-laid out for
+  the extra room so far, the rest still stack as they did.
+  Inside a modal, fields pair up with `.field-row` (a two-column grid) rather
+  than stacking, now that there is room for it.
+- **`.upload-zone` + `.upload-list`** (`src/styles.scss`) — **the** file
+  attachment pattern. A dashed block with an upload glyph, a title and a hint,
+  followed by one row per file with its name and an `✕` to remove it. Files
+  picked but not yet uploaded carry a "Nuevo" badge, because removing one of
+  those costs nothing while removing a stored one deletes it for good. It
+  replaced a one-line "Subir comprobante" link that sat last in the form and
+  was the easiest thing to miss. **Every new file field uses this** — never a
+  bare `<input type="file">` or another dropzone.
+
+  Markup (lives inside a `.field`, so the `<span>` is the label):
+
+  ```html
+  <div class="field">
+    <span>Comprobante de pago</span>
+
+    <label class="upload-zone">
+      <input type="file" accept="image/*,.pdf" multiple
+             (change)="onComprobantesSelected($event)" hidden />
+      <span class="upload-zone__icon" aria-hidden="true">&#128228;</span>
+      <span class="upload-zone__title">Subir comprobantes</span>
+      <span class="upload-zone__hint">Imágenes o PDF · puedes anexar varios</span>
+    </label>
+
+    @if (comprobantesExistentes.length > 0 || comprobanteFiles.length > 0) {
+      <ul class="upload-list">
+        <!-- Already stored: removing one deletes it for good. -->
+        @for (c of comprobantesExistentes; track c.id) {
+          <li class="upload-list__item">
+            <span class="upload-list__name">{{ c.nombre }}</span>
+            <button type="button" class="upload-list__remove"
+                    (click)="removeComprobanteExistente(c)"
+                    [attr.aria-label]="'Eliminar ' + c.nombre">&#10005;</button>
+          </li>
+        }
+        <!-- Picked this session: not uploaded yet, hence the badge. -->
+        @for (file of comprobanteFiles; track file.name + file.size) {
+          <li class="upload-list__item upload-list__item--nuevo">
+            <span class="upload-list__name">{{ file.name }}</span>
+            <span class="upload-list__badge">Nuevo</span>
+            <button type="button" class="upload-list__remove"
+                    (click)="removeComprobanteFile(file)"
+                    [attr.aria-label]="'Quitar ' + file.name">&#10005;</button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+  ```
+
+  The three handlers behind it:
+
+  ```ts
+  protected comprobanteFiles: File[] = [];
+  protected comprobantesExistentes: ComprobantePago[] = [];
+
+  /** Emitted so the PAGE deletes it through the service — the modal owns no
+   *  data access of its own (smart/dumb). */
+  @Output() comprobanteEliminado = new EventEmitter<ComprobantePago>();
+
+  protected onComprobantesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    // Appended, not replaced: picking a second time should ADD to the list,
+    // which is what "anexar varios" means to someone choosing one at a time.
+    this.comprobanteFiles = [...this.comprobanteFiles, ...Array.from(input.files ?? [])];
+    // Let the same file be picked again after being removed.
+    input.value = '';
+  }
+
+  protected removeComprobanteFile(file: File): void {
+    this.comprobanteFiles = this.comprobanteFiles.filter((f) => f !== file);
+  }
+
+  protected removeComprobanteExistente(c: ComprobantePago): void {
+    this.comprobantesExistentes = this.comprobantesExistentes.filter((x) => x.id !== c.id);
+    this.comprobanteEliminado.emit(c);
+  }
+  ```
+
+  Two details that are load-bearing and easy to drop:
+  - **`input.value = ''` after every pick.** Without it the browser suppresses
+    the `change` event when the same file is chosen again, so re-adding a file
+    you just removed silently does nothing.
+  - **Append, don't replace.** `input.files` holds only the last pick, so
+    assigning it straight to the list throws away everything chosen before.
+
+  On the data side, several files per record means a child table (one row per
+  file, `on delete cascade`), as `pagos_comprobantes` and
+  `facturas_servicio_fotos` both do — not more columns on the parent. Deleting
+  one removes the Storage object **first**: the DB row cascades, the file does
+  not.
 - **`ConfirmDialogService`** (`src/app/shared/services/confirm-dialog.service.ts`)
   - `<app-confirm-dialog>` (mounted once in `app.html`, available app-wide) —
     the app's custom replacement for `window.confirm()`. Inject the service and
@@ -152,8 +306,9 @@ directives and services under `src/app/shared/`.
 ## Database (PostgreSQL via Supabase)
 
 Implemented (migration + RLS in `supabase/migrations/`): usuarios, empresas,
-locales, pagos, deudas, facturas_servicio, facturas_servicio_fotos, documentos,
-tasas_cambio, egresos. Not built: `remodelaciones`.
+locales, pagos, pagos_comprobantes, deudas, facturas_servicio,
+facturas_servicio_fotos, egresos_servicio, documentos, tasas_cambio, egresos.
+Not built: `remodelaciones`.
 
 - `caja_chica` still exists in the database but **nothing reads it**: the Caja
   chica module was removed in favour of Balance. Drop the table only on an
@@ -259,6 +414,76 @@ front-end half of the same rule.
   The one deliberate canon-only filter left is `canonPagadoEsteMes()`, because
   rent status must not be satisfied by a condominio payment.
 
+### El formulario de pago
+
+Laid out in rows of two, in this order — the sequence someone filling it in
+actually thinks in, which the old single column did not follow:
+
+1. **Concepto · Fecha**
+2. **Empresa · Local** — the whole row disappears for condominio, which has
+   neither.
+3. **Monto (Bs) · Monto (USD)** — for canon. The Bs side is explicitly marked
+   *Opcional* (a payment in cash dollars has no bolívar side). For the three
+   service concepts this collapses to a single required **Monto (Bs)** plus
+   the live BCV equivalent, since those are collected in bolívares.
+4. **Descripción**
+5. **Comprobantes**
+
+- **The rate select lives inside the amount input** (`.monto-combo`), not as
+  a field of its own: "120 at BCV" is one statement, and as two separate
+  fields the rate was routinely left on whatever the previous payment used.
+  The wrapper carries the border and the focus ring; the input and the select
+  are borderless inside it.
+- **A pago can carry several comprobantes** — `pagos_comprobantes`, one row
+  per file, same arrangement as `facturas_servicio_fotos`, because a payment
+  arrives as the transfer slip plus the bank's confirmation often enough.
+  `pagos.comprobante_ruta` / `_nombre` are **left on the table and backfilled
+  from, not dropped**: dropping them would take the live rows' receipts with
+  them if the migration ever had to be rolled back. Nothing reads them now.
+  Removing an existing attachment deletes it immediately (Storage object
+  first — the row does not cascade to the file); the modal emits
+  `comprobanteEliminado` and the page calls the service, so the modal keeps
+  no data access of its own.
+
+### Conversión a USDT — qué cuenta como ingreso
+
+**A payment arriving is not income yet.** The bolívares sit in the account
+until somebody goes to the market and buys USDT with them, and what the mall
+ends up with is never exactly the nominal figure — the rate moved, the
+exchange took a cut. So the amount that counts is the one that came back.
+
+- **`pagos.usdt_convertido`** holds the USDT actually bought with that
+  payment, with `conversion_fecha` and an optional
+  `conversion_comprobante_ruta` / `_nombre` (its own `conversiones/<pago_id>/`
+  folder in the `documentos` bucket — a different document from the payment's
+  own comprobante). A check constraint keeps the amount and the date together:
+  neither half means anything alone.
+- **It is typed, never computed from a rate.** Deriving it would defeat the
+  whole point, which is that what came back differs from the nominal amount.
+- **Every income total goes through `montoRealizado(pago)`** in
+  `pago.model.ts` — it returns `usdt_convertido ?? 0`. Reporte de pagos'
+  "Total cobrado", the Dashboard tiles and "Ingresos mensuales" chart, Balance
+  and Reportes' summary cards all use it. **Never sum `pago.monto` for a
+  balance again**: that is the nominal figure, which the mall may not have
+  realised yet. This is the same mistake as hard-coding `concepto === 'canon'`
+  — one rule, one function.
+- **`montoSinConvertir(pago)`** is the other half: the nominal value of what
+  is still pending. It feeds the "Balance sin convertir" card beside "Total
+  cobrado" in Reporte de pagos, which is a **queue of work, not money** —
+  styled muted and dashed, tagged `Nominal` rather than `USDT/Cash`, and
+  deliberately never added to any balance.
+- **Rent status deliberately ignores all of this.** `canonPagadoEsteMes()`
+  sums `monto`, because it answers "did the tenant pay?" — whether the mall
+  converted the money is the mall's business, not the tenant's. Using the
+  converted figure there would mark every tenant moroso until the admin got
+  round to converting.
+- Reportes' **export keeps both**: `Monto USD` stays nominal (it is a register
+  of what came in) and a `USDT convertido` column carries the realised figure,
+  which is what the summary rows total.
+- Balance's movement list shows the realised amount, and tags an unconverted
+  income "Sin convertir" — otherwise a `$ 0,00` row looks like a bug instead
+  of money that has not been turned into USDT yet.
+
 ### deudas y facturas de servicio
 
 `pagos` records money that came IN. `deudas` records what is OWED — that is what
@@ -348,7 +573,9 @@ not in the root of app/.
 - The sidebar modules are built and wired to real Supabase data:
   - **Dashboard**: fully live — Balance del mes, Empresas activas, Egresos
     del mes, Ingresos del mes (all real, computed for the current calendar
-    month), "Locales por estado de pago" pie chart, "Últimos pagos"/"Últimos
+    month; every money tile is in **USDT/Cash**, tagged as such, with the
+    bolívar and BCV restatements under it from `<app-monto-equivalencias>`,
+    and income counts only what has been converted), "Locales por estado de pago" pie chart, "Últimos pagos"/"Últimos
     egresos" panels, and the "Ingresos mensuales" bar chart (+ its breakdown
     list) — last 6 calendar months, summed from real pagos
   - **Locales**: two tabs — "Locales" (the card grid, one card per unit; the
@@ -365,15 +592,31 @@ not in the root of app/.
     Corpoelec / Hidrocapital) with the total recomputed per tab, plus filters
     for search, año, mes, monto range, empresa and local (the last two are
     `<app-multi-select>`). Columns: ID, fecha, concepto chip, empresa, local
-    (`—` for empresa-wide concepts), monto, tasa, comprobante. Full edit and
-    delete. The form picks concepto first; the Local field only appears for
+    (`—` for empresa-wide concepts), monto, tasa, descripción, comprobante and
+    **conversión**. Full edit and delete.
+    Two cards in the header: **"Total cobrado"**, which counts only converted
+    payments, and **"Balance sin convertir"** beside it, the nominal value
+    still queued. The Conversión column carries a `Convertir` button on an
+    unconverted row and, once converted, the USDT figure, its date, a link to
+    the conversion receipt and `Editar` / `Anular`. Anular is confirmed
+    through `ConfirmDialogService` and puts the row back in the queue. The form picks concepto first; the Local field only appears for
     canon and lists just that empresa's units
-  - **Egresos**: transactions split into administrativo / operativo, plus a
-    combined total view (tabs order: Total, Gastos administrativos, Gastos
-    operativos); full edit support
+  - **Reporte de egresos**: transactions split into administrativo / operativo,
+    plus a combined total view (tabs order: Total, Gastos administrativos,
+    Gastos operativos); full edit and delete. Each row can carry a
+    **comprobante** — same arrangement as pagos: the file goes to the private
+    `documentos` bucket under `egresos/<id>/`, the row keeps `comprobante_ruta`
+    - `comprobante_nombre`, and the table opens it through a signed URL with
+      the shared `<app-comprobante-preview-modal>`. The total and each amount
+      also show a bolívar figure at today's **USDT/Cash** rate, flagged `≈`:
+      egresos have no recorded `monto_bs`, so it is a live conversion, not what
+      left the account. It converted at BCV until the rate model changed, which
+      understated every row by the gap between the two rates.
   - **Balance** (`/balance`): three cards — Ingresos, Egresos and the Balance
-    between them — over a single list of the period's movements, both sides
-    together, newest first, with a green/red chip and a signed amount.
+    between them, all in USDT/Cash with their bolívar and BCV restatements —
+    over a single list of the period's movements, both sides together, newest
+    first, with a green/red chip and a signed amount. Income counts only
+    converted payments; an unconverted one shows 0 with a "Sin convertir" tag.
     Read-only: every row is registered in Reporte de pagos or Reporte de
     egresos and is edited there. Defaults to the current month.
     **Canon only on the income side, and servicios excluded entirely**:
@@ -400,6 +643,19 @@ not in the root of app/.
       arrangement as pago comprobantes, so no new bucket or storage policy.
       Deleting a bill removes its Storage objects first: the DB rows cascade,
       the files don't.
+    - **Egresos de servicios** — what the mall pays the providers, in its own
+      table `egresos_servicio`. A separate table rather than a `categoria` on
+      `egresos`, for two reasons: it must stay **out of Balance and Reportes**
+      (services are collected and forwarded, so counting them there would have
+      each cancel against itself), and making that structural means nothing has
+      to remember to filter it; and it is denominated in **bolívares**, the
+      opposite of `egresos` where USD is authoritative. The form takes an amount
+      in Bs **or** USD — a dollar figure is converted at that day's BCV and the
+      rate is **frozen onto the row** (`monto_usd` + `tasa`), unlike the live
+      conversions elsewhere on this page, because an expense on record must not
+      drift when the dollar moves. The tab shows "Total egresado" and
+      **"Saldo de servicios" = cobrado − egresado**, in Bs, which is the number
+      that says whether the tenants' payments covered the providers' bills.
       The module is an **archive, not an amount ledger** — the form asks only
       for service, month, year and photos. It deliberately carries **no amount,
       currency or exchange rate**: the figures live inside the attached
@@ -423,8 +679,11 @@ not in the root of app/.
     version. jsPDF pulls `canvg`/`html2canvas` (CommonJS, unused by us), which
     is why `allowedCommonJsDependencies` exists in `angular.json`.
     Egreso rows carry no recorded bolívar figure, so their Bs column is a live
-    BCV conversion flagged `≈` in the table and with a "Bs estimado" column in
-    the CSV; pago rows show their real `monto_bs` unflagged.
+    USDT/Cash conversion flagged `≈` in the table and with a "Bs estimado"
+    column in the CSV; pago rows show their real `monto_bs` unflagged. The
+    summary cards total `montoRealizado`, so they count only converted income,
+    while the rows keep the nominal `Monto USD` and carry the realised figure
+    in a separate `USDT convertido` column.
   - **Calculadora**: BCV + paralelo rates from dolarapi.com, USDT from Binance
     P2P, fetched and cached once per day by the `tasas-cambio` Edge Function
     into the `tasas_cambio` table

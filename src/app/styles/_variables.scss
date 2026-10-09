@@ -35,6 +35,11 @@
   --radius-md: 10px;
   --radius-lg: 16px;
 
+  // One width for every modal in the app. 480px wasted the desktop viewport
+  // and forced single-column forms that scrolled; at 760px a form fits two
+  // fields per row and the whole thing is visible without scrolling.
+  --modal-width: 760px;
+
   // Shadows
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 5%);
   --shadow-md: 0 4px 12px rgb(0 0 0 / 8%);

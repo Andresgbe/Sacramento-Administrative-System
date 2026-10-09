@@ -1,7 +1,11 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { CategoriaEgreso } from '../../../core/models/egreso.model';
-import { CONCEPTO_LABEL, esConceptoDeIngreso } from '../../../core/models/pago.model';
+import {
+  CONCEPTO_LABEL,
+  esConceptoDeIngreso,
+  montoRealizado,
+} from '../../../core/models/pago.model';
 import {
   PeriodFilter,
   availableYears,
@@ -11,6 +15,8 @@ import {
 } from '../../../shared/components/period-filter/period-filter';
 import { EgresosService } from '../../egresos/egresos.service';
 import { PagosService } from '../../pagos/pagos.service';
+import { TasasCambioService } from '../../tasas-cambio/tasas-cambio.service';
+import { MontoEquivalencias } from '../../../shared/components/monto-equivalencias/monto-equivalencias';
 import { signal } from '@angular/core';
 
 interface Movimiento {
@@ -18,18 +24,26 @@ interface Movimiento {
   tipo: 'ingreso' | 'egreso';
   fecha: string;
   detalle: string;
+  /** Realised: for an income row, the USDT the conversion actually produced. */
   monto: number;
+  /** An income still waiting to be converted. It shows as 0 and says so,
+   *  because the cards above exclude it and a nominal figure here would not
+   *  add up to them. */
+  sinConvertir: boolean;
 }
 
 @Component({
   selector: 'app-balance-page',
-  imports: [DecimalPipe, DatePipe, PeriodFilter],
+  imports: [DecimalPipe, DatePipe, PeriodFilter, MontoEquivalencias],
   templateUrl: './balance-page.html',
   styleUrl: './balance-page.scss',
 })
 export class BalancePage implements OnInit {
   private readonly pagosService = inject(PagosService);
   private readonly egresosService = inject(EgresosService);
+  // Only to populate it: <app-monto-equivalencias> reads the rates itself,
+  // but nothing on this route would have fetched them.
+  private readonly tasasCambioService = inject(TasasCambioService);
 
   protected readonly isLoading = computed(
     () => this.pagosService.isLoading() || this.egresosService.isLoading(),
@@ -65,7 +79,8 @@ export class BalancePage implements OnInit {
         (pago) =>
           esConceptoDeIngreso(pago.concepto) && matchesPeriod(pago.fecha, this.anio(), this.mes()),
       )
-      .reduce((sum, pago) => sum + pago.monto, 0),
+      // Realised income only — unconverted payments are not money yet.
+      .reduce((sum, pago) => sum + montoRealizado(pago), 0),
   );
 
   protected readonly egresos = computed(() =>
@@ -93,7 +108,8 @@ export class BalancePage implements OnInit {
         detalle: pago.localNumero
           ? `${pago.empresaNombre} — ${pago.localNumero}`
           : pago.empresaNombre || CONCEPTO_LABEL[pago.concepto],
-        monto: pago.monto,
+        monto: montoRealizado(pago),
+        sinConvertir: pago.usdtConvertido === null,
       }));
 
     const egresos: Movimiento[] = this.egresosService
@@ -105,6 +121,8 @@ export class BalancePage implements OnInit {
         fecha: egreso.fecha,
         detalle: egreso.descripcion || this.categoriaLabel[egreso.categoria],
         monto: egreso.monto,
+        // Egresos are paid out directly; there is nothing to convert.
+        sinConvertir: false,
       }));
 
     return [...ingresos, ...egresos].sort((a, b) => b.fecha.localeCompare(a.fecha));
@@ -113,6 +131,7 @@ export class BalancePage implements OnInit {
   ngOnInit(): void {
     this.pagosService.load();
     this.egresosService.load();
+    this.tasasCambioService.load();
   }
 
   protected setAnio(value: string): void {

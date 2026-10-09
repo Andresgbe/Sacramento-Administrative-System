@@ -27,21 +27,36 @@ import {
 import { TabItem, Tabs } from '../../../shared/components/tabs/tabs';
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { EgresoServicio } from '../../../core/models/egreso-servicio.model';
+import {
+  EgresoServicioFormModal,
+  EgresoServicioFormPayload,
+} from '../egreso-servicio-form-modal/egreso-servicio-form-modal';
+import { EgresosServicioService } from '../egresos-servicio.service';
 import { FacturaFormModal, FacturaFormPayload } from '../factura-form-modal/factura-form-modal';
 import { ServiciosBasicosService } from '../servicios-basicos.service';
 
 type FiltroServicio = ServicioConcepto | 'todos';
-type ServiciosTab = 'facturas' | 'pagos';
+type ServiciosTab = 'facturas' | 'pagos' | 'egresos';
 
 @Component({
   selector: 'app-servicios-basicos-page',
-  imports: [DecimalPipe, DatePipe, Tabs, PeriodFilter, FacturaFormModal, PagoFormModal],
+  imports: [
+    DecimalPipe,
+    DatePipe,
+    Tabs,
+    PeriodFilter,
+    FacturaFormModal,
+    PagoFormModal,
+    EgresoServicioFormModal,
+  ],
   templateUrl: './servicios-basicos-page.html',
   styleUrl: './servicios-basicos-page.scss',
 })
 export class ServiciosBasicosPage implements OnInit {
   private readonly service = inject(ServiciosBasicosService);
   private readonly pagosService = inject(PagosService);
+  private readonly egresosServicioService = inject(EgresosServicioService);
   private readonly localesService = inject(LocalesService);
   private readonly empresasService = inject(EmpresasService);
   private readonly authService = inject(AuthService);
@@ -60,6 +75,7 @@ export class ServiciosBasicosPage implements OnInit {
 
   protected readonly tabItems: TabItem<ServiciosTab>[] = [
     { id: 'pagos', label: 'Pagos de las empresas' },
+    { id: 'egresos', label: 'Egresos de servicios' },
     { id: 'facturas', label: 'Facturas del mes' },
   ];
 
@@ -141,6 +157,90 @@ export class ServiciosBasicosPage implements OnInit {
     return pago.montoBs / rate;
   }
 
+  // --- Egresos de servicios: what the mall pays the providers ---
+
+  protected readonly egresosFiltrados = computed(() => {
+    const servicio = this.servicio();
+    const anio = this.anio();
+    const mes = this.mes();
+
+    return this.egresosServicioService.all().filter((egreso) => {
+      if (servicio !== 'todos' && egreso.concepto !== servicio) {
+        return false;
+      }
+      return matchesPeriod(egreso.fecha, anio, mes);
+    });
+  });
+
+  protected readonly totalEgresosBs = computed(() =>
+    this.egresosFiltrados().reduce((sum, egreso) => sum + egreso.montoBs, 0),
+  );
+
+  /** What was collected minus what was paid out, in bolívares — the number
+   *  that says whether the tenants' payments covered the providers' bills.
+   *  Deliberately absent from Balance: services are collected and forwarded,
+   *  so they belong to this page alone. */
+  protected readonly saldoServiciosBs = computed(() => this.totalPagosBs() - this.totalEgresosBs());
+
+  protected readonly egresoModalOpen = signal(false);
+  protected readonly editingEgreso = signal<EgresoServicio | null>(null);
+  protected readonly deletingEgresoId = signal<string | null>(null);
+
+  protected openEgresoModal(egreso: EgresoServicio | null): void {
+    this.saveError.set(null);
+    this.editingEgreso.set(egreso);
+    this.egresoModalOpen.set(true);
+  }
+
+  protected closeEgresoModal(): void {
+    this.egresoModalOpen.set(false);
+    this.editingEgreso.set(null);
+  }
+
+  protected async onEgresoSaved(payload: EgresoServicioFormPayload): Promise<void> {
+    this.saving.set(true);
+    this.saveError.set(null);
+
+    const editing = this.editingEgreso();
+    const { error } = editing
+      ? await this.egresosServicioService.update(editing.id, payload)
+      : await this.egresosServicioService.add(payload);
+
+    this.saving.set(false);
+
+    if (error) {
+      this.saveError.set(error);
+      return;
+    }
+
+    this.closeEgresoModal();
+    this.toastService.success(editing ? 'Egreso actualizado.' : 'Egreso registrado.');
+  }
+
+  protected async deleteEgreso(egreso: EgresoServicio): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Eliminar egreso',
+      message: `¿Eliminar el egreso de ${CONCEPTO_LABEL[egreso.concepto]} por ${egreso.montoBs.toFixed(2)} Bs? Esta acción no se puede deshacer.`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingEgresoId.set(egreso.id);
+    const { error } = await this.egresosServicioService.delete(egreso.id);
+    this.deletingEgresoId.set(null);
+
+    if (error) {
+      this.toastService.error(error);
+      return;
+    }
+
+    this.toastService.success('Egreso eliminado.');
+  }
+
   protected readonly locales = this.localesService.all;
   protected readonly empresas = this.empresasService.all;
 
@@ -157,6 +257,7 @@ export class ServiciosBasicosPage implements OnInit {
   ngOnInit(): void {
     this.service.load();
     this.pagosService.load();
+    this.egresosServicioService.load();
     this.localesService.load();
     this.empresasService.load();
     this.tasasCambioService.load();

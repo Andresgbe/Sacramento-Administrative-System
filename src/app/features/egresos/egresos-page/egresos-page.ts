@@ -16,6 +16,8 @@ import { SelectOnFocusDirective } from '../../../shared/directives/select-on-foc
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { TasasCambioService } from '../../tasas-cambio/tasas-cambio.service';
+import { ComprobantePreviewModal } from '../../../shared/components/comprobante-preview-modal/comprobante-preview-modal';
+import { MontoEquivalencias } from '../../../shared/components/monto-equivalencias/monto-equivalencias';
 import { EgresoFormModal, EgresoFormPayload } from '../egreso-form-modal/egreso-form-modal';
 import { EgresosService } from '../egresos.service';
 
@@ -32,6 +34,8 @@ type FiltroCategoria = CategoriaEgreso | 'todos';
     PositiveDecimalDirective,
     Tabs,
     PeriodFilter,
+    ComprobantePreviewModal,
+    MontoEquivalencias,
   ],
   templateUrl: './egresos-page.html',
   styleUrl: './egresos-page.scss',
@@ -61,19 +65,17 @@ export class EgresosPage implements OnInit {
     operativo: 'Operativo',
   };
 
-  protected readonly bcvRate = computed(() => this.tasasCambioService.current()?.bcv ?? null);
-
   /**
-   * Bolívar equivalent at TODAY's BCV rate — an estimate, not a record.
+   * Bolívar equivalent at TODAY's USDT/Cash rate — an estimate, not a record.
    *
+   * An egreso's `monto` is in USDT/Cash, so the parallel rate is what turns it
+   * into bolívares; it used to convert at BCV, which understated every row.
    * Unlike `pagos`, an egreso has no `monto_bs`: nobody types what actually
-   * left the account, so there is no real figure to show and this is a live
-   * conversion that moves with the rate. Always rendered with "≈" so it is
-   * never mistaken for an amount that was really transferred.
+   * left the account, so this is a live conversion that moves with the rate.
+   * Always rendered with "≈" so it is never mistaken for a real transfer.
    */
-  protected bsEquivalente(montoUsd: number): number | null {
-    const rate = this.bcvRate();
-    return rate ? montoUsd * rate : null;
+  protected bsEquivalente(montoUsdtCash: number): number | null {
+    return this.tasasCambioService.aBolivares(montoUsdtCash);
   }
 
   protected readonly searchInput = signal('');
@@ -134,6 +136,35 @@ export class EgresosPage implements OnInit {
   protected readonly saving = signal(false);
   protected readonly saveError = signal<string | null>(null);
   protected readonly deletingId = signal<string | null>(null);
+
+  protected readonly comprobanteTarget = signal<Egreso | null>(null);
+  protected readonly comprobanteUrl = signal<string | null>(null);
+  protected readonly comprobanteLoading = signal(false);
+  protected readonly comprobanteError = signal<string | null>(null);
+
+  protected async openComprobante(egreso: Egreso): Promise<void> {
+    if (!egreso.comprobanteRuta) return;
+
+    this.comprobanteTarget.set(egreso);
+    this.comprobanteUrl.set(null);
+    this.comprobanteError.set(null);
+    this.comprobanteLoading.set(true);
+
+    const { url, error } = await this.egresosService.getComprobanteUrl(egreso.comprobanteRuta);
+
+    this.comprobanteLoading.set(false);
+
+    if (error) {
+      this.comprobanteError.set(error);
+      return;
+    }
+
+    this.comprobanteUrl.set(url);
+  }
+
+  protected closeComprobante(): void {
+    this.comprobanteTarget.set(null);
+  }
 
   ngOnInit(): void {
     this.egresosService.load();

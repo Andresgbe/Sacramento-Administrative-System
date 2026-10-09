@@ -1,4 +1,4 @@
-.modal-backdrop {
+﻿.modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 100;
@@ -75,7 +75,8 @@
   color: var(--color-text-secondary);
 
   input,
-  select {
+  select,
+  textarea {
     font-family: var(--font-body);
     font-size: 0.9rem;
     font-weight: 400;
@@ -94,17 +95,11 @@
       box-shadow: 0 0 0 3px var(--color-accent-soft);
     }
   }
-}
 
-.field--invalid input,
-.field--invalid select {
-  border-color: var(--color-danger);
-}
-
-.field__error {
-  color: var(--color-danger);
-  font-size: 0.75rem;
-  font-weight: 400;
+  textarea {
+    resize: vertical;
+    min-height: 90px;
+  }
 }
 
 .field-row {
@@ -126,4 +121,44 @@
   justify-content: flex-end;
   gap: 12px;
   margin-top: 8px;
+}
+
+
+// Read-only recap of the payment being converted, so the admin can see what
+// they are converting without leaving the modal.
+.conversion-origen {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+}
+
+.conversion-origen__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+}
+
+.conversion-origen__monto {
+  font-family: var(--font-amount);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.conversion-origen__detalle {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.conversion-hint {
+  margin: -4px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
 }

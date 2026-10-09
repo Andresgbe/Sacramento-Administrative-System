@@ -2,26 +2,31 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CategoriaEgreso } from '../../../core/models/egreso.model';
-import { esConceptoDeIngreso } from '../../../core/models/pago.model';
+import { esConceptoDeIngreso, montoRealizado } from '../../../core/models/pago.model';
 import { PagosService } from '../../pagos/pagos.service';
 import { EmpresasService } from '../../locales/empresas.service';
 import { LocalesService } from '../../locales/locales.service';
 import { EgresosService } from '../../egresos/egresos.service';
 import { TasasCambioService } from '../../tasas-cambio/tasas-cambio.service';
 import { BarChart, BarDatum } from '../../../shared/components/bar-chart/bar-chart';
+import { MontoEquivalencias } from '../../../shared/components/monto-equivalencias/monto-equivalencias';
 import { PieChart, PieSegment } from '../../../shared/components/pie-chart/pie-chart';
 
 interface DashboardStat {
   label: string;
   value: string;
   tone: 'accent' | 'default' | 'danger';
-  /** Optional second line under the figure, e.g. the bolívar equivalent. */
-  secondary?: string;
+  /**
+   * The figure in USDT/Cash, when it is money. The card renders the bolívar
+   * and BCV restatements off this; a plain count (Empresas activas) leaves it
+   * undefined and gets neither the rate tag nor the equivalences.
+   */
+  montoUsdtCash?: number;
 }
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [PieChart, BarChart, DatePipe, DecimalPipe, RouterLink],
+  imports: [PieChart, BarChart, DatePipe, DecimalPipe, RouterLink, MontoEquivalencias],
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
 })
@@ -52,12 +57,10 @@ export class DashboardPage implements OnInit {
       .all()
       .filter((pago) => esConceptoDeIngreso(pago.concepto) && pago.fecha.startsWith(yearMonth));
 
-    const ingresosDelMes = ingresosPagos.reduce((sum, pago) => sum + pago.monto, 0);
+    // Realised income only: a payment counts once its USDT conversion is
+    // recorded. See `montoRealizado()`.
+    const ingresosDelMes = ingresosPagos.reduce((sum, pago) => sum + montoRealizado(pago), 0);
 
-    // Sum of what was actually transferred in bolívares, NOT a conversion of
-    // the dollar total: payments made in cash dollars carry no `montoBs`, so
-    // this figure covers only the transfers that recorded one.
-    const ingresosDelMesBs = ingresosPagos.reduce((sum, pago) => sum + (pago.montoBs ?? 0), 0);
     const egresosDelMes = this.egresosService
       .all()
       .filter((egreso) => egreso.fecha.startsWith(yearMonth))
@@ -65,31 +68,30 @@ export class DashboardPage implements OnInit {
 
     const balanceDelMes = ingresosDelMes - egresosDelMes;
 
-    // No monto_bs on egresos (unlike pagos), so there's nothing real to sum —
-    // this is an estimate off today's BCV rate, marked with "≈" to keep it
-    // visually distinct from ingresosDelMesBs above, which is an exact sum of
-    // what tenants actually transferred.
-    const bcv = this.tasasCambioService.current()?.bcv;
-
+    // Every figure here is in USDT/Cash. The bolívar and BCV lines under each
+    // card are derived from it by <app-monto-equivalencias>, so the three
+    // always reconcile. Income's bolívar line used to be the exact sum of the
+    // recorded `montoBs` transfers instead, which silently left out every
+    // payment made in cash dollars and so read lower than the dollar total.
     return [
       {
         label: 'Balance del mes',
         value: this.formatUsd(balanceDelMes),
         tone: balanceDelMes < 0 ? 'danger' : 'default',
-        secondary: bcv ? this.formatBsApprox(balanceDelMes * bcv) : undefined,
+        montoUsdtCash: balanceDelMes,
       },
       { label: 'Empresas activas', value: `${empresasActivas}`, tone: 'default' },
       {
         label: 'Egresos del mes',
         value: this.formatUsd(egresosDelMes),
         tone: 'danger',
-        secondary: bcv ? this.formatBsApprox(egresosDelMes * bcv) : undefined,
+        montoUsdtCash: egresosDelMes,
       },
       {
         label: 'Ingresos del mes',
         value: this.formatUsd(ingresosDelMes),
         tone: 'default',
-        secondary: ingresosDelMesBs > 0 ? this.formatBs(ingresosDelMesBs) : undefined,
+        montoUsdtCash: ingresosDelMes,
       },
     ];
   });
@@ -188,7 +190,7 @@ export class DashboardPage implements OnInit {
       label,
       value: pagos
         .filter((pago) => pago.fecha.startsWith(key))
-        .reduce((sum, pago) => sum + pago.monto, 0),
+        .reduce((sum, pago) => sum + montoRealizado(pago), 0),
     }));
   });
 
@@ -202,14 +204,5 @@ export class DashboardPage implements OnInit {
 
   private formatUsd(value: number): string {
     return `$ ${value.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-
-  private formatBs(value: number): string {
-    return `${value.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs`;
-  }
-
-  /** Same as formatBs, but marked "≈" — a BCV-rate conversion, not a real transferred amount. */
-  private formatBsApprox(value: number): string {
-    return `≈ ${this.formatBs(value)}`;
   }
 }

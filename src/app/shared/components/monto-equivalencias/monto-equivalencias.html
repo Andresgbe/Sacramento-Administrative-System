@@ -1,0 +1,8 @@
+<!-- Explicit null checks, not `@if (x; as y)`: a card whose balance lands on
+     exactly 0 is still worth restating, and 0 is falsy. -->
+ @if (dolaresBcv() !== null) {
+  <span class="monto-equivalencias__linea">≈ ${{ dolaresBcv() | number: '1.2-2' }} <b>BCV</b></span>
+}
+@if (bolivares() !== null) {
+  <span class="monto-equivalencias__linea">≈ {{ bolivares() | number: '1.2-2' }} Bs</span>
+}

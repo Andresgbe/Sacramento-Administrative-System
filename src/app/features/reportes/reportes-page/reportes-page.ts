@@ -2,7 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CategoriaEgreso } from '../../../core/models/egreso.model';
-import { CONCEPTO_LABEL, PagoConcepto } from '../../../core/models/pago.model';
+import { CONCEPTO_LABEL, PagoConcepto, montoRealizado } from '../../../core/models/pago.model';
 import {
   MultiSelect,
   MultiSelectOption,
@@ -36,6 +36,13 @@ interface Transaccion {
   montoBs: number | null;
   /** True when `montoBs` is a live BCV conversion rather than a recorded amount. */
   bsEstimado: boolean;
+  /**
+   * What the row contributes to a balance. For an income it is the USDT the
+   * conversion produced, so it is 0 until one is recorded; `montoUsd` above
+   * keeps the nominal figure, because the export is a register of what came
+   * in, not only of what was realised. For an egreso the two are the same.
+   */
+  montoRealizado: number;
 }
 
 const EGRESO_LABEL: Record<CategoriaEgreso, string> = {
@@ -113,6 +120,7 @@ export class ReportesPage implements OnInit {
       montoUsd: pago.monto,
       montoBs: pago.montoBs,
       bsEstimado: false,
+      montoRealizado: montoRealizado(pago),
     }));
 
     const egresos: Transaccion[] = this.egresosService.all().map((egreso) => ({
@@ -128,6 +136,7 @@ export class ReportesPage implements OnInit {
       // Egresos carry no recorded bolívar figure, so this is a live BCV
       // conversion — flagged so the table and the export can say so.
       montoBs: rate ? egreso.monto * rate : null,
+      montoRealizado: egreso.monto,
       bsEstimado: true,
     }));
 
@@ -198,13 +207,13 @@ export class ReportesPage implements OnInit {
   protected readonly totalIngresos = computed(() =>
     this.resultados()
       .filter((transaccion) => transaccion.tipo === 'ingreso')
-      .reduce((sum, transaccion) => sum + transaccion.montoUsd, 0),
+      .reduce((sum, transaccion) => sum + transaccion.montoRealizado, 0),
   );
 
   protected readonly totalEgresos = computed(() =>
     this.resultados()
       .filter((transaccion) => transaccion.tipo === 'egreso')
-      .reduce((sum, transaccion) => sum + transaccion.montoUsd, 0),
+      .reduce((sum, transaccion) => sum + transaccion.montoRealizado, 0),
   );
 
   protected readonly balance = computed(() => this.totalIngresos() - this.totalEgresos());
@@ -269,6 +278,7 @@ export class ReportesPage implements OnInit {
     'Monto USD',
     'Monto Bs',
     'Bs estimado',
+    'USDT convertido',
   ];
 
   protected readonly exportando = signal(false);
@@ -302,6 +312,7 @@ export class ReportesPage implements OnInit {
           t.montoUsd,
           t.montoBs,
           t.bsEstimado ? 'Sí' : 'No',
+          t.montoRealizado,
         ]),
         [],
         ['Total ingresos (USD)', this.totalIngresos()],
@@ -320,6 +331,7 @@ export class ReportesPage implements OnInit {
         { wch: 14 },
         { wch: 16 },
         { wch: 12 },
+        { wch: 16 },
       ];
 
       const libro = XLSX.utils.book_new();

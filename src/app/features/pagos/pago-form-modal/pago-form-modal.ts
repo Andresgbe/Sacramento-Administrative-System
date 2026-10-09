@@ -15,6 +15,7 @@ import { Empresa } from '../../../core/models/empresa.model';
 import { Local } from '../../../core/models/local.model';
 import {
   CONCEPTO_LABEL,
+  ComprobantePago,
   Pago,
   PagoConcepto,
   TipoTasa,
@@ -34,7 +35,7 @@ export interface PagoFormPayload {
   montoBs: number | null;
   tipoTasa: TipoTasa;
   descripcion: string | null;
-  comprobanteFile: File | null;
+  comprobanteFiles: File[];
 }
 
 // `toISOString()` reports UTC, which can roll over to tomorrow's date for
@@ -69,11 +70,16 @@ export class PagoFormModal implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly tasasCambioService = inject(TasasCambioService);
 
-  protected comprobanteFile: File | null = null;
+  /** Files picked in this session, not yet uploaded. */
+  protected comprobanteFiles: File[] = [];
 
-  protected get comprobanteDisplayName(): string | null {
-    return this.comprobanteFile?.name ?? this.pago?.comprobanteNombre ?? null;
-  }
+  /** Already stored on the pago. Removing one deletes it immediately — there
+   *  is no pending state to reconcile, and the row is already saved. */
+  protected comprobantesExistentes: ComprobantePago[] = [];
+
+  /** Emitted when an existing attachment is removed, so the page can delete
+   *  it through the service; the modal owns no data access of its own. */
+  @Output() comprobanteEliminado = new EventEmitter<ComprobantePago>();
 
   private mouseDownOnBackdrop = false;
 
@@ -167,6 +173,7 @@ export class PagoFormModal implements OnInit {
       });
       this.concepto.set(this.pago.concepto);
       this.empresaId.set(this.pago.empresaId ?? '');
+      this.comprobantesExistentes = [...this.pago.comprobantes];
     }
 
     this.syncEmpresaValidator();
@@ -226,13 +233,24 @@ export class PagoFormModal implements OnInit {
     control.updateValueAndValidity();
   }
 
-  protected onComprobanteSelected(event: Event): void {
+  protected onComprobantesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.comprobanteFile = input.files?.[0] ?? null;
+    // Appended, not replaced: picking a second time should add to the list,
+    // which is what "anexar varios" means to someone choosing one at a time.
+    this.comprobanteFiles = [...this.comprobanteFiles, ...Array.from(input.files ?? [])];
+    // Let the same file be picked again after being removed.
+    input.value = '';
   }
 
-  protected removeComprobante(): void {
-    this.comprobanteFile = null;
+  protected removeComprobanteFile(file: File): void {
+    this.comprobanteFiles = this.comprobanteFiles.filter((f) => f !== file);
+  }
+
+  protected removeComprobanteExistente(comprobante: ComprobantePago): void {
+    this.comprobantesExistentes = this.comprobantesExistentes.filter(
+      (c) => c.id !== comprobante.id,
+    );
+    this.comprobanteEliminado.emit(comprobante);
   }
 
   protected readonly submitError = signal<string | null>(null);
@@ -270,7 +288,7 @@ export class PagoFormModal implements OnInit {
       montoBs: value.montoBs || null,
       tipoTasa: value.tipoTasa,
       descripcion: value.descripcion || null,
-      comprobanteFile: this.comprobanteFile,
+      comprobanteFiles: this.comprobanteFiles,
     });
   }
 }

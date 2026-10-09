@@ -4,10 +4,13 @@ import { FormsModule } from '@angular/forms';
 import {
   CONCEPTOS_DE_INGRESO,
   CONCEPTO_LABEL,
+  ComprobantePago,
   Pago,
   PagoConcepto,
   TipoTasa,
   esConceptoDeIngreso,
+  montoRealizado,
+  montoSinConvertir,
 } from '../../../core/models/pago.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
@@ -27,10 +30,13 @@ import {
 } from '../../../shared/components/period-filter/period-filter';
 import { EmpresasService } from '../../locales/empresas.service';
 import { LocalesService } from '../../locales/locales.service';
-import { ComprobantePreviewModal } from '../comprobante-preview-modal/comprobante-preview-modal';
+import { TasasCambioService } from '../../tasas-cambio/tasas-cambio.service';
+import { ComprobantePreviewModal } from '../../../shared/components/comprobante-preview-modal/comprobante-preview-modal';
 import { PagoFormModal, PagoFormPayload } from '../pago-form-modal/pago-form-modal';
 import { PagosService } from '../pagos.service';
 import { TabItem, Tabs } from '../../../shared/components/tabs/tabs';
+import { MontoEquivalencias } from '../../../shared/components/monto-equivalencias/monto-equivalencias';
+import { ConversionModal, ConversionPayload } from '../conversion-modal/conversion-modal';
 
 type FiltroConcepto = PagoConcepto | 'todos';
 
@@ -47,6 +53,8 @@ type FiltroConcepto = PagoConcepto | 'todos';
     MultiSelect,
     PeriodFilter,
     Tabs,
+    MontoEquivalencias,
+    ConversionModal,
   ],
   templateUrl: './pagos-page.html',
   styleUrl: './pagos-page.scss',
@@ -55,6 +63,8 @@ export class PagosPage implements OnInit {
   private readonly pagosService = inject(PagosService);
   private readonly localesService = inject(LocalesService);
   private readonly empresasService = inject(EmpresasService);
+  // Only to populate it: <app-monto-equivalencias> reads the rates itself.
+  private readonly tasasCambioService = inject(TasasCambioService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly toastService = inject(ToastService);
   private readonly authService = inject(AuthService);
@@ -81,7 +91,12 @@ export class PagosPage implements OnInit {
   protected readonly saveError = signal<string | null>(null);
   protected readonly deletingId = signal<string | null>(null);
 
-  protected readonly comprobanteTarget = signal<Pago | null>(null);
+  protected readonly conversionTarget = signal<Pago | null>(null);
+  protected readonly savingConversion = signal(false);
+  protected readonly conversionError = signal<string | null>(null);
+  protected readonly anulandoId = signal<string | null>(null);
+
+  protected readonly comprobanteTarget = signal<{ nombre: string } | null>(null);
   protected readonly comprobanteUrl = signal<string | null>(null);
   protected readonly comprobanteLoading = signal(false);
   protected readonly comprobanteError = signal<string | null>(null);
@@ -192,8 +207,22 @@ export class PagosPage implements OnInit {
     });
   });
 
+  /**
+   * Realised income: only the USDT actually bought. A payment that has come
+   * in but has not been converted contributes nothing here — it sits in
+   * `totalSinConvertir()` until the admin records what it bought.
+   */
   protected readonly total = computed(() =>
-    this.pagosFiltrados().reduce((sum, pago) => sum + pago.monto, 0),
+    this.pagosFiltrados().reduce((sum, pago) => sum + montoRealizado(pago), 0),
+  );
+
+  /** Nominal value of what is still waiting to be converted. Never a balance. */
+  protected readonly totalSinConvertir = computed(() =>
+    this.pagosFiltrados().reduce((sum, pago) => sum + montoSinConvertir(pago), 0),
+  );
+
+  protected readonly cantidadSinConvertir = computed(
+    () => this.pagosFiltrados().filter((pago) => pago.usdtConvertido === null).length,
   );
 
   // Real sum of what was actually transferred in bolívares — not a conversion
@@ -207,6 +236,7 @@ export class PagosPage implements OnInit {
     this.pagosService.load();
     this.localesService.load();
     this.empresasService.load();
+    this.tasasCambioService.load();
   }
 
   protected setSearchInput(value: string): void {
@@ -312,15 +342,18 @@ export class PagosPage implements OnInit {
     this.toastService.success('Pago eliminado.');
   }
 
-  protected async openComprobante(pago: Pago): Promise<void> {
-    if (!pago.comprobanteRuta) return;
+  protected async openComprobante(comprobante: ComprobantePago): Promise<void> {
+    await this.mostrarArchivo(comprobante.nombre, comprobante.ruta);
+  }
 
-    this.comprobanteTarget.set(pago);
+  /** Shared by the payment's own receipts and the conversion's. */
+  private async mostrarArchivo(nombre: string, ruta: string): Promise<void> {
+    this.comprobanteTarget.set({ nombre });
     this.comprobanteUrl.set(null);
     this.comprobanteError.set(null);
     this.comprobanteLoading.set(true);
 
-    const { url, error } = await this.pagosService.getComprobanteUrl(pago.comprobanteRuta);
+    const { url, error } = await this.pagosService.getComprobanteUrl(ruta);
 
     this.comprobanteLoading.set(false);
 
@@ -332,7 +365,76 @@ export class PagosPage implements OnInit {
     this.comprobanteUrl.set(url);
   }
 
+  protected async onComprobanteEliminado(comprobante: ComprobantePago): Promise<void> {
+    const { error } = await this.pagosService.deleteComprobante(comprobante);
+    if (error) {
+      this.toastService.error(error);
+    }
+  }
+
   protected closeComprobante(): void {
     this.comprobanteTarget.set(null);
+  }
+
+  /** The conversion receipt is a different document from the payment's own. */
+  protected async openComprobanteConversion(pago: Pago): Promise<void> {
+    if (!pago.conversionComprobanteRuta) return;
+    await this.mostrarArchivo(
+      pago.conversionComprobanteNombre ?? 'Comprobante de conversión',
+      pago.conversionComprobanteRuta,
+    );
+  }
+
+  protected openConversionModal(pago: Pago): void {
+    this.conversionError.set(null);
+    this.conversionTarget.set(pago);
+  }
+
+  protected closeConversionModal(): void {
+    this.conversionTarget.set(null);
+  }
+
+  protected async onConversionSaved(payload: ConversionPayload): Promise<void> {
+    const target = this.conversionTarget();
+    if (!target) return;
+
+    this.savingConversion.set(true);
+    this.conversionError.set(null);
+
+    const { error } = await this.pagosService.registrarConversion(target.id, payload);
+
+    this.savingConversion.set(false);
+
+    if (error) {
+      this.conversionError.set(error);
+      return;
+    }
+
+    this.closeConversionModal();
+    this.toastService.success('Conversión registrada.');
+  }
+
+  protected async anularConversion(pago: Pago): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Anular conversión',
+      message: `Este pago volverá a contar como "sin convertir" y sus ${pago.usdtConvertido?.toFixed(2)} USDT saldrán del balance. ¿Continuar?`,
+      confirmLabel: 'Anular',
+      danger: true,
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.anulandoId.set(pago.id);
+    const { error } = await this.pagosService.anularConversion(pago.id);
+    this.anulandoId.set(null);
+
+    if (error) {
+      this.toastService.error(error);
+      return;
+    }
+
+    this.toastService.success('Conversión anulada.');
   }
 }

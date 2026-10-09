@@ -4,6 +4,8 @@
     <span class="balance-card__value balance-card__value--ingreso">
       $ {{ ingresos() | number: '1.2-2' }}
     </span>
+    <span class="monto-moneda">USDT/Cash</span>
+    <app-monto-equivalencias [monto]="ingresos()" />
     <span class="balance-card__hint">Alquiler cobrado</span>
   </div>
 
@@ -12,6 +14,8 @@
     <span class="balance-card__value balance-card__value--egreso">
       $ {{ egresos() | number: '1.2-2' }}
     </span>
+    <span class="monto-moneda">USDT/Cash</span>
+    <app-monto-equivalencias [monto]="egresos()" />
     <span class="balance-card__hint">Gastos administrativos y operativos</span>
   </div>
 
@@ -20,6 +24,8 @@
     <span class="balance-card__value" [class.balance-card__value--egreso]="balance() < 0">
       $ {{ balance() | number: '1.2-2' }}
     </span>
+    <span class="monto-moneda">USDT/Cash</span>
+    <app-monto-equivalencias [monto]="balance()" />
     <span class="balance-card__hint">Ingresos menos egresos</span>
   </div>
 </div>
@@ -70,7 +76,12 @@
                 {{ movimiento.tipo === 'ingreso' ? 'Ingreso' : 'Egreso' }}
               </span>
             </td>
-            <td>{{ movimiento.detalle }}</td>
+            <td>
+              {{ movimiento.detalle }}
+              @if (movimiento.sinConvertir) {
+                <span class="balance-sin-convertir">Sin convertir</span>
+              }
+            </td>
             <td
               class="data-table__amount"
               [class.balance-table__amount--ingreso]="movimiento.tipo === 'ingreso'"
