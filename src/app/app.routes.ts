@@ -47,12 +47,7 @@ export const routes: Routes = [
           ),
         data: { title: 'Calculadora', subtitle: 'Conversión USD ↔ Bs con tasas del día' },
       },
-      {
-        path: 'egresos',
-        loadComponent: () =>
-          import('./features/egresos/egresos-page/egresos-page').then((m) => m.EgresosPage),
-        data: { title: 'Reporte de egresos', subtitle: 'Gastos administrativos y operativos' },
-      },
+
       {
         path: 'balance',
         loadComponent: () =>

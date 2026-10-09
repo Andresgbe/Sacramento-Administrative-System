@@ -59,7 +59,12 @@ export class EgresoServicioFormModal implements OnInit {
     descripcion: [''],
   });
 
-  protected readonly bcvRate = computed(() => this.tasasCambioService.current()?.bcv ?? null);
+  /**
+   * A typed dollar figure is a USDT/Cash dollar, like every other `monto` in
+   * the app, so that is the rate it converts at. It used to freeze BCV here,
+   * which subtracted ~25% fewer bolívares than the money was worth.
+   */
+  protected readonly usdtRate = computed(() => this.tasasCambioService.usdtCash());
 
   private readonly monedaValue = toSignal(this.form.controls.moneda.valueChanges, {
     initialValue: this.form.controls.moneda.value,
@@ -78,7 +83,7 @@ export class EgresoServicioFormModal implements OnInit {
     if (!this.enDolares()) {
       return monto || null;
     }
-    const rate = this.bcvRate();
+    const rate = this.usdtRate();
     return rate && monto ? monto * rate : null;
   });
 
@@ -136,9 +141,10 @@ export class EgresoServicioFormModal implements OnInit {
       return;
     }
 
-    const rate = this.bcvRate();
+    const rate = this.usdtRate();
     if (!rate) {
-      this.errorTasa = 'No se pudo obtener la tasa BCV del día. Intenta de nuevo en un momento.';
+      this.errorTasa =
+        'No se pudo obtener la tasa USDT/Cash del día. Intenta de nuevo en un momento.';
       return;
     }
 

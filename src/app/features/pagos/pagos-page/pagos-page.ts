@@ -11,6 +11,7 @@ import {
   esConceptoDeIngreso,
   montoRealizado,
   montoSinConvertir,
+  requiereConversionManual,
 } from '../../../core/models/pago.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
@@ -222,8 +223,30 @@ export class PagosPage implements OnInit {
   );
 
   protected readonly cantidadSinConvertir = computed(
-    () => this.pagosFiltrados().filter((pago) => pago.usdtConvertido === null).length,
+    () =>
+      this.pagosFiltrados().filter(
+        (pago) => requiereConversionManual(pago.concepto) && pago.usdtConvertido === null,
+      ).length,
   );
+
+  /** Condominio is valued at the parallel rate when it is entered, so it has
+   *  no Convertir step. */
+  protected requiereConversion(pago: Pago): boolean {
+    return requiereConversionManual(pago.concepto);
+  }
+
+  /**
+   * Whether the "Sin convertir" card belongs on screen at all.
+   *
+   * Keyed on the tab, not on the card reaching 0: on Todos and Canon an empty
+   * queue is real information ("nothing pending"), and hiding it there would
+   * make the card vanish the moment it did its job. On Condominio there is no
+   * such thing as a pending conversion, so the card is meaningless.
+   */
+  protected readonly muestraSinConvertir = computed(() => {
+    const concepto = this.concepto();
+    return concepto === 'todos' || requiereConversionManual(concepto);
+  });
 
   // Real sum of what was actually transferred in bolívares — not a conversion
   // of `total`, same reasoning as montoBs on the model: payments made in cash

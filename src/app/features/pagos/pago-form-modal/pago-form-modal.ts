@@ -112,7 +112,16 @@ export class PagoFormModal implements OnInit {
    *  never typed by hand (unlike canon, where USD stays authoritative). */
   protected readonly esServicio = computed(() => this.concepto() !== 'canon');
 
-  protected readonly bcvRate = computed(() => this.tasasCambioService.current()?.bcv ?? null);
+  /**
+   * Services are typed in bolívares and their USD side is computed. It is
+   * computed at USDT/Cash, not BCV: `pagos.monto` holds USDT/Cash dollars
+   * everywhere else, and dividing by BCV put a BCV dollar in that column —
+   * a figure ~25% too high that then fed the balance as if it were parallel.
+   */
+  protected readonly usdtRate = computed(() => this.tasasCambioService.usdtCash());
+
+  /** Shown beside the computed figure so the rate used is never implicit. */
+  protected readonly bcvRate = computed(() => this.tasasCambioService.bcv());
 
   protected readonly localesDeEmpresa = computed(() =>
     this.locales.filter((local) => local.empresaId === this.empresaId()),
@@ -146,6 +155,15 @@ export class PagoFormModal implements OnInit {
   /** Preview only — recomputed at submit() from that moment's rate, never
    *  read back from here. */
   protected readonly montoUsdEstimado = computed(() => {
+    const rate = this.usdtRate();
+    const bs = this.montoBsValue();
+    if (!rate || !bs) return null;
+    return bs / rate;
+  });
+
+  /** The same bolívares read at the official rate — shown only so the admin
+   *  can tell the two apart; never stored. */
+  protected readonly montoUsdBcv = computed(() => {
     const rate = this.bcvRate();
     const bs = this.montoBsValue();
     if (!rate || !bs) return null;
@@ -267,10 +285,10 @@ export class PagoFormModal implements OnInit {
     let monto = value.monto;
 
     if (this.esServicio()) {
-      const rate = this.bcvRate();
+      const rate = this.usdtRate();
       if (!rate) {
         this.submitError.set(
-          'No se pudo obtener la tasa BCV del día. Intenta de nuevo en un momento.',
+          'No se pudo obtener la tasa USDT/Cash del día. Intenta de nuevo en un momento.',
         );
         return;
       }

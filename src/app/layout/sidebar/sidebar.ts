@@ -45,10 +45,10 @@ export class Sidebar {
     { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
     { label: 'Locales', icon: 'store', route: '/locales' },
     { label: 'Reporte de pagos', icon: 'receipt', route: '/pagos' },
-    { label: 'Servicios', icon: 'services', route: '/servicios-basicos' },
     { label: 'Reporte de egresos', icon: 'expenses', route: '/egresos' },
+    { label: 'Servicios', icon: 'services', route: '/servicios-basicos' },
     { label: 'Balance', icon: 'wallet', route: '/balance' },
-    { label: 'Calculadora', icon: 'calculator', route: '/calculadora' },
+    { label: 'Tasas', icon: 'calculator', route: '/calculadora' },
     { label: 'Reportes', icon: 'reports', route: '/reportes' },
   ];
 

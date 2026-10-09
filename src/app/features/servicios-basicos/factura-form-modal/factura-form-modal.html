@@ -52,16 +52,7 @@
           </p>
         }
 
-        @for (foto of fotos(); track foto.name + $index) {
-          <div class="file-picker__selected">
-            <span class="file-picker__name">{{ foto.name }}</span>
-            <button type="button" class="file-picker__remove" (click)="removeFoto($index)">
-              Quitar
-            </button>
-          </div>
-        }
-
-        <label class="file-picker__dropzone">
+        <label class="upload-zone">
           <input
             type="file"
             accept="image/*,.pdf"
@@ -69,8 +60,31 @@
             (change)="onFotosSelected($event)"
             hidden
           />
-          Agregar fotos
+          <span class="upload-zone__icon" aria-hidden="true">&#128228;</span>
+          <span class="upload-zone__title">Agregar fotos</span>
+          <span class="upload-zone__hint">
+            Imágenes o PDF · la factura suele venir en varias páginas
+          </span>
         </label>
+
+        @if (fotos().length > 0) {
+          <ul class="upload-list">
+            @for (foto of fotos(); track foto.name + $index) {
+              <li class="upload-list__item upload-list__item--nuevo">
+                <span class="upload-list__name">{{ foto.name }}</span>
+                <span class="upload-list__badge">Nuevo</span>
+                <button
+                  type="button"
+                  class="upload-list__remove"
+                  (click)="removeFoto($index)"
+                  [attr.aria-label]="'Quitar ' + foto.name"
+                >
+                  &#10005;
+                </button>
+              </li>
+            }
+          </ul>
+        }
       </div>
 
       @if (errorMessage) {

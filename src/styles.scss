@@ -492,6 +492,25 @@ button {
   line-height: 1;
 }
 
+// For a form with SEVERAL file fields stacked (the empresa form's contrato /
+// RIF / otro): the full block three times over was taller than the rest of
+// the form put together. Icon and label sit on one line instead.
+.upload-zone--compact {
+  flex-direction: row;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+
+  .upload-zone__icon {
+    font-size: 1rem;
+  }
+
+  .upload-zone__title {
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+}
+
 .upload-zone__title {
   font-size: 0.9rem;
   font-weight: 700;

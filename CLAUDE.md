@@ -379,14 +379,18 @@ front-end half of the same rule.
   add a stored rate to `pagos`.
   **Condominio/Corpoelec/Hidrocapital flip this**: the mall collects these in
   bolívares, so `monto_bs` is the one typed by hand (required in the form —
-  `PagoFormModal.esServicio()`), and `monto` (USD) is computed automatically
-  from that day's BCV rate at submit time, purely to satisfy the NOT NULL
-  column — it is never read back for display. Every USD figure shown for a
-  service pago (the row, and the "Total cobrado en servicios" card in
-  Servicios) is instead a **live** conversion of `monto_bs` at _today's_ BCV
-  rate, marked with "≈", and changes as the rate does — a deliberate
-  divergence from `deudas`' frozen-rate snapshot, chosen because these are
-  live conversions for display, not a debt balance meant to stay stable.
+  `PagoFormModal.esServicio()`), and `monto` (USD) is computed at submit time
+  from that day's **USDT/Cash** rate. That computed figure is **real and is
+  read back**: it is what these concepts contribute to every balance, since
+  they need no manual conversion. It was computed at BCV once, which put a
+  BCV dollar in a column that holds USDT/Cash everywhere else and overstated
+  every service payment by the gap between the two rates.
+  The USD figures *displayed* for a service pago (the row, and the "Total
+  cobrado en servicios" card in Servicios) are a **live** conversion of
+  `monto_bs` at _today's_ USDT/Cash rate, marked with "≈", and change as the
+  rate does — a deliberate divergence from `deudas`' frozen-rate snapshot,
+  chosen because these are live conversions for display, not a debt balance
+  meant to stay stable.
 - A check constraint (`pagos_local_matches_concepto`) enforces the table above,
   because "which local is this water bill for?" has no correct answer. Add a
   new per-unit concept to `CONCEPTOS_POR_LOCAL` in `pago.model.ts` **and** to
@@ -425,7 +429,8 @@ actually thinks in, which the old single column did not follow:
 3. **Monto (Bs) · Monto (USD)** — for canon. The Bs side is explicitly marked
    *Opcional* (a payment in cash dollars has no bolívar side). For the three
    service concepts this collapses to a single required **Monto (Bs)** plus
-   the live BCV equivalent, since those are collected in bolívares.
+   its USDT/Cash equivalent (which is what gets stored) plus the BCV reading
+   beside it, since those are collected in bolívares.
 4. **Descripción**
 5. **Comprobantes**
 
@@ -460,8 +465,21 @@ exchange took a cut. So the amount that counts is the one that came back.
   neither half means anything alone.
 - **It is typed, never computed from a rate.** Deriving it would defeat the
   whole point, which is that what came back differs from the nominal amount.
+- **Only canon needs the manual step** (`requiereConversionManual()`). Canon
+  is agreed in dollars and arrives as dollars or as a transfer at whatever
+  rate was agreed, so what the mall ends up holding is unknown until it
+  actually buys USDT. **Condominio, Corpoelec and Hidrocapital are typed in
+  bolívares and the form values them at that day's USDT/Cash rate on the
+  spot** — `monto` is already the parallel figure, so they count immediately,
+  have no "sin convertir" state, and show "Automática" in the Conversión
+  column instead of a button. The **"Balance sin convertir" card is hidden on
+  those tabs entirely** (`muestraSinConvertir()`), keyed on the concepto and
+  not on the card reaching 0 — on Todos and Canon an empty queue is real
+  information, and hiding it there would make the card vanish the moment it
+  did its job, the same mistake `.filters-clear` made once.
 - **Every income total goes through `montoRealizado(pago)`** in
-  `pago.model.ts` — it returns `usdt_convertido ?? 0`. Reporte de pagos'
+  `pago.model.ts` — `monto` for the bolívar concepts, `usdt_convertido ?? 0`
+  for canon. Reporte de pagos'
   "Total cobrado", the Dashboard tiles and "Ingresos mensuales" chart, Balance
   and Reportes' summary cards all use it. **Never sum `pago.monto` for a
   balance again**: that is the nominal figure, which the mall may not have
@@ -650,8 +668,9 @@ not in the root of app/.
       each cancel against itself), and making that structural means nothing has
       to remember to filter it; and it is denominated in **bolívares**, the
       opposite of `egresos` where USD is authoritative. The form takes an amount
-      in Bs **or** USD — a dollar figure is converted at that day's BCV and the
-      rate is **frozen onto the row** (`monto_usd` + `tasa`), unlike the live
+      in Bs **or** USD — a dollar figure is converted at that day's USDT/Cash
+      rate (a typed dollar is a USDT/Cash dollar, like every other `monto`)
+      and the rate is **frozen onto the row** (`monto_usd` + `tasa`), unlike the live
       conversions elsewhere on this page, because an expense on record must not
       drift when the dollar moves. The tab shows "Total egresado" and
       **"Saldo de servicios" = cobrado − egresado**, in Bs, which is the number

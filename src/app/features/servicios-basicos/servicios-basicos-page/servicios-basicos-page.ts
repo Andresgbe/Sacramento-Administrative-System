@@ -135,7 +135,7 @@ export class ServiciosBasicosPage implements OnInit {
     });
   });
 
-  protected readonly bcvRate = computed(() => this.tasasCambioService.current()?.bcv ?? null);
+  protected readonly bcvRate = computed(() => this.tasasCambioService.bcv());
 
   // Services are collected in Bs, so this is the real, authoritative total —
   // same reasoning as ingresosDelMesBs on the Dashboard: rows with no montoBs
@@ -144,17 +144,17 @@ export class ServiciosBasicosPage implements OnInit {
     this.pagosFiltrados().reduce((sum, pago) => sum + (pago.montoBs ?? 0), 0),
   );
 
-  // Live BCV conversion for display only, always today's rate per product
-  // decision — not the rate frozen on each row's `monto` at entry time.
-  protected readonly totalPagosUsdEquivalente = computed(() => {
-    const rate = this.bcvRate();
-    return rate ? this.totalPagosBs() / rate : null;
-  });
+  // Live USDT/Cash conversion for display only, always today's rate per
+  // product decision — not the rate frozen on each row's `monto` at entry
+  // time. It read BCV until the rate model changed, which showed a figure
+  // ~25% above what the bolívares are actually worth.
+  protected readonly totalPagosUsdEquivalente = computed(() =>
+    this.tasasCambioService.aDolaresUsdtCash(this.totalPagosBs()),
+  );
 
   protected montoUsdEquivalente(pago: Pago): number | null {
-    const rate = this.bcvRate();
-    if (!pago.montoBs || !rate) return null;
-    return pago.montoBs / rate;
+    if (!pago.montoBs) return null;
+    return this.tasasCambioService.aDolaresUsdtCash(pago.montoBs);
   }
 
   // --- Egresos de servicios: what the mall pays the providers ---
