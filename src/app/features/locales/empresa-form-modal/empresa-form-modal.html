@@ -90,52 +90,76 @@
 
           <div class="field">
             <span>Contrato</span>
+            <label class="upload-zone upload-zone--compact">
+              <input type="file" (change)="onContratoSelected($event)" hidden />
+              <span class="upload-zone__icon" aria-hidden="true">&#128228;</span>
+              <span class="upload-zone__title">Subir archivo</span>
+            </label>
             @if (contratoFile) {
-              <div class="file-picker__selected">
-                <span class="file-picker__name">{{ contratoFile.name }}</span>
-                <button type="button" class="file-picker__remove" (click)="removeContrato()">
-                  Quitar
-                </button>
-              </div>
-            } @else {
-              <label class="file-picker__dropzone">
-                <input type="file" (change)="onContratoSelected($event)" hidden />
-                Subir archivo
-              </label>
+              <ul class="upload-list">
+                <li class="upload-list__item upload-list__item--nuevo">
+                  <span class="upload-list__name">{{ contratoFile.name }}</span>
+                  <span class="upload-list__badge">Nuevo</span>
+                  <button
+                    type="button"
+                    class="upload-list__remove"
+                    (click)="removeContrato()"
+                    [attr.aria-label]="'Quitar ' + contratoFile.name"
+                  >
+                    &#10005;
+                  </button>
+                </li>
+              </ul>
             }
           </div>
 
           <div class="field">
             <span>RIF</span>
+            <label class="upload-zone upload-zone--compact">
+              <input type="file" (change)="onRifSelected($event)" hidden />
+              <span class="upload-zone__icon" aria-hidden="true">&#128228;</span>
+              <span class="upload-zone__title">Subir archivo</span>
+            </label>
             @if (rifFile) {
-              <div class="file-picker__selected">
-                <span class="file-picker__name">{{ rifFile.name }}</span>
-                <button type="button" class="file-picker__remove" (click)="removeRif()">
-                  Quitar
-                </button>
-              </div>
-            } @else {
-              <label class="file-picker__dropzone">
-                <input type="file" (change)="onRifSelected($event)" hidden />
-                Subir archivo
-              </label>
+              <ul class="upload-list">
+                <li class="upload-list__item upload-list__item--nuevo">
+                  <span class="upload-list__name">{{ rifFile.name }}</span>
+                  <span class="upload-list__badge">Nuevo</span>
+                  <button
+                    type="button"
+                    class="upload-list__remove"
+                    (click)="removeRif()"
+                    [attr.aria-label]="'Quitar ' + rifFile.name"
+                  >
+                    &#10005;
+                  </button>
+                </li>
+              </ul>
             }
           </div>
 
           <div class="field">
             <span>Otro documento</span>
+            <label class="upload-zone upload-zone--compact">
+              <input type="file" (change)="onOtroSelected($event)" hidden />
+              <span class="upload-zone__icon" aria-hidden="true">&#128228;</span>
+              <span class="upload-zone__title">Subir archivo</span>
+            </label>
             @if (otroFile) {
-              <div class="file-picker__selected">
-                <span class="file-picker__name">{{ otroFile.name }}</span>
-                <button type="button" class="file-picker__remove" (click)="removeOtro()">
-                  Quitar
-                </button>
-              </div>
-            } @else {
-              <label class="file-picker__dropzone">
-                <input type="file" (change)="onOtroSelected($event)" hidden />
-                Subir archivo
-              </label>
+              <ul class="upload-list">
+                <li class="upload-list__item upload-list__item--nuevo">
+                  <span class="upload-list__name">{{ otroFile.name }}</span>
+                  <span class="upload-list__badge">Nuevo</span>
+                  <button
+                    type="button"
+                    class="upload-list__remove"
+                    (click)="removeOtro()"
+                    [attr.aria-label]="'Quitar ' + otroFile.name"
+                  >
+                    &#10005;
+                  </button>
+                </li>
+              </ul>
             }
           </div>
         </div>

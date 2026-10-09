@@ -108,11 +108,15 @@
         </label>
 
         <p class="field-hint">
-          @if (bcvRate() && montoUsdEstimado() !== null) {
-            Equivalente: $ {{ montoUsdEstimado() | number: '1.2-2' }} (tasa BCV
-            {{ bcvRate() | number: '1.2-2' }})
+          @if (montoUsdEstimado() !== null) {
+            Se registra como
+            <strong>$ {{ montoUsdEstimado() | number: '1.2-2' }} USDT/Cash</strong>
+            (tasa {{ usdtRate() | number: '1.2-2' }})
+            @if (montoUsdBcv() !== null) {
+              · equivale a $ {{ montoUsdBcv() | number: '1.2-2' }} a tasa BCV
+            }
           } @else {
-            Cargando tasa BCV…
+            Cargando tasa USDT/Cash…
           }
         </p>
       } @else {

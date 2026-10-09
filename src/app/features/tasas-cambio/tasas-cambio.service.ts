@@ -33,6 +33,16 @@ export class TasasCambioService {
   }
 
   /**
+   * Bolívares valued in USDT/Cash — the inverse of `aBolivares()`, and what
+   * a figure collected in bolívares is actually worth. Services use it both
+   * to compute the `monto` they store and to display their totals.
+   */
+  aDolaresUsdtCash(montoBs: number): number | null {
+    const tasa = this.usdtCash();
+    return tasa ? montoBs / tasa : null;
+  }
+
+  /**
    * The same money read at the official rate — always a LARGER number of
    * dollars than the USDT/Cash figure, because BCV prices the dollar lower.
    * It is the figure that would appear on official books, never a total the

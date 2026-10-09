@@ -12,15 +12,17 @@
     }
   </div>
 
-  <div class="pagos-total pagos-total--pendiente">
-    <span class="pagos-total__label">Balance sin convertir</span>
-    <span class="pagos-total__value">$ {{ totalSinConvertir() | number: '1.2-2' }}</span>
-    <span class="monto-moneda">Nominal</span>
-    <span class="pagos-total__transferido">
-      {{ cantidadSinConvertir() }}
-      {{ cantidadSinConvertir() === 1 ? 'pago pendiente' : 'pagos pendientes' }}
-    </span>
-  </div>
+  @if (muestraSinConvertir()) {
+    <div class="pagos-total pagos-total--pendiente">
+      <span class="pagos-total__label">Balance sin convertir</span>
+      <span class="pagos-total__value">$ {{ totalSinConvertir() | number: '1.2-2' }}</span>
+      <span class="monto-moneda">Nominal</span>
+      <span class="pagos-total__transferido">
+        {{ cantidadSinConvertir() }}
+        {{ cantidadSinConvertir() === 1 ? 'pago pendiente' : 'pagos pendientes' }}
+      </span>
+    </div>
+  }
   </div>
 
   @if (isAdmin()) {
@@ -193,7 +195,11 @@
               }
             </td>
             <td>
-              @if (pago.usdtConvertido !== null) {
+              @if (!requiereConversion(pago)) {
+                <span class="pagos-conversion__automatica" title="Registrado en bolívares y valorado a tasa USDT/Cash del día">
+                  Automática
+                </span>
+              } @else if (pago.usdtConvertido !== null) {
                 <div class="pagos-conversion">
                   <span class="pagos-conversion__monto">
                     {{ pago.usdtConvertido | number: '1.2-2' }} USDT

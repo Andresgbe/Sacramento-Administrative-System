@@ -184,3 +184,12 @@
     white-space: nowrap;
   }
 }
+
+
+// Concepts typed in bolívares are valued at the parallel rate on entry, so
+// they never queue for conversion. Muted, not a chip: it is the absence of
+// an action, not a status worth drawing the eye.
+.pagos-conversion__automatica {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}

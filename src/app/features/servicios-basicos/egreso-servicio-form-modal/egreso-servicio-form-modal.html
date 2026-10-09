@@ -58,11 +58,11 @@
 
       @if (enDolares()) {
         <p class="field-hint">
-          @if (bcvRate() && montoBsResultante() !== null) {
-            Se restarán {{ montoBsResultante() | number: '1.2-2' }} Bs (tasa BCV
-            {{ bcvRate() | number: '1.2-2' }})
+          @if (usdtRate() && montoBsResultante() !== null) {
+            Se restarán {{ montoBsResultante() | number: '1.2-2' }} Bs (tasa USDT/Cash
+            {{ usdtRate() | number: '1.2-2' }})
           } @else {
-            Cargando tasa BCV…
+            Cargando tasa USDT/Cash…
           }
         </p>
       }
