@@ -104,3 +104,12 @@
   color: var(--color-text-muted);
   white-space: nowrap;
 }
+
+
+// The only card on the page the período filter does not touch, so it is
+// marked as a different kind of figure rather than a fourth sibling of the
+// three beside it.
+.balance-card--total {
+  background: var(--color-surface-muted);
+  border-style: dashed;
+}

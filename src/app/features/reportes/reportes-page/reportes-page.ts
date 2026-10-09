@@ -10,6 +10,9 @@ import {
 import {
   PeriodFilter,
   availableYears,
+  esPeriodoActual,
+  currentMonth,
+  currentYear,
   matchesPeriod,
 } from '../../../shared/components/period-filter/period-filter';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
@@ -82,8 +85,8 @@ export class ReportesPage implements OnInit {
   protected readonly appliedSearch = signal('');
   // Empty by default: a report page should open showing everything on record,
   // not silently scoped to the current month.
-  protected readonly anio = signal('');
-  protected readonly mes = signal('');
+  protected readonly anio = signal(currentYear());
+  protected readonly mes = signal(currentMonth());
   protected readonly montoMin = signal<number | null>(null);
   protected readonly montoMax = signal<number | null>(null);
   protected readonly selectedTipos = signal<Set<string>>(new Set());
@@ -142,7 +145,11 @@ export class ReportesPage implements OnInit {
       bsEstimado: true,
     }));
 
-    return [...pagos, ...egresos].sort((a, b) => b.fecha.localeCompare(a.fecha));
+    // Oldest first, newest at the bottom — same reading order as the ID
+    // columns in Pagos and Egresos. Sorted by date, not by ID: this list
+    // mixes two tables whose `numero` sequences are independent, so their
+    // ids are not comparable against each other.
+    return [...pagos, ...egresos].sort((a, b) => a.fecha.localeCompare(b.fecha));
   });
 
   protected readonly aniosDisponibles = computed(() =>
@@ -152,8 +159,7 @@ export class ReportesPage implements OnInit {
   protected readonly hasActiveFilters = computed(
     () =>
       this.appliedSearch() !== '' ||
-      this.anio() !== '' ||
-      this.mes() !== '' ||
+      !esPeriodoActual(this.anio(), this.mes()) ||
       this.montoMin() !== null ||
       this.montoMax() !== null ||
       this.selectedTipos().size > 0 ||
@@ -274,8 +280,11 @@ export class ReportesPage implements OnInit {
   protected clearAllFilters(): void {
     this.searchInput.set('');
     this.appliedSearch.set('');
-    this.anio.set('');
-    this.mes.set('');
+    // Back to the current month, not "todos": that is the page's resting
+    // state, and clearing into an all-time view silently changed what the
+    // totals above were counting.
+    this.anio.set(currentYear());
+    this.mes.set(currentMonth());
     this.montoMin.set(null);
     this.montoMax.set(null);
     this.selectedTipos.set(new Set());

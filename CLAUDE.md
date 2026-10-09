@@ -141,24 +141,29 @@ directives and services under `src/app/shared/`.
   `.filters-field__amount-row` / `.filters-clear`** — the filter card above
   every report table (Pagos, Egresos, Balance, Servicios, Reportes). Two
   parts, and the split is the point:
-  - **`.filters-bar__header`** — just a "Filtros" label with a funnel icon.
-    It carries no controls: "Limpiar filtros" was tried up there and read as
-    part of the card's title rather than as an action on the fields below it.
-  - **`.filters-bar__grid`** — the fields, on a **CSS grid**
-    (`repeat(auto-fit, minmax(min(190px, 100%), 1fr))`), not flex-wrap:
-    wrapped flex items kept their own widths and left ragged gaps, which is
-    what made the bar look tangled on phones. Search spans two columns where
-    there's room.
+  **Three rows, always in this order. Every filter card in the system is
+  built this way — do not improvise a different arrangement for a new page:**
 
-  Add a new filter as one more `.filters-field` inside the grid — it lands
-  automatically, no width tuning needed.
+  1. **`.filters-bar__header`** — a "Filtros" label with a funnel icon on the
+     left, and **`.filters-clear` pinned top right**. One fixed place on
+     every screen; as a cell in the field grid the button moved every time a
+     page gained a filter.
+  2. **`.filters-field--search`** — the search box, a **direct child of the
+     card, alone on a full-width row**, NOT inside the grid. It used to span
+     two grid columns, which left it sharing a line with Año and Mes and made
+     the row read as one long strip of unrelated controls.
+  3. **`.filters-bar__grid`** — everything else, on a **CSS grid**
+     (`repeat(auto-fit, minmax(min(190px, 100%), 1fr))`), not flex-wrap:
+     wrapped flex items kept their own widths and left ragged gaps, which is
+     what made the bar look tangled on phones.
 
-  **`.filters-clear` is the grid's last item**, so it sits beside the final
-  row of filters. It is a **grey fill** (`--color-surface-muted`) with a
-  border, turning red-tinted on hover: transparent with muted text, it
-  vanished against the white card and did not read as clickable.
-  `align-self: end` puts it on the inputs' baseline, since every other cell
-  is a label stacked over a control and so is taller. It is **always
+  Add a new filter as one more `.filters-field` **inside the grid** — it
+  lands automatically, no width tuning needed. A page with no search (Balance,
+  Servicios) just omits row 2.
+
+  **`.filters-clear`** is a **grey fill** (`--color-surface-muted`) with a
+  border, turning red-tinted on hover: transparent with muted text it vanished
+  against the white card and did not read as clickable. It is **always
   rendered** and `[disabled]="!hasActiveFilters()"` — never wrap it in an
   `@if`: it used to vanish the moment it did its job, which read as the
   button deleting itself.
@@ -171,9 +176,24 @@ directives and services under `src/app/shared/`.
   `.filters-bar` instead of sharing one cell. Ships with three helpers used
   alongside it — `availableYears(fechas)` (years present in the data, newest
   first, plus the current one), `matchesPeriod(fecha, anio, mes)` for the
-  filter predicate, and `currentYear()` / `currentMonth()` for the default
-  signals. Any new report page filters its dates through these, never by
-  hand-rolling `fecha.startsWith(...)`.
+  filter predicate, `currentYear()` / `currentMonth()` for the default
+  signals, and `esPeriodoActual(anio, mes)`. Any new report page filters its
+  dates through these, never by hand-rolling `fecha.startsWith(...)`.
+
+  **Every report page opens on the current month, and "Limpiar filtros"
+  returns it there — never to "todos".** Three rules that have to move
+  together, or the card misbehaves:
+  - `anio`/`mes` initialise to `currentYear()` / `currentMonth()`.
+  - `clearAllFilters()` sets them back to those, not to `''`. Clearing into
+    an all-time view silently changed what the totals above the table were
+    counting.
+  - `hasActiveFilters()` tests `!esPeriodoActual(anio, mes)`, **not**
+    `anio !== ''`. The current month is the resting state, not a filter the
+    user applied, so comparing against `''` left the clear button enabled on
+    a page nobody had touched yet.
+
+  `''` still means "todos" on either select — it is reachable, just not where
+  the page starts or where clearing lands.
 - **`<app-monto-equivalencias>`**
   (`src/app/shared/components/monto-equivalencias/`) — the two lines that sit
   under every big money figure: `≈ … Bs` and `≈ $ … a tasa BCV`, both derived
@@ -689,8 +709,15 @@ not in the root of app/.
       egresos have no recorded `monto_bs`, so it is a live conversion, not what
       left the account. It converted at BCV until the rate model changed, which
       understated every row by the gap between the two rates.
-  - **Balance** (`/balance`): three cards — Ingresos, Egresos and the Balance
-    between them, all in USDT/Cash with their bolívar and BCV restatements —
+  - **Balance** (`/balance`): four cards — Ingresos, Egresos, the Balance
+    between them, and **Balance total**, all in USDT/Cash with their bolívar
+    and BCV restatements. The first three follow the período filter;
+    **Balance total deliberately ignores it** and accumulates every period on
+    record, because "where does the mall stand" is a different question from
+    "how did this month go" and is meaningless scoped to a month. It is
+    styled muted and dashed so it does not read as a fourth sibling of the
+    three beside it. Same rules otherwise (canon only, realised amounts), so
+    it reconciles with the monthly figures summed over time —
     over a single list of the period's movements, both sides together, newest
     first, with a green/red chip and a signed amount. Income counts only
     converted payments; an unconverted one shows 0 with a "Sin convertir" tag.

@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import {
   PeriodFilter,
   availableYears,
+  esPeriodoActual,
   currentMonth,
   currentYear,
   matchesPeriod,
@@ -95,8 +96,7 @@ export class EgresosPage implements OnInit {
   protected readonly hasActiveFilters = computed(
     () =>
       this.appliedSearch() !== '' ||
-      this.anio() !== '' ||
-      this.mes() !== '' ||
+      !esPeriodoActual(this.anio(), this.mes()) ||
       this.montoMin() !== null ||
       this.montoMax() !== null,
   );
@@ -204,8 +204,11 @@ export class EgresosPage implements OnInit {
   protected clearAllFilters(): void {
     this.searchInput.set('');
     this.appliedSearch.set('');
-    this.anio.set('');
-    this.mes.set('');
+    // Back to the current month, not "todos": that is the page's resting
+    // state, and clearing into an all-time view silently changed what the
+    // totals above were counting.
+    this.anio.set(currentYear());
+    this.mes.set(currentMonth());
     this.montoMin.set(null);
     this.montoMax.set(null);
   }
