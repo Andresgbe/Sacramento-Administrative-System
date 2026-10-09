@@ -9,6 +9,7 @@ import {
 import {
   PeriodFilter,
   availableYears,
+  esPeriodoActual,
   currentMonth,
   currentYear,
   matchesPeriod,
@@ -65,7 +66,7 @@ export class BalancePage implements OnInit {
     ]),
   );
 
-  protected readonly hasActiveFilters = computed(() => this.anio() !== '' || this.mes() !== '');
+  protected readonly hasActiveFilters = computed(() => !esPeriodoActual(this.anio(), this.mes()));
 
   /**
    * Rent collected in the period. Canon only: condominio, Corpoelec and
@@ -92,6 +93,29 @@ export class BalancePage implements OnInit {
   );
 
   protected readonly balance = computed(() => this.ingresos() - this.egresos());
+
+  /**
+   * Accumulated balance across every period on record — deliberately NOT
+   * filtered, so it does not move when the año/mes selects do. The three
+   * cards beside it answer "how did this month go"; this one answers "where
+   * does the mall stand", which is a different question and would be
+   * meaningless scoped to a month.
+   *
+   * Same rules otherwise: canon only on the income side, realised amounts
+   * only, so it reconciles with the monthly figures summed over time.
+   */
+  protected readonly balanceTotal = computed(() => {
+    const ingresos = this.pagosService
+      .all()
+      .filter((pago) => esConceptoDeIngreso(pago.concepto))
+      .reduce((sum, pago) => sum + montoRealizado(pago), 0);
+
+    const egresos = this.egresosService
+      .all()
+      .reduce((sum, egreso) => sum + egreso.monto, 0);
+
+    return ingresos - egresos;
+  });
 
   /** Both sides of the ledger in one list, newest first. */
   protected readonly movimientos = computed<Movimiento[]>(() => {
@@ -126,7 +150,11 @@ export class BalancePage implements OnInit {
         sinConvertir: false,
       }));
 
-    return [...ingresos, ...egresos].sort((a, b) => b.fecha.localeCompare(a.fecha));
+    // Oldest first, newest at the bottom — same reading order as the ID
+    // columns in Pagos and Egresos. Sorted by date, not by ID: this list
+    // mixes two tables whose `numero` sequences are independent, so their
+    // ids are not comparable against each other.
+    return [...ingresos, ...egresos].sort((a, b) => a.fecha.localeCompare(b.fecha));
   });
 
   ngOnInit(): void {
@@ -144,7 +172,10 @@ export class BalancePage implements OnInit {
   }
 
   protected clearAllFilters(): void {
-    this.anio.set('');
-    this.mes.set('');
+    // Back to the current month, not "todos": that is the page's resting
+    // state, and clearing into an all-time view silently changed what the
+    // totals above were counting.
+    this.anio.set(currentYear());
+    this.mes.set(currentMonth());
   }
 }

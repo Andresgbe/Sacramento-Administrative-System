@@ -11,3 +11,31 @@
   color: var(--color-text-secondary);
   white-space: nowrap;
 }
+
+// Tinted tag naming the unit on each line. Both lines are grey "≈"
+// conversions and were easy to read as one blur; the tags separate them at a
+// glance and say which is which without reading the numbers.
+//
+// Neither colour is the palette's orange accent, nor the green/red that mean
+// income/expense on amounts — these sit on the UNIT, never on a figure, so
+// they cannot be mistaken for a sign.
+.monto-equivalencias__tasa {
+  display: inline-block;
+  margin-left: 2px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+
+  &--bcv {
+    background: rgb(217 119 6 / 14%);
+    color: #b45309;
+  }
+
+  &--bs {
+    background: rgb(22 163 74 / 13%);
+    color: #15803d;
+  }
+}

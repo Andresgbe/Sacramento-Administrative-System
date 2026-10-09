@@ -52,6 +52,18 @@ export function currentMonth(): string {
   return String(new Date().getMonth() + 1).padStart(2, '0');
 }
 
+/**
+ * True when the pair is the current month — the period every report page
+ * opens on and that "Limpiar filtros" returns to.
+ *
+ * `hasActiveFilters()` goes through this rather than comparing against `''`:
+ * the current month is the resting state, not a filter the user applied, so
+ * a freshly loaded page must show the clear button disabled.
+ */
+export function esPeriodoActual(anio: string, mes: string): boolean {
+  return anio === currentYear() && mes === currentMonth();
+}
+
 @Component({
   selector: 'app-period-filter',
   imports: [],

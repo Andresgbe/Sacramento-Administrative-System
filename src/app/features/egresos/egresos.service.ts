@@ -71,7 +71,10 @@ export class EgresosService {
     const { data, error } = await this.supabase
       .from('egresos')
       .select('*')
-      .order('fecha', { ascending: false });
+      // Ordered by `numero` ascending, so the ID column reads 1, 2, 3… and the
+      // newest transaction sits at the bottom. Pages that want the latest
+      // rows take them off the END (see the Dashboard panels).
+      .order('numero', { ascending: true });
 
     if (error) {
       this.error.set(error.message);

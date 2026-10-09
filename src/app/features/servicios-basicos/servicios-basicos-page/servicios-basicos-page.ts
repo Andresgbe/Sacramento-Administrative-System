@@ -21,6 +21,9 @@ import { TasasCambioService } from '../../tasas-cambio/tasas-cambio.service';
 import {
   PeriodFilter,
   availableYears,
+  esPeriodoActual,
+  currentMonth,
+  currentYear,
   formatPeriodo,
   matchesPeriod,
 } from '../../../shared/components/period-filter/period-filter';
@@ -93,15 +96,15 @@ export class ServiciosBasicosPage implements OnInit {
 
   // Empty by default: this page is a historical record, so it opens showing
   // every month rather than hiding everything but the current one.
-  protected readonly anio = signal('');
-  protected readonly mes = signal('');
+  protected readonly anio = signal(currentYear());
+  protected readonly mes = signal(currentMonth());
 
   protected readonly aniosDisponibles = computed(() =>
     availableYears(this.service.all().map((factura) => factura.periodo)),
   );
 
   protected readonly hasActiveFilters = computed(
-    () => this.anio() !== '' || this.mes() !== '' || this.servicio() !== 'todos',
+    () => !esPeriodoActual(this.anio(), this.mes()) || this.servicio() !== 'todos',
   );
 
   protected readonly facturasFiltradas = computed(() => {
@@ -341,8 +344,11 @@ export class ServiciosBasicosPage implements OnInit {
 
   protected clearAllFilters(): void {
     this.servicio.set('todos');
-    this.anio.set('');
-    this.mes.set('');
+    // Back to the current month, not "todos": that is the page's resting
+    // state, and clearing into an all-time view silently changed what the
+    // totals above were counting.
+    this.anio.set(currentYear());
+    this.mes.set(currentMonth());
   }
 
   protected openModal(factura: FacturaServicio | null): void {

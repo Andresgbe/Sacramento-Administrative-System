@@ -365,8 +365,12 @@ button {
 
 // Search earns twice the width where there is room; grid clamps the span back
 // to 1 when the bar collapses to a single column.
+// Search sits OUTSIDE `.filters-bar__grid`, as a direct child of the card,
+// so it takes a full-width row of its own above the other filters. It used
+// to span two grid columns, which left it sharing a line with Año and Mes
+// and made the row read as one long strip of unrelated controls.
 .filters-field--search {
-  grid-column: span 2;
+  width: 100%;
 }
 
 .filters-search {
@@ -414,20 +418,13 @@ button {
   }
 }
 
-// The last item in the field grid, so it lands beside the last row of
-// filters rather than in the header: up there it read as part of the card's
-// title instead of as an action on the fields below it.
-//
-// `align-self: end` puts it on the inputs' baseline — the grid rows are
-// taller than the button, since every other cell carries a label above it.
+// Pinned to the card header, top right — one fixed place on every screen,
+// instead of a grid cell that moved every time a page gained a filter.
 .filters-clear {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  justify-self: start;
-  align-self: end;
   gap: 6px;
-  padding: 9px 16px;
+  padding: 7px 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   // Grey fill, not a bare text link: on the white filter card a transparent
@@ -435,7 +432,7 @@ button {
   background: var(--color-surface-muted);
   color: var(--color-text-primary);
   font-family: var(--font-body);
-  font-size: 0.825rem;
+  font-size: 0.8rem;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
