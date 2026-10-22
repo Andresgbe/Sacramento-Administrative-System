@@ -113,6 +113,7 @@ export class PagosPage implements OnInit {
     { id: 'todos', label: 'Todos' },
     { id: 'canon', label: 'Canon' },
     { id: 'condominio', label: 'Condominio' },
+    { id: 'otros', label: 'Otros' },
   ];
 
   protected readonly totalLabel = computed(() => {
@@ -121,6 +122,8 @@ export class PagosPage implements OnInit {
         return 'Total cobrado en alquiler';
       case 'condominio':
         return 'Total cobrado en condominio';
+      case 'otros':
+        return 'Total cobrado en otros';
       default:
         return 'Total cobrado';
     }

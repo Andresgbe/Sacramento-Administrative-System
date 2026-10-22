@@ -36,55 +36,60 @@
         </label>
       </div>
 
-      <!-- 2. Empresa + Local. Condominio has neither, so the row collapses. -->
-      @if (pideEmpresa() || pideLocal()) {
-        <div class="field-row">
-          @if (pideEmpresa()) {
-            <label
-              class="field"
-              [class.field--invalid]="
-                form.controls.empresaId.invalid && form.controls.empresaId.touched
-              "
-            >
-              <span>Empresa</span>
-              <select
-                formControlName="empresaId"
-                (change)="onEmpresaChange($any($event.target).value)"
-              >
-                <option value="" disabled>Selecciona una empresa</option>
-                @for (empresa of empresasDisponibles(); track empresa.id) {
-                  <option [value]="empresa.id">{{ empresa.nombreComercial }}</option>
-                }
-              </select>
-              @if (form.controls.empresaId.invalid && form.controls.empresaId.touched) {
-                <span class="field__error">Debes seleccionar una empresa.</span>
-              }
-            </label>
+      <!-- 2. Empresa + Local. Only the per-unit concepts ask for a local. -->
+      <div class="field-row">
+        <label
+          class="field"
+          [class.field--invalid]="
+            form.controls.empresaId.invalid && form.controls.empresaId.touched
+          "
+        >
+          <span>
+            Empresa
+            @if (!empresaObligatoria()) {
+              <em class="field__opcional">Opcional</em>
+            }
+          </span>
+          <select
+            formControlName="empresaId"
+            (change)="onEmpresaChange($any($event.target).value)"
+          >
+            @if (empresaObligatoria()) {
+              <option value="" disabled>Selecciona una empresa</option>
+            } @else {
+              <option value="">Sin empresa</option>
+            }
+            @for (empresa of empresasDisponibles(); track empresa.id) {
+              <option [value]="empresa.id">{{ empresa.nombreComercial }}</option>
+            }
+          </select>
+          @if (form.controls.empresaId.invalid && form.controls.empresaId.touched) {
+            <span class="field__error">Debes seleccionar una empresa.</span>
           }
+        </label>
 
-          @if (pideLocal() && !esCondominioMultiple) {
-            <label
-              class="field"
-              [class.field--invalid]="
-                form.controls.localId.invalid && form.controls.localId.touched
-              "
-            >
-              <span>Local</span>
-              <select formControlName="localId">
-                <option value="" disabled>Selecciona un local</option>
-                @for (local of localesDeEmpresa(); track local.id) {
-                  <option [value]="local.id">{{ local.numeroLocal }}</option>
-                }
-              </select>
-              @if (form.controls.empresaId.valid && localesDeEmpresa().length === 0) {
-                <span class="field__error">Esta empresa no tiene locales registrados.</span>
-              } @else if (form.controls.localId.invalid && form.controls.localId.touched) {
-                <span class="field__error">Debes seleccionar un local.</span>
+        @if (pideLocal() && !esCondominioMultiple) {
+          <label
+            class="field"
+            [class.field--invalid]="
+              form.controls.localId.invalid && form.controls.localId.touched
+            "
+          >
+            <span>Local</span>
+            <select formControlName="localId">
+              <option value="" disabled>Selecciona un local</option>
+              @for (local of localesDeEmpresa(); track local.id) {
+                <option [value]="local.id">{{ local.numeroLocal }}</option>
               }
-            </label>
-          }
-        </div>
-      }
+            </select>
+            @if (form.controls.empresaId.valid && localesDeEmpresa().length === 0) {
+              <span class="field__error">Esta empresa no tiene locales registrados.</span>
+            } @else if (form.controls.localId.invalid && form.controls.localId.touched) {
+              <span class="field__error">Debes seleccionar un local.</span>
+            }
+          </label>
+        }
+      </div>
 
       <!-- 3. Monto Bs + Monto USD. Services are collected in bolívares, so
            there the Bs figure is the required one and the dollar is computed. -->

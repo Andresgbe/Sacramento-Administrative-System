@@ -21,6 +21,7 @@ import {
   TipoTasa,
   esConceptoPorLocal,
   requiereEmpresa,
+  seTipeaEnDolares,
 } from '../../../core/models/pago.model';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
@@ -108,14 +109,14 @@ export class PagoFormModal implements OnInit {
    *  the chosen empresa actually rents. */
   protected readonly pideLocal = computed(() => esConceptoPorLocal(this.concepto()));
 
-  /** Condominio is one lump sum for the mall, not billed to any tenant, so it
-   *  asks for no empresa at all. */
-  protected readonly pideEmpresa = computed(() => requiereEmpresa(this.concepto()));
+  /** The empresa field is always shown, but "otros" may come from someone
+   *  who is not a tenant, so there it can be left empty. */
+  protected readonly empresaObligatoria = computed(() => requiereEmpresa(this.concepto()));
 
   /** Condominio/Corpoelec/Hidrocapital are collected in bolívares, so those
-   *  three are typed in Bs; USD is shown only as a live BCV estimate and
-   *  never typed by hand (unlike canon, where USD stays authoritative). */
-  protected readonly esServicio = computed(() => this.concepto() !== 'canon');
+   *  three are typed in Bs and their USD side is computed (unlike canon and
+   *  otros, where USD stays authoritative). */
+  protected readonly esServicio = computed(() => !seTipeaEnDolares(this.concepto()));
 
   /**
    * Condominio being registered fresh: the form lists the empresa's units
@@ -255,11 +256,10 @@ export class PagoFormModal implements OnInit {
 
   private syncEmpresaValidator(): void {
     const control = this.form.controls.empresaId;
-    if (this.pideEmpresa()) {
+    if (this.empresaObligatoria()) {
       control.addValidators(Validators.required);
     } else {
       control.removeValidators(Validators.required);
-      control.setValue('');
     }
     control.updateValueAndValidity();
   }
@@ -338,8 +338,8 @@ export class PagoFormModal implements OnInit {
     const value = this.form.getRawValue();
     let monto = value.monto;
 
-    // Every concept but canon is typed in bolívares, so its USD side is
-    // computed here at the day's USDT/Cash rate.
+    // Every concept but canon and otros is typed in bolívares, so its USD
+    // side is computed here at the day's USDT/Cash rate.
     const rate = this.usdtRate();
     if (this.esServicio() && !rate) {
       this.submitError.set(

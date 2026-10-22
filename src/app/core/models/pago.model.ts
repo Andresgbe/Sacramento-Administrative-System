@@ -1,12 +1,13 @@
 export type TipoTasa = 'BCV' | 'EUR' | 'USD' | 'otra';
 
-export type PagoConcepto = 'canon' | 'condominio' | 'corpoelec' | 'hidrocapital';
+export type PagoConcepto = 'canon' | 'condominio' | 'corpoelec' | 'hidrocapital' | 'otros';
 
 export const CONCEPTO_LABEL: Record<PagoConcepto, string> = {
   canon: 'Canon',
   condominio: 'Condominio',
   corpoelec: 'Corpoelec',
   hidrocapital: 'Hidrocapital',
+  otros: 'Otros',
 };
 
 /**
@@ -17,11 +18,20 @@ export const CONCEPTO_LABEL: Record<PagoConcepto, string> = {
 export const CONCEPTOS_POR_LOCAL: readonly PagoConcepto[] = ['canon', 'condominio'];
 
 /** Registered in Reporte de pagos and counted as the mall's income. */
-export const CONCEPTOS_DE_INGRESO: readonly PagoConcepto[] = ['canon', 'condominio'];
+export const CONCEPTOS_DE_INGRESO: readonly PagoConcepto[] = ['canon', 'condominio', 'otros'];
 
-/** Every concepto is billed to a business. */
-export function requiereEmpresa(_concepto: PagoConcepto): boolean {
-  return true;
+/** Typed in dollars (USD authoritative, Bs optional). The rest are collected
+ *  in bolívares and their dollar side is computed at the USDT/Cash rate. */
+export const CONCEPTOS_EN_DOLARES: readonly PagoConcepto[] = ['canon', 'otros'];
+
+/** Every concepto is billed to a business except "otros", which may come from
+ *  someone who is not a tenant. */
+export function requiereEmpresa(concepto: PagoConcepto): boolean {
+  return concepto !== 'otros';
+}
+
+export function seTipeaEnDolares(concepto: PagoConcepto): boolean {
+  return CONCEPTOS_EN_DOLARES.includes(concepto);
 }
 
 export function esConceptoDeIngreso(concepto: PagoConcepto): boolean {
@@ -80,9 +90,9 @@ export interface Pago {
 /**
  * Whether the admin has to record a USDT purchase before this payment counts.
  *
- * Only **canon** does. Canon is agreed in dollars and arrives as dollars or
- * as a transfer at whatever rate was agreed, so what the mall ends up holding
- * is not known until it actually buys USDT.
+ * Only the concepts typed in dollars do — **canon** and **otros**. They arrive
+ * as dollars or as a transfer at whatever rate was agreed, so what the mall
+ * ends up holding is not known until it actually buys USDT.
  *
  * Condominio, Corpoelec and Hidrocapital are typed in bolívares, and the form
  * values them at that day's USDT/Cash rate on the spot — `monto` is already
@@ -90,7 +100,7 @@ export interface Pago {
  * "sin convertir" state for them.
  */
 export function requiereConversionManual(concepto: PagoConcepto): boolean {
-  return concepto === 'canon';
+  return seTipeaEnDolares(concepto);
 }
 
 /** True once this payment counts: converted, or never needing it. */

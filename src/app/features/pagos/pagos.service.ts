@@ -6,7 +6,6 @@ import {
   PagoConcepto,
   TipoTasa,
   esConceptoPorLocal,
-  requiereEmpresa,
 } from '../../core/models/pago.model';
 import { SupabaseService } from '../../core/services/supabase.service';
 
@@ -60,9 +59,9 @@ export interface ConversionInput {
 function toRow(pago: PagoInput) {
   return {
     concepto: pago.concepto,
-    // The DB rejects an empresa on condominio, so this normalises rather than
-    // trusting the form to have cleared it.
-    empresa_id: requiereEmpresa(pago.concepto) ? pago.empresaId : null,
+    // Required for every concepto but "otros", where it is optional; the form
+    // sends null when none was picked.
+    empresa_id: pago.empresaId,
     // The DB rejects a local on an empresa-wide concept, so this normalises
     // rather than trusting the form to have cleared it.
     local_id: esConceptoPorLocal(pago.concepto) ? pago.localId : null,
@@ -119,10 +118,9 @@ export class PagosService {
     const { data, error } = await this.supabase
       .from('pagos')
       .select(SELECT_WITH_REFS)
-      // Ordered by `numero` ascending, so the ID column reads 1, 2, 3… and the
-      // newest transaction sits at the bottom. Pages that want the latest
-      // rows take them off the END (see the Dashboard panels).
-      .order('numero', { ascending: true });
+      // Newest first: the highest ID tops the table, and the Dashboard's
+      // "últimos" panels take the latest rows off the front with slice(0, 3).
+      .order('numero', { ascending: false });
 
     if (error) {
       this.error.set(error.message);

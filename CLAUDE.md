@@ -418,6 +418,12 @@ same level — this is why `pagos` carries both `empresa_id` and `local_id`:
 | `condominio`       | **local** — 2 units = 2 condominios     | required     | required   |
 | `corpoelec`        | empresa — its share of a shared bill    | required     | null       |
 | `hidrocapital`     | empresa — idem                          | required     | null       |
+| `otros`            | catch-all income, may be a non-tenant   | optional     | null       |
+
+`otros` is the mall's own income (in `CONCEPTOS_DE_INGRESO`, with its own tab
+in Reporte de pagos) and is entered **like canon**: USD typed, Bs optional,
+and it waits in the "sin convertir" queue until converted
+(`CONCEPTOS_EN_DOLARES` / `seTipeaEnDolares()` in `pago.model.ts`).
 
 Corpoelec and Hidrocapital are the odd ones: one shared meter per business, so
 "which unit is this water bill for?" has no answer and `local_id` stays null.

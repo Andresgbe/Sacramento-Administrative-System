@@ -69,10 +69,9 @@ export class EgresosServicioService {
     const { data, error } = await this.supabase
       .from('egresos_servicio')
       .select('*')
-      // Ordered by `numero` ascending, so the ID column reads 1, 2, 3… and the
-      // newest transaction sits at the bottom. Pages that want the latest
-      // rows take them off the END (see the Dashboard panels).
-      .order('numero', { ascending: true });
+      // Newest first: the highest ID tops the table, and the Dashboard's
+      // "últimos" panels take the latest rows off the front with slice(0, 3).
+      .order('numero', { ascending: false });
 
     if (error) {
       this.error.set(error.message);

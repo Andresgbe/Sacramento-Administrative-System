@@ -147,8 +147,8 @@ export class ReportesPage implements OnInit {
     // Oldest first, newest at the bottom — same reading order as the ID
     // columns in Pagos and Egresos. Sorted by date, not by ID: this list
     // mixes two tables whose `numero` sequences are independent, so their
-    // ids are not comparable against each other.
-    return [...pagos, ...egresos].sort((a, b) => a.fecha.localeCompare(b.fecha));
+    // ids are not comparable against each other. Newest first.
+    return [...pagos, ...egresos].sort((a, b) => b.fecha.localeCompare(a.fecha));
   });
 
   protected readonly aniosDisponibles = computed(() =>

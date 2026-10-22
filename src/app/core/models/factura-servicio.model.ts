@@ -1,8 +1,8 @@
 import { PagoConcepto } from './pago.model';
 
-/** Canon is charged straight to each local, so it never arrives as a shared
- *  bill the mall has to split. */
-export type ServicioConcepto = Exclude<PagoConcepto, 'canon'>;
+/** Canon is charged straight to each local, and "otros" is no provider's
+ *  bill, so neither arrives as a shared bill the mall has to split. */
+export type ServicioConcepto = Exclude<PagoConcepto, 'canon' | 'otros'>;
 
 /** Condominio is NOT here: it is the mall's own income and is registered in
  *  Reporte de pagos. These two are bills the mall collects and forwards. */

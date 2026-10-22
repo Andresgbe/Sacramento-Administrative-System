@@ -278,6 +278,11 @@ button {
     background: rgb(2 132 199 / 12%);
     color: #0369a1;
   }
+
+  &--otros {
+    background: rgb(124 58 237 / 12%);
+    color: #6d28d9;
+  }
 }
 
 // Shared filter-bar styles, used across the transaction report pages
