@@ -1,7 +1,11 @@
 <!doctype html>
-<html lang="en">
+<!-- lang="es" + translate="no": with lang="en" Chrome offered to translate the
+     page, and Google Translate swaps text nodes for its own copies — Angular
+     keeps updating the originals, so every figure froze on filter changes. -->
+<html lang="es" translate="no">
 <head>
   <meta charset="utf-8">
+  <meta name="google" content="notranslate">
   <title>CC Sacramento</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,7 +17,9 @@
     rel="stylesheet"
   >
 </head>
-<body>
+<!-- Belt and braces for translators that ignore the attribute but honour the
+     class (Microsoft Translator in Edge, translation extensions). -->
+<body class="notranslate">
   <app-root></app-root>
 </body>
 </html>
