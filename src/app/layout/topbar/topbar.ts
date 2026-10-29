@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { AmountVisibilityService } from '../../core/services/amount-visibility.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PageHeaderService } from '../../core/services/page-header.service';
 import {
@@ -29,6 +30,7 @@ export class Topbar {
   private readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
   protected readonly pageHeader = inject(PageHeaderService);
+  protected readonly amountVisibility = inject(AmountVisibilityService);
 
   @Output() menuToggle = new EventEmitter<void>();
 

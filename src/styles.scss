@@ -638,3 +638,51 @@ button {
   font-style: normal;
   color: var(--color-text-muted);
 }
+
+// "Ocultar montos" (the eye in the topbar, AmountVisibilityService). Every
+// money figure is listed here once, by the class it already carries, and is
+// swapped for asterisks while <html> has .amounts-hidden. The figure stays in
+// the DOM, just invisible, so the layout does not jump when toggling.
+// A NEW money figure must be added to this list, or carry .monto-ocultable.
+// Exchange rates (Calculadora) and counts (pie legend) are deliberately not
+// here: they are not the mall's money.
+.amounts-hidden {
+  :is(
+      .monto-ocultable,
+      .data-table__amount,
+      .monto-equivalencias__linea,
+      .balance-card__value,
+      td.panel__table-amount,
+      .income-breakdown__value,
+      .egresos-total__value,
+      .egresos-monto-bs,
+      .local-card__rent,
+      .local-card__paid,
+      .local-card__pending,
+      .detail-monto-bs,
+      .detail-pago-paid,
+      .detail-pago-pending,
+      .conversion-origen__monto,
+      .pagos-total__value,
+      .pagos-monto-bs,
+      .pagos-conversion__monto,
+      .reportes-total__value,
+      .reportes-monto-bs,
+      .servicios-total__value,
+      .servicios-monto-bs,
+      .bar-chart__value
+    ) {
+    position: relative;
+    visibility: hidden;
+    white-space: nowrap;
+
+    &::after {
+      content: '******';
+      position: absolute;
+      top: 0;
+      left: 0;
+      visibility: visible;
+      letter-spacing: 0.08em;
+    }
+  }
+}

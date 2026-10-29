@@ -222,6 +222,14 @@ directives and services under `src/app/shared/`.
 - **`.monto-moneda`** (`src/styles.scss`) — the small uppercase pill that names
   the rate a figure is in ("USDT/Cash", "Nominal"). Goes on every big money
   figure, because the app has three dollars and `$ 467,01` alone is ambiguous.
+- **Ocultar montos** — the eye button in the topbar (`AmountVisibilityService`
+  in `core/services/`, persisted in `localStorage`) toggles `.amounts-hidden`
+  on `<html>`, and one block at the end of `src/styles.scss` swaps every money
+  figure for `******`. Pure CSS: no template knows the mode exists. That block
+  lists each figure by the class it already carries, so **a new money figure
+  must be added to that list, or carry `.monto-ocultable`** (the dashboard
+  tiles use it, since one of them is a count, not money). Calculadora's rates
+  and the pie legend's counts are deliberately left visible.
 - **`.btn--sm`** — size modifier on the button system, for a button inside a
   table row where the default padding would set the row height.
 - **`<app-comprobante-preview-modal>`

@@ -2,7 +2,11 @@
   @for (stat of stats(); track stat.label) {
     <div class="stat-card">
       <span class="stat-card__label">{{ stat.label }}</span>
-      <span class="stat-card__value" [class]="'stat-card__value--' + stat.tone">
+      <span
+        class="stat-card__value"
+        [class]="'stat-card__value--' + stat.tone"
+        [class.monto-ocultable]="stat.montoUsdtCash !== undefined"
+      >
         {{ stat.value }}
       </span>
       @if (stat.montoUsdtCash !== undefined) {
