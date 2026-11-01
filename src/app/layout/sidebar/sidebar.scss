@@ -19,13 +19,35 @@
     &.sidebar--collapsed {
       width: 76px;
 
+      // Logo and arrow share one row. The 76px rail only fits both with the
+      // logo at 46px and the button's default padding removed.
       .sidebar__brand-row {
-        flex-direction: column;
-        gap: 10px;
-        padding: 20px 8px 12px;
+        justify-content: center;
+        gap: 2px;
+        padding: 20px 4px 12px;
       }
 
-      .sidebar__brand-name,
+      .sidebar__brand {
+        flex: none;
+      }
+
+      .sidebar__collapse-toggle {
+        padding: 0;
+      }
+
+      // Only the 76px rail swaps to the building alone. Scoped by this media
+      // query on purpose: a phone's overlay is always wide, even if the rail
+      // was left collapsed on desktop.
+      .sidebar__logo-full {
+        display: none;
+      }
+
+      .sidebar__logo {
+        display: block;
+        width: 46px;
+        height: 46px;
+      }
+
       .sidebar__label,
       .sidebar__footer {
         display: none;
@@ -104,7 +126,9 @@
 
 .sidebar__brand {
   display: flex;
+  flex: 1;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   min-width: 0;
   font-family: var(--font-heading);
@@ -112,21 +136,22 @@
   font-size: 1.25rem;
 }
 
+// The full logo carries the name itself, so the expanded rail needs no text.
+.sidebar__logo-full {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
 .sidebar__logo {
+  display: none;
   width: 52px;
   height: 52px;
   flex-shrink: 0;
   border-radius: 50%;
   object-fit: cover;
-}
-
-// Wraps to two lines: the name is far longer than the "Sacramento" it
-// replaced and would otherwise overflow the 260px rail.
-.sidebar__brand-name {
-  color: var(--color-accent);
-  font-size: 1rem;
-  line-height: 1.2;
-  min-width: 0;
 }
 
 .sidebar__nav {
