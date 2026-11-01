@@ -90,17 +90,16 @@ export interface Pago {
 /**
  * Whether the admin has to record a USDT purchase before this payment counts.
  *
- * Only the concepts typed in dollars do — **canon** and **otros**. They arrive
- * as dollars or as a transfer at whatever rate was agreed, so what the mall
- * ends up holding is not known until it actually buys USDT.
+ * Every income concept does — **canon**, **condominio** and **otros**. What the
+ * mall ends up holding is not known until it actually buys USDT. Condominio is
+ * typed in bolívares and its `monto` is valued at that day's USDT/Cash rate, but
+ * that is only an estimate of the same money: no dollars have been bought yet.
  *
- * Condominio, Corpoelec and Hidrocapital are typed in bolívares, and the form
- * values them at that day's USDT/Cash rate on the spot — `monto` is already
- * the parallel-dollar figure, so there is nothing left to convert and no
- * "sin convertir" state for them.
+ * Corpoelec and Hidrocapital stay out: they are collected and forwarded to the
+ * provider, never turned into the mall's USDT, and no balance counts them.
  */
 export function requiereConversionManual(concepto: PagoConcepto): boolean {
-  return seTipeaEnDolares(concepto);
+  return esConceptoDeIngreso(concepto);
 }
 
 /** True once this payment counts: converted, or never needing it. */
@@ -111,13 +110,13 @@ export function estaConvertido(pago: Pago): boolean {
 /**
  * What this payment contributes to a balance, in USDT/Cash.
  *
- * For canon, the USDT actually obtained — nothing at all until the conversion
- * is recorded. For the bolívar-denominated concepts, `monto`, which the form
+ * For income, the USDT actually obtained — nothing at all until the conversion
+ * is recorded. For the two pass-through services, `monto`, which the form
  * already computed at the parallel rate.
  *
  * Every income total in the app goes through this — the Pagos card, the
  * Dashboard tiles and chart, Balance and Reportes. Never sum `pago.monto` for
- * a balance again: for canon that is the nominal figure the tenant paid,
+ * a balance again: for income that is the nominal figure the tenant paid,
  * which the mall has not necessarily realised yet.
  */
 export function montoRealizado(pago: Pago): number {
@@ -129,7 +128,7 @@ export function montoRealizado(pago: Pago): number {
 
 /**
  * The nominal figure still waiting to be converted; 0 once it has been, and
- * always 0 for the concepts that convert on entry. Feeds the "Sin convertir"
+ * always 0 for the pass-through services. Feeds the "Sin convertir"
  * card, which is a queue of pending work, not income — it is deliberately
  * never added to a balance.
  */
