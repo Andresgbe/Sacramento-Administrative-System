@@ -1,11 +1,13 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Session } from '@supabase/supabase-js';
 import { UserRol } from '../models/usuario.model';
+import { ModulosService } from './modulos.service';
 import { SupabaseService } from './supabase.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly supabase = inject(SupabaseService).client;
+  private readonly modulosService = inject(ModulosService);
 
   private readonly session = signal<Session | null>(null);
   readonly currentSession = this.session.asReadonly();
@@ -13,6 +15,11 @@ export class AuthService {
   private readonly rol = signal<UserRol | null>(null);
   readonly currentRol = this.rol.asReadonly();
   readonly isAdmin = computed(() => this.rol() === 'admin');
+
+  /** The one admin above the others (`usuarios.es_principal`): module
+   *  switches and the audit log. */
+  private readonly principal = signal(false);
+  readonly isPrincipal = computed(() => this.isAdmin() && this.principal());
 
   // Resolves once the initial session has been read from storage.
   readonly ready: Promise<void>;
@@ -40,16 +47,31 @@ export class AuthService {
   private async loadRol(session: Session | null): Promise<void> {
     if (!session) {
       this.rol.set(null);
+      this.principal.set(false);
       return;
     }
 
-    const { data } = await this.supabase
+    const { data, error } = await this.supabase
       .from('usuarios')
-      .select('rol')
+      .select('rol, es_principal')
       .eq('id', session.user.id)
       .single();
 
+    if (error) {
+      // es_principal does not exist until its migration runs; without this
+      // fallback a frontend deployed first would strip every admin of the role.
+      const { data: soloRol } = await this.supabase
+        .from('usuarios')
+        .select('rol')
+        .eq('id', session.user.id)
+        .single();
+      this.rol.set(soloRol?.rol ?? null);
+      this.principal.set(false);
+      return;
+    }
+
     this.rol.set(data?.rol ?? null);
+    this.principal.set(data?.es_principal ?? false);
   }
 
   get isAuthenticated(): boolean {
@@ -68,8 +90,29 @@ export class AuthService {
     return { error: error?.message ?? null };
   }
 
+  /**
+   * Asks the BROWSER's password manager to save the credentials; its own
+   * prompt appears and the user decides there. The app must never keep a
+   * password itself: in localStorage any injected script could read it.
+   * Chrome and Edge support this call. Elsewhere it does nothing and the
+   * browser's usual save prompt, driven by the form's autocomplete
+   * attributes, is what remains.
+   */
+  offerToSavePassword(email: string, password: string): void {
+    const { PasswordCredential } = window as unknown as {
+      PasswordCredential?: new (data: { id: string; password: string }) => Credential;
+    };
+    if (!PasswordCredential) {
+      return;
+    }
+    navigator.credentials.store(new PasswordCredential({ id: email, password })).catch(() => {
+      // Declining or a blocked prompt is not an error: the login already worked.
+    });
+  }
+
   async signOut(): Promise<void> {
     await this.supabase.auth.signOut();
+    this.modulosService.reset();
   }
 
   async updateOwnPassword(

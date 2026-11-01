@@ -1,0 +1,147 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+// The page's own gap spaces the blocks; the shared card's margin would double it.
+.filters-bar {
+  margin-bottom: 0;
+}
+
+.auditoria-page__status {
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  text-align: center;
+
+  &--error {
+    border-color: rgb(185 28 28 / 30%);
+    color: var(--color-danger);
+  }
+}
+
+.data-table.auditoria-table {
+  min-width: 760px;
+}
+
+.auditoria-table__fecha {
+  white-space: nowrap;
+}
+
+.auditoria-table__resumen {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// The detail row sits on the surface colour so it reads as belonging to the
+// grey row above it rather than as one more entry.
+.data-table tbody tr.auditoria-table__detalle {
+  background: var(--color-surface);
+}
+
+.auditoria-op {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  &--insert {
+    background: rgb(22 163 74 / 12%);
+    color: var(--color-success);
+  }
+
+  &--update {
+    background: rgb(100 116 139 / 14%);
+    color: var(--color-neutral);
+  }
+
+  &--delete {
+    background: rgb(185 28 28 / 10%);
+    color: var(--color-danger);
+  }
+}
+
+.auditoria-cambios {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+
+  th {
+    padding: 6px 10px;
+    text-align: left;
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    word-break: break-word;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.auditoria-cambios__campo {
+  width: 1%;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.modulos-card {
+  padding: 20px 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.modulos-card__nota {
+  margin: 0 0 16px;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.modulos-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.modulos-list__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.modulos-list__label {
+  flex: 1;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.modulos-list__estado {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+
+  &--oculto {
+    color: var(--color-danger);
+  }
+}
