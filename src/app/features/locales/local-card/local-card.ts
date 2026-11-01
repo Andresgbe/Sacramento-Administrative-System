@@ -20,6 +20,8 @@ export class LocalCard {
    *  `al-dia` card it also surfaces an overpayment, which the status alone
    *  would hide. */
   @Input() pagado = 0;
+  /** Canon left unpaid in previous months, carried forward. */
+  @Input() deudaAnterior = 0;
   /**
    * Condominio for the CURRENT month. Set by hand, not derived: a condominio
    * pago carries no `local_id`, so there is nothing to compute it from.

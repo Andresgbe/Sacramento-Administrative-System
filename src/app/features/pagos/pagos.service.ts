@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { PagoStatus } from '../../core/models/local.model';
+import { DeudaCanonMes, PagoStatus } from '../../core/models/local.model';
 import {
   ComprobantePago,
   Pago,
@@ -382,4 +382,71 @@ export class PagosService {
     }
     return Math.max(0, montoAlquiler - this.canonPagadoEsteMes(localId));
   }
+
+  /**
+   * Canon still owed from months BEFORE the current one, oldest first. The
+   * current month is left to `faltantePorPagar()`, which the card already
+   * shows as "Faltan".
+   *
+   * Every month from the unit's first canon payment up to last month owes the
+   * full `montoAlquiler`; a month with no payment at all owes all of it. The
+   * first payment is where the count starts because nothing before it is on
+   * record — the system went live mid-tenancy.
+   *
+   * A month paid ABOVE the canon (catching up) pays off the oldest debt
+   * first, current month included, so settling arrears clears them here.
+   *
+   * Same rules as `canonPagadoEsteMes()`: canon only, nominal `monto`, months
+   * matched on the 'YYYY-MM' prefix. Uses today's `montoAlquiler` for every
+   * month — a rent change is not tracked historically.
+   */
+  deudaCanonAnterior(localId: string, montoAlquiler: number | null): DeudaCanonMes[] {
+    if (!montoAlquiler) {
+      return [];
+    }
+
+    const pagadoPorMes = new Map<string, number>();
+    for (const pago of this.pagos()) {
+      if (pago.concepto === 'canon' && pago.localId === localId) {
+        const periodo = pago.fecha.slice(0, 7);
+        pagadoPorMes.set(periodo, (pagadoPorMes.get(periodo) ?? 0) + pago.monto);
+      }
+    }
+    if (pagadoPorMes.size === 0) {
+      return [];
+    }
+
+    const now = new Date();
+    const actual = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const primero = [...pagadoPorMes.keys()].sort()[0];
+    const pendientes: DeudaCanonMes[] = [];
+
+    for (let periodo = primero; periodo <= actual; periodo = mesSiguiente(periodo)) {
+      let saldo = (pagadoPorMes.get(periodo) ?? 0) - montoAlquiler;
+
+      // Same half-cent slack as `estadoPago()`.
+      if (periodo < actual && saldo < -0.005) {
+        pendientes.push({ periodo, faltante: -saldo });
+        continue;
+      }
+
+      while (saldo > 0.005 && pendientes.length > 0) {
+        const masViejo = pendientes[0];
+        const abono = Math.min(saldo, masViejo.faltante);
+        masViejo.faltante -= abono;
+        saldo -= abono;
+        if (masViejo.faltante <= 0.005) {
+          pendientes.shift();
+        }
+      }
+    }
+
+    return pendientes;
+  }
+}
+
+/** '2026-12' → '2027-01'. */
+function mesSiguiente(periodo: string): string {
+  const [anio, mes] = periodo.split('-').map(Number);
+  return mes === 12 ? `${anio + 1}-01` : `${anio}-${String(mes + 1).padStart(2, '0')}`;
 }

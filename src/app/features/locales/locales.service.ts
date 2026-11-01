@@ -10,6 +10,7 @@ interface LocalRow {
   piso: string | null;
   area_m2: number | null;
   monto_alquiler: number | null;
+  notas: string | null;
   created_at: string;
   empresas: {
     nombre_comercial: string;
@@ -28,6 +29,7 @@ function fromRow(row: LocalRow): Local {
     piso: row.piso,
     areaM2: row.area_m2,
     montoAlquiler: row.monto_alquiler,
+    notas: row.notas,
     createdAt: row.created_at,
     empresaNombre: row.empresas?.nombre_comercial ?? '',
     empresaImagenUrl: row.empresas?.imagen_url ?? null,
@@ -78,7 +80,10 @@ export class LocalesService {
   }
 
   async add(
-    local: Omit<Local, 'id' | 'createdAt' | 'empresaNombre' | 'empresaImagenUrl' | 'empresaEstado'>,
+    local: Omit<
+      Local,
+      'id' | 'createdAt' | 'notas' | 'empresaNombre' | 'empresaImagenUrl' | 'empresaEstado'
+    >,
   ): Promise<{ local: Local | null; error: string | null }> {
     const { data, error } = await this.supabase
       .from('locales')
@@ -129,6 +134,7 @@ export class LocalesService {
         numero_local: changes.numeroLocal,
         piso: changes.piso,
         monto_alquiler: changes.montoAlquiler,
+        notas: changes.notas,
       })
       .eq('id', id)
       .select(SELECT_WITH_EMPRESA)

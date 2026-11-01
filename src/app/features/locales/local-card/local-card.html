@@ -55,5 +55,11 @@
     @if (pagoStatus === 'parcial') {
       <span class="local-card__pending">Faltan $ {{ faltante | number: '1.2-2' }}</span>
     }
+
+    @if (deudaAnterior > 0) {
+      <span class="local-card__pending local-card__pending--anterior">
+        Deuda anterior $ {{ deudaAnterior | number: '1.2-2' }}
+      </span>
+    }
   </div>
 </article>
