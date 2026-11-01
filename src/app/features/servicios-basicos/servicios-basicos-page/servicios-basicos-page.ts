@@ -20,12 +20,12 @@ import { PagosService } from '../../pagos/pagos.service';
 import { TasasCambioService } from '../../tasas-cambio/tasas-cambio.service';
 import {
   PeriodFilter,
-  availableYears,
-  esPeriodoActual,
-  currentMonth,
-  currentYear,
   formatPeriodo,
-  matchesPeriod,
+  esRangoMesActual,
+  finMesActual,
+  inicioMesActual,
+  matchesRango,
+  matchesRangoMensual,
 } from '../../../shared/components/period-filter/period-filter';
 import { TabItem, Tabs } from '../../../shared/components/tabs/tabs';
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
@@ -96,27 +96,23 @@ export class ServiciosBasicosPage implements OnInit {
 
   // Empty by default: this page is a historical record, so it opens showing
   // every month rather than hiding everything but the current one.
-  protected readonly anio = signal(currentYear());
-  protected readonly mes = signal(currentMonth());
-
-  protected readonly aniosDisponibles = computed(() =>
-    availableYears(this.service.all().map((factura) => factura.periodo)),
-  );
+  protected readonly fechaInicio = signal(inicioMesActual());
+  protected readonly fechaFin = signal(finMesActual());
 
   protected readonly hasActiveFilters = computed(
-    () => !esPeriodoActual(this.anio(), this.mes()) || this.servicio() !== 'todos',
+    () => !esRangoMesActual(this.fechaInicio(), this.fechaFin()) || this.servicio() !== 'todos',
   );
 
   protected readonly facturasFiltradas = computed(() => {
     const servicio = this.servicio();
-    const anio = this.anio();
-    const mes = this.mes();
+    const inicio = this.fechaInicio();
+    const fin = this.fechaFin();
 
     return this.service.all().filter((factura) => {
       if (servicio !== 'todos' && factura.concepto !== servicio) {
         return false;
       }
-      return matchesPeriod(factura.periodo, anio, mes);
+      return matchesRangoMensual(factura.periodo, inicio, fin);
     });
   });
 
@@ -124,8 +120,8 @@ export class ServiciosBasicosPage implements OnInit {
 
   protected readonly pagosFiltrados = computed(() => {
     const servicio = this.servicio();
-    const anio = this.anio();
-    const mes = this.mes();
+    const inicio = this.fechaInicio();
+    const fin = this.fechaFin();
 
     return this.pagosService.all().filter((pago) => {
       if (esConceptoDeIngreso(pago.concepto)) {
@@ -134,7 +130,7 @@ export class ServiciosBasicosPage implements OnInit {
       if (servicio !== 'todos' && pago.concepto !== servicio) {
         return false;
       }
-      return matchesPeriod(pago.fecha, anio, mes);
+      return matchesRango(pago.fecha, inicio, fin);
     });
   });
 
@@ -164,14 +160,14 @@ export class ServiciosBasicosPage implements OnInit {
 
   protected readonly egresosFiltrados = computed(() => {
     const servicio = this.servicio();
-    const anio = this.anio();
-    const mes = this.mes();
+    const inicio = this.fechaInicio();
+    const fin = this.fechaFin();
 
     return this.egresosServicioService.all().filter((egreso) => {
       if (servicio !== 'todos' && egreso.concepto !== servicio) {
         return false;
       }
-      return matchesPeriod(egreso.fecha, anio, mes);
+      return matchesRango(egreso.fecha, inicio, fin);
     });
   });
 
@@ -344,12 +340,12 @@ export class ServiciosBasicosPage implements OnInit {
     this.servicio.set(servicio);
   }
 
-  protected setAnio(value: string): void {
-    this.anio.set(value);
+  protected setFechaInicio(value: string): void {
+    this.fechaInicio.set(value);
   }
 
-  protected setMes(value: string): void {
-    this.mes.set(value);
+  protected setFechaFin(value: string): void {
+    this.fechaFin.set(value);
   }
 
   protected clearAllFilters(): void {
@@ -357,8 +353,8 @@ export class ServiciosBasicosPage implements OnInit {
     // Back to the current month, not "todos": that is the page's resting
     // state, and clearing into an all-time view silently changed what the
     // totals above were counting.
-    this.anio.set(currentYear());
-    this.mes.set(currentMonth());
+    this.fechaInicio.set(inicioMesActual());
+    this.fechaFin.set(finMesActual());
   }
 
   protected openModal(factura: FacturaServicio | null): void {

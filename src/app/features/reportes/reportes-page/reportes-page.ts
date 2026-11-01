@@ -9,8 +9,7 @@ import {
 } from '../../../shared/components/multi-select/multi-select';
 import {
   PeriodFilter,
-  availableYears,
-  matchesPeriod,
+  matchesRango,
 } from '../../../shared/components/period-filter/period-filter';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
@@ -84,8 +83,8 @@ export class ReportesPage implements OnInit {
   // the complete ledger, and the point of it is searching across months.
   // "Todos" is what the selects show, and now actually what they apply —
   // they used to read "Todos" while a month was silently in force.
-  protected readonly anio = signal('');
-  protected readonly mes = signal('');
+  protected readonly fechaInicio = signal('');
+  protected readonly fechaFin = signal('');
   protected readonly montoMin = signal<number | null>(null);
   protected readonly montoMax = signal<number | null>(null);
   protected readonly selectedTipos = signal<Set<string>>(new Set());
@@ -151,15 +150,11 @@ export class ReportesPage implements OnInit {
     return [...pagos, ...egresos].sort((a, b) => b.fecha.localeCompare(a.fecha));
   });
 
-  protected readonly aniosDisponibles = computed(() =>
-    availableYears(this.transacciones().map((transaccion) => transaccion.fecha)),
-  );
-
   protected readonly hasActiveFilters = computed(
     () =>
       this.appliedSearch() !== '' ||
-      this.anio() !== '' ||
-      this.mes() !== '' ||
+      this.fechaInicio() !== '' ||
+      this.fechaFin() !== '' ||
       this.montoMin() !== null ||
       this.montoMax() !== null ||
       this.selectedTipos().size > 0 ||
@@ -168,8 +163,8 @@ export class ReportesPage implements OnInit {
 
   protected readonly resultados = computed(() => {
     const term = this.appliedSearch();
-    const anio = this.anio();
-    const mes = this.mes();
+    const inicio = this.fechaInicio();
+    const fin = this.fechaFin();
     const min = this.montoMin();
     const max = this.montoMax();
     const tipos = this.selectedTipos();
@@ -193,7 +188,7 @@ export class ReportesPage implements OnInit {
       ) {
         return false;
       }
-      if (!matchesPeriod(transaccion.fecha, anio, mes)) {
+      if (!matchesRango(transaccion.fecha, inicio, fin)) {
         return false;
       }
       if (min !== null && transaccion.montoUsd < min) {
@@ -253,12 +248,12 @@ export class ReportesPage implements OnInit {
     this.appliedSearch.set(this.searchInput().trim().toLowerCase());
   }
 
-  protected setAnio(value: string): void {
-    this.anio.set(value);
+  protected setFechaInicio(value: string): void {
+    this.fechaInicio.set(value);
   }
 
-  protected setMes(value: string): void {
-    this.mes.set(value);
+  protected setFechaFin(value: string): void {
+    this.fechaFin.set(value);
   }
 
   protected setMontoMin(value: string): void {
@@ -282,8 +277,8 @@ export class ReportesPage implements OnInit {
     this.appliedSearch.set('');
     // Back to every period — this page's resting state, unlike the monthly
     // report pages that clear to the current month.
-    this.anio.set('');
-    this.mes.set('');
+    this.fechaInicio.set('');
+    this.fechaFin.set('');
     this.montoMin.set(null);
     this.montoMax.set(null);
     this.selectedTipos.set(new Set());

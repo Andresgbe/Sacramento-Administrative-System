@@ -5,11 +5,10 @@ import { CategoriaEgreso, Egreso } from '../../../core/models/egreso.model';
 import { AuthService } from '../../../core/services/auth.service';
 import {
   PeriodFilter,
-  availableYears,
-  esPeriodoActual,
-  currentMonth,
-  currentYear,
-  matchesPeriod,
+  esRangoMesActual,
+  finMesActual,
+  inicioMesActual,
+  matchesRango,
 } from '../../../shared/components/period-filter/period-filter';
 import { TabItem, Tabs } from '../../../shared/components/tabs/tabs';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
@@ -83,20 +82,16 @@ export class EgresosPage implements OnInit {
 
   protected readonly searchInput = signal('');
   protected readonly appliedSearch = signal('');
-  protected readonly anio = signal(currentYear());
-  protected readonly mes = signal(currentMonth());
+  protected readonly fechaInicio = signal(inicioMesActual());
+  protected readonly fechaFin = signal(finMesActual());
 
   protected readonly montoMin = signal<number | null>(null);
   protected readonly montoMax = signal<number | null>(null);
 
-  protected readonly aniosDisponibles = computed(() =>
-    availableYears(this.egresosService.all().map((egreso) => egreso.fecha)),
-  );
-
   protected readonly hasActiveFilters = computed(
     () =>
       this.appliedSearch() !== '' ||
-      !esPeriodoActual(this.anio(), this.mes()) ||
+      !esRangoMesActual(this.fechaInicio(), this.fechaFin()) ||
       this.montoMin() !== null ||
       this.montoMax() !== null,
   );
@@ -104,8 +99,8 @@ export class EgresosPage implements OnInit {
   protected readonly egresosFiltrados = computed(() => {
     const filtro = this.filtro();
     const term = this.appliedSearch();
-    const anio = this.anio();
-    const mes = this.mes();
+    const inicio = this.fechaInicio();
+    const fin = this.fechaFin();
     const min = this.montoMin();
     const max = this.montoMax();
 
@@ -116,7 +111,7 @@ export class EgresosPage implements OnInit {
       if (term && !(egreso.descripcion ?? '').toLowerCase().includes(term)) {
         return false;
       }
-      if (!matchesPeriod(egreso.fecha, anio, mes)) {
+      if (!matchesRango(egreso.fecha, inicio, fin)) {
         return false;
       }
       if (min !== null && egreso.monto < min) {
@@ -185,12 +180,12 @@ export class EgresosPage implements OnInit {
     this.appliedSearch.set(this.searchInput().trim().toLowerCase());
   }
 
-  protected setAnio(value: string): void {
-    this.anio.set(value);
+  protected setFechaInicio(value: string): void {
+    this.fechaInicio.set(value);
   }
 
-  protected setMes(value: string): void {
-    this.mes.set(value);
+  protected setFechaFin(value: string): void {
+    this.fechaFin.set(value);
   }
 
   protected setMontoMin(value: string): void {
@@ -207,8 +202,8 @@ export class EgresosPage implements OnInit {
     // Back to the current month, not "todos": that is the page's resting
     // state, and clearing into an all-time view silently changed what the
     // totals above were counting.
-    this.anio.set(currentYear());
-    this.mes.set(currentMonth());
+    this.fechaInicio.set(inicioMesActual());
+    this.fechaFin.set(finMesActual());
     this.montoMin.set(null);
     this.montoMax.set(null);
   }
