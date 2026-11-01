@@ -5,7 +5,7 @@
 >
   <div class="modal">
     <div class="modal__header">
-      <h2>Comprobante de pago</h2>
+      <h2>{{ titulo }}</h2>
       <button type="button" class="modal__close" (click)="closed.emit()" aria-label="Cerrar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="m6 6 12 12M18 6 6 18" stroke-linecap="round" />
@@ -17,14 +17,14 @@
 
     <div class="modal__preview">
       @if (loading) {
-        <p class="modal__status">Cargando comprobante…</p>
+        <p class="modal__status">Cargando archivo…</p>
       } @else if (errorMessage) {
         <p class="modal__status modal__status--error">{{ errorMessage }}</p>
       } @else if (url) {
         @if (isImage) {
           <img [src]="url" [alt]="nombreArchivo" />
         } @else if (isPdf) {
-          <iframe [src]="safePdfUrl" title="Comprobante de pago"></iframe>
+          <iframe [src]="safePdfUrl" [title]="titulo"></iframe>
         } @else {
           <p class="modal__status">No hay vista previa disponible para este tipo de archivo.</p>
         }

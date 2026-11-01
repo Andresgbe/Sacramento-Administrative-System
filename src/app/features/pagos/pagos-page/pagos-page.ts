@@ -24,11 +24,10 @@ import {
 } from '../../../shared/components/multi-select/multi-select';
 import {
   PeriodFilter,
-  availableYears,
-  esPeriodoActual,
-  currentMonth,
-  currentYear,
-  matchesPeriod,
+  esRangoMesActual,
+  finMesActual,
+  inicioMesActual,
+  matchesRango,
 } from '../../../shared/components/period-filter/period-filter';
 import { EmpresasService } from '../../locales/empresas.service';
 import { LocalesService } from '../../locales/locales.service';
@@ -135,16 +134,12 @@ export class PagosPage implements OnInit {
 
   protected readonly searchInput = signal('');
   protected readonly appliedSearch = signal('');
-  protected readonly anio = signal(currentYear());
-  protected readonly mes = signal(currentMonth());
+  protected readonly fechaInicio = signal(inicioMesActual());
+  protected readonly fechaFin = signal(finMesActual());
   protected readonly montoMin = signal<number | null>(null);
   protected readonly montoMax = signal<number | null>(null);
   protected readonly selectedLocalIds = signal<Set<string>>(new Set());
   protected readonly selectedEmpresaIds = signal<Set<string>>(new Set());
-
-  protected readonly aniosDisponibles = computed(() =>
-    availableYears(this.pagos().map((pago) => pago.fecha)),
-  );
 
   protected readonly empresaOptions = computed<MultiSelectOption[]>(() =>
     this.empresas().map((empresa) => ({ id: empresa.id, label: empresa.nombreComercial })),
@@ -160,7 +155,7 @@ export class PagosPage implements OnInit {
   protected readonly hasActiveFilters = computed(
     () =>
       this.appliedSearch() !== '' ||
-      !esPeriodoActual(this.anio(), this.mes()) ||
+      !esRangoMesActual(this.fechaInicio(), this.fechaFin()) ||
       this.montoMin() !== null ||
       this.montoMax() !== null ||
       this.selectedLocalIds().size > 0 ||
@@ -169,8 +164,8 @@ export class PagosPage implements OnInit {
 
   protected readonly pagosFiltrados = computed(() => {
     const term = this.appliedSearch();
-    const anio = this.anio();
-    const mes = this.mes();
+    const inicio = this.fechaInicio();
+    const fin = this.fechaFin();
     const min = this.montoMin();
     const max = this.montoMax();
     const localIds = this.selectedLocalIds();
@@ -190,7 +185,7 @@ export class PagosPage implements OnInit {
       ) {
         return false;
       }
-      if (!matchesPeriod(pago.fecha, anio, mes)) {
+      if (!matchesRango(pago.fecha, inicio, fin)) {
         return false;
       }
       if (min !== null && pago.monto < min) {
@@ -232,8 +227,7 @@ export class PagosPage implements OnInit {
       ).length,
   );
 
-  /** Condominio is valued at the parallel rate when it is entered, so it has
-   *  no Convertir step. */
+  /** False only for a pass-through service, which is never converted. */
   protected requiereConversion(pago: Pago): boolean {
     return requiereConversionManual(pago.concepto);
   }
@@ -241,10 +235,10 @@ export class PagosPage implements OnInit {
   /**
    * Whether the "Sin convertir" card belongs on screen at all.
    *
-   * Keyed on the tab, not on the card reaching 0: on Todos and Canon an empty
-   * queue is real information ("nothing pending"), and hiding it there would
-   * make the card vanish the moment it did its job. On Condominio there is no
-   * such thing as a pending conversion, so the card is meaningless.
+   * Keyed on the tab, not on the card reaching 0: an empty queue is real
+   * information ("nothing pending"), and hiding it would make the card vanish
+   * the moment it did its job. Every tab on this page holds income, so today
+   * it always shows; only a pass-through service would hide it.
    */
   protected readonly muestraSinConvertir = computed(() => {
     const concepto = this.concepto();
@@ -273,12 +267,12 @@ export class PagosPage implements OnInit {
     this.appliedSearch.set(this.searchInput().trim().toLowerCase());
   }
 
-  protected setAnio(value: string): void {
-    this.anio.set(value);
+  protected setFechaInicio(value: string): void {
+    this.fechaInicio.set(value);
   }
 
-  protected setMes(value: string): void {
-    this.mes.set(value);
+  protected setFechaFin(value: string): void {
+    this.fechaFin.set(value);
   }
 
   protected setMontoMin(value: string): void {
@@ -303,8 +297,8 @@ export class PagosPage implements OnInit {
     // Back to the current month, not "todos": that is the page's resting
     // state, and clearing into an all-time view silently changed what the
     // totals above were counting.
-    this.anio.set(currentYear());
-    this.mes.set(currentMonth());
+    this.fechaInicio.set(inicioMesActual());
+    this.fechaFin.set(finMesActual());
     this.montoMin.set(null);
     this.montoMax.set(null);
     this.selectedLocalIds.set(new Set());

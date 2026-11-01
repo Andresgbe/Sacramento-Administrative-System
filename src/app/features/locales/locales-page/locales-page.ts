@@ -89,6 +89,12 @@ export class LocalesPage implements OnInit {
     return this.pagosService.faltantePorPagar(local.id, local.montoAlquiler);
   }
 
+  protected deudaAnterior(local: Local): number {
+    return this.pagosService
+      .deudaCanonAnterior(local.id, local.montoAlquiler)
+      .reduce((sum, mes) => sum + mes.faltante, 0);
+  }
+
   protected pagado(local: Local): number {
     return this.pagosService.canonPagadoEsteMes(local.id);
   }

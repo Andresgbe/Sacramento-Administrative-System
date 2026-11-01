@@ -2,16 +2,19 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Local, PagoStatus } from '../../../core/models/local.model';
+import { DeudaCanonMes, Local, LocalDocumento, PagoStatus } from '../../../core/models/local.model';
 import { TipoTasa } from '../../../core/models/pago.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { PageHeaderService } from '../../../core/services/page-header.service';
+import { ComprobantePreviewModal } from '../../../shared/components/comprobante-preview-modal/comprobante-preview-modal';
+import { formatPeriodo } from '../../../shared/components/period-filter/period-filter';
 import { SelectOnFocusDirective } from '../../../shared/directives/select-on-focus.directive';
 import { PositiveDecimalDirective } from '../../../shared/directives/positive-decimal.directive';
 import { ConfirmDialogService } from '../../../shared/services/confirm-dialog.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { PagosService } from '../../pagos/pagos.service';
 import { EmpresasService } from '../empresas.service';
+import { LocalDocumentosService } from '../local-documentos.service';
 import { LocalesService } from '../locales.service';
 
 @Component({
@@ -23,6 +26,7 @@ import { LocalesService } from '../locales.service';
     DatePipe,
     SelectOnFocusDirective,
     PositiveDecimalDirective,
+    ComprobantePreviewModal,
   ],
   templateUrl: './local-detail-page.html',
   styleUrl: './local-detail-page.scss',
@@ -32,6 +36,7 @@ export class LocalDetailPage implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly localesService = inject(LocalesService);
+  private readonly documentosService = inject(LocalDocumentosService);
   private readonly empresasService = inject(EmpresasService);
   private readonly pagosService = inject(PagosService);
   private readonly pageHeaderService = inject(PageHeaderService);
@@ -53,6 +58,14 @@ export class LocalDetailPage implements OnInit {
 
   protected local: Local | null = null;
 
+  protected readonly documentos = signal<LocalDocumento[]>([]);
+  protected readonly documentosError = signal<string | null>(null);
+  protected readonly subiendoDocumentos = signal(false);
+  protected readonly documentoAbierto = signal<LocalDocumento | null>(null);
+  protected readonly documentoUrl = signal<string | null>(null);
+  protected readonly documentoUrlLoading = signal(false);
+  protected readonly documentoUrlError = signal<string | null>(null);
+
   protected readonly pagoStatusLabel: Record<PagoStatus, string> = {
     'al-dia': 'Al día',
     parcial: 'Pago incompleto',
@@ -71,6 +84,7 @@ export class LocalDetailPage implements OnInit {
     numeroLocal: ['', Validators.required],
     piso: [''],
     montoAlquiler: [0, [Validators.min(0)]],
+    notas: [''],
   });
 
   async ngOnInit(): Promise<void> {
@@ -94,6 +108,7 @@ export class LocalDetailPage implements OnInit {
     }
 
     this.applyLocal(local);
+    this.loadDocumentos(local.id);
 
     if (!this.isAdmin()) {
       this.form.disable();
@@ -107,6 +122,7 @@ export class LocalDetailPage implements OnInit {
       numeroLocal: local.numeroLocal,
       piso: local.piso ?? '',
       montoAlquiler: local.montoAlquiler ?? 0,
+      notas: local.notas ?? '',
     });
 
     this.pageHeaderService.setHeader({
@@ -128,6 +144,20 @@ export class LocalDetailPage implements OnInit {
     return this.pagosService.faltantePorPagar(this.local.id, this.local.montoAlquiler);
   }
 
+  protected readonly formatPeriodo = formatPeriodo;
+
+  protected deudaAnterior(): DeudaCanonMes[] {
+    if (!this.local) {
+      return [];
+    }
+    return this.pagosService.deudaCanonAnterior(this.local.id, this.local.montoAlquiler);
+  }
+
+  /** This month's shortfall plus everything carried from earlier months. */
+  protected totalPendiente(): number {
+    return this.faltante() + this.deudaAnterior().reduce((sum, mes) => sum + mes.faltante, 0);
+  }
+
   protected pagado(): number {
     if (!this.local) {
       return 0;
@@ -141,6 +171,72 @@ export class LocalDetailPage implements OnInit {
       return [];
     }
     return this.pagosService.all().filter((pago) => pago.localId === localId);
+  }
+
+  private async loadDocumentos(localId: string): Promise<void> {
+    const { documentos, error } = await this.documentosService.list(localId);
+    this.documentos.set(documentos);
+    this.documentosError.set(error);
+  }
+
+  /** Uploads straight away, with no save step: the file is stored once it is
+   *  listed, so "Guardar cambios" has nothing to do with it. */
+  protected async onDocumentosSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    // Let the same file be picked again after being removed.
+    input.value = '';
+
+    if (!this.local) {
+      return;
+    }
+
+    this.subiendoDocumentos.set(true);
+    for (const file of files) {
+      const { documento, error } = await this.documentosService.upload(this.local.id, file);
+      if (error || !documento) {
+        this.toastService.error(`No se pudo subir ${file.name}: ${error}`);
+        continue;
+      }
+      this.documentos.update((current) => [documento, ...current]);
+    }
+    this.subiendoDocumentos.set(false);
+  }
+
+  protected async abrirDocumento(documento: LocalDocumento): Promise<void> {
+    this.documentoAbierto.set(documento);
+    this.documentoUrl.set(null);
+    this.documentoUrlError.set(null);
+    this.documentoUrlLoading.set(true);
+
+    const { url, error } = await this.documentosService.getUrl(documento.ruta);
+
+    this.documentoUrlLoading.set(false);
+    this.documentoUrl.set(url);
+    this.documentoUrlError.set(error);
+  }
+
+  protected cerrarDocumento(): void {
+    this.documentoAbierto.set(null);
+  }
+
+  protected async quitarDocumento(documento: LocalDocumento): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Quitar documento',
+      message: `¿Quitar "${documento.nombre}" de este local?`,
+      confirmLabel: 'Quitar',
+      danger: true,
+    });
+    if (!confirmed) {
+      return;
+    }
+
+    const { error } = await this.documentosService.remove(documento);
+    if (error) {
+      this.toastService.error(`No se pudo quitar el documento: ${error}`);
+      return;
+    }
+    this.documentos.update((current) => current.filter((d) => d.id !== documento.id));
   }
 
   protected async submit(): Promise<void> {
@@ -159,6 +255,7 @@ export class LocalDetailPage implements OnInit {
       numeroLocal: value.numeroLocal,
       piso: value.piso || null,
       montoAlquiler: value.montoAlquiler || null,
+      notas: value.notas.trim() || null,
     });
 
     this.saving.set(false);

@@ -80,11 +80,10 @@
 
   <div class="filters-bar__grid">
     <app-period-filter
-      [anio]="anio()"
-      [mes]="mes()"
-      [anios]="aniosDisponibles()"
-      (anioChange)="setAnio($event)"
-      (mesChange)="setMes($event)"
+      [inicio]="fechaInicio()"
+      [fin]="fechaFin()"
+      (inicioChange)="setFechaInicio($event)"
+      (finChange)="setFechaFin($event)"
     />
 
     <div class="filters-field">

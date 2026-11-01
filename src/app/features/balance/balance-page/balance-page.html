@@ -1,6 +1,6 @@
 <div class="balance-cards">
   <div class="balance-card">
-    <span class="balance-card__label">Ingresos del mes  </span>
+    <span class="balance-card__label">Ingresos del período</span>
     <span class="balance-card__value balance-card__value--ingreso">
       $ {{ ingresos() | number: '1.2-2' }}
     </span>
@@ -10,7 +10,7 @@
   </div>
 
   <div class="balance-card">
-    <span class="balance-card__label">Egresos del mes</span>
+    <span class="balance-card__label">Egresos del período</span>
     <span class="balance-card__value balance-card__value--egreso">
       $ {{ egresos() | number: '1.2-2' }}
     </span>
@@ -20,7 +20,7 @@
   </div>
 
   <div class="balance-card balance-card--destacada">
-    <span class="balance-card__label">Balance del mes</span>
+    <span class="balance-card__label">Balance del período</span>
     <span class="balance-card__value" [class.balance-card__value--egreso]="balance() < 0">
       $ {{ balance() | number: '1.2-2' }}
     </span>
@@ -63,11 +63,10 @@
 
   <div class="filters-bar__grid">
     <app-period-filter
-      [anio]="anio()"
-      [mes]="mes()"
-      [anios]="aniosDisponibles()"
-      (anioChange)="setAnio($event)"
-      (mesChange)="setMes($event)"
+      [inicio]="fechaInicio()"
+      [fin]="fechaFin()"
+      (inicioChange)="setFechaInicio($event)"
+      (finChange)="setFechaFin($event)"
     />
   </div>
 </div>

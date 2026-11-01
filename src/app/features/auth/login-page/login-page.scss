@@ -25,11 +25,12 @@
   justify-content: center;
 }
 
+// The full logo, wordmark included: a rectangle, since a circle would cut it.
 .login__logo {
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  object-fit: cover;
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
 }
 
@@ -66,6 +67,62 @@
       border-color: var(--color-accent);
       box-shadow: 0 0 0 3px var(--color-accent-soft);
     }
+  }
+}
+
+// Input and eye button read as one field: the button sits inside the input's
+// right edge, and the input's padding keeps text from running under it.
+.login__password {
+  position: relative;
+  display: block;
+
+  input {
+    box-sizing: border-box;
+    width: 100%;
+    padding-right: 42px;
+  }
+}
+
+.login__eye {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  transform: translateY(-50%);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-bg);
+    color: var(--color-text-primary);
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.login__remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.825rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+
+  input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--color-accent);
   }
 }
 

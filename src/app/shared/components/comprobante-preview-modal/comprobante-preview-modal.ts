@@ -10,6 +10,7 @@ const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
   styleUrl: './comprobante-preview-modal.scss',
 })
 export class ComprobantePreviewModal {
+  @Input() titulo = 'Comprobante de pago';
   @Input() nombreArchivo = 'Comprobante';
   @Input() url: string | null = null;
   @Input() loading = false;

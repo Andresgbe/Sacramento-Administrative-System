@@ -8,11 +8,10 @@ import {
 } from '../../../core/models/pago.model';
 import {
   PeriodFilter,
-  availableYears,
-  esPeriodoActual,
-  currentMonth,
-  currentYear,
-  matchesPeriod,
+  esRangoMesActual,
+  finMesActual,
+  inicioMesActual,
+  matchesRango,
 } from '../../../shared/components/period-filter/period-filter';
 import { EgresosService } from '../../egresos/egresos.service';
 import { PagosService } from '../../pagos/pagos.service';
@@ -56,17 +55,10 @@ export class BalancePage implements OnInit {
     remodelacion: 'Remodelación',
   };
 
-  protected readonly anio = signal(currentYear());
-  protected readonly mes = signal(currentMonth());
+  protected readonly fechaInicio = signal(inicioMesActual());
+  protected readonly fechaFin = signal(finMesActual());
 
-  protected readonly aniosDisponibles = computed(() =>
-    availableYears([
-      ...this.pagosService.all().map((pago) => pago.fecha),
-      ...this.egresosService.all().map((egreso) => egreso.fecha),
-    ]),
-  );
-
-  protected readonly hasActiveFilters = computed(() => !esPeriodoActual(this.anio(), this.mes()));
+  protected readonly hasActiveFilters = computed(() => !esRangoMesActual(this.fechaInicio(), this.fechaFin()));
 
   /**
    * Rent collected in the period. Canon only: condominio, Corpoelec and
@@ -79,7 +71,7 @@ export class BalancePage implements OnInit {
       .all()
       .filter(
         (pago) =>
-          esConceptoDeIngreso(pago.concepto) && matchesPeriod(pago.fecha, this.anio(), this.mes()),
+          esConceptoDeIngreso(pago.concepto) && matchesRango(pago.fecha, this.fechaInicio(), this.fechaFin()),
       )
       // Realised income only — unconverted payments are not money yet.
       .reduce((sum, pago) => sum + montoRealizado(pago), 0),
@@ -88,7 +80,7 @@ export class BalancePage implements OnInit {
   protected readonly egresos = computed(() =>
     this.egresosService
       .all()
-      .filter((egreso) => matchesPeriod(egreso.fecha, this.anio(), this.mes()))
+      .filter((egreso) => matchesRango(egreso.fecha, this.fechaInicio(), this.fechaFin()))
       .reduce((sum, egreso) => sum + egreso.monto, 0),
   );
 
@@ -119,12 +111,12 @@ export class BalancePage implements OnInit {
 
   /** Both sides of the ledger in one list, newest first. */
   protected readonly movimientos = computed<Movimiento[]>(() => {
-    const anio = this.anio();
-    const mes = this.mes();
+    const inicio = this.fechaInicio();
+    const fin = this.fechaFin();
 
     const ingresos: Movimiento[] = this.pagosService
       .all()
-      .filter((pago) => esConceptoDeIngreso(pago.concepto) && matchesPeriod(pago.fecha, anio, mes))
+      .filter((pago) => esConceptoDeIngreso(pago.concepto) && matchesRango(pago.fecha, inicio, fin))
       .map((pago) => ({
         id: `pago-${pago.id}`,
         tipo: 'ingreso' as const,
@@ -139,7 +131,7 @@ export class BalancePage implements OnInit {
 
     const egresos: Movimiento[] = this.egresosService
       .all()
-      .filter((egreso) => matchesPeriod(egreso.fecha, anio, mes))
+      .filter((egreso) => matchesRango(egreso.fecha, inicio, fin))
       .map((egreso) => ({
         id: `egreso-${egreso.id}`,
         tipo: 'egreso' as const,
@@ -163,19 +155,19 @@ export class BalancePage implements OnInit {
     this.tasasCambioService.load();
   }
 
-  protected setAnio(value: string): void {
-    this.anio.set(value);
+  protected setFechaInicio(value: string): void {
+    this.fechaInicio.set(value);
   }
 
-  protected setMes(value: string): void {
-    this.mes.set(value);
+  protected setFechaFin(value: string): void {
+    this.fechaFin.set(value);
   }
 
   protected clearAllFilters(): void {
     // Back to the current month, not "todos": that is the page's resting
     // state, and clearing into an all-time view silently changed what the
     // totals above were counting.
-    this.anio.set(currentYear());
-    this.mes.set(currentMonth());
+    this.fechaInicio.set(inicioMesActual());
+    this.fechaFin.set(finMesActual());
   }
 }

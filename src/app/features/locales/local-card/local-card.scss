@@ -125,6 +125,11 @@
   font-size: 0.8rem;
   font-weight: 600;
   color: #a16207;
+
+  // Carried over from earlier months: older than "Faltan", so it reads worse.
+  &--anterior {
+    color: var(--color-danger);
+  }
 }
 
 .local-card__pago-badge {

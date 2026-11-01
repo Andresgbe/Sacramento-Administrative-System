@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, computed, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { ModulosService } from '../../core/services/modulos.service';
 
 const COLLAPSED_STORAGE_KEY = 'sidebar-collapsed';
 
@@ -15,7 +16,8 @@ interface NavItem {
     | 'calculator'
     | 'reports'
     | 'services'
-    | 'users';
+    | 'users'
+    | 'audit';
   route: string;
 }
 
@@ -30,6 +32,11 @@ export class Sidebar {
   @Output() closeRequested = new EventEmitter<void>();
 
   private readonly authService = inject(AuthService);
+  private readonly modulosService = inject(ModulosService);
+
+  constructor() {
+    this.modulosService.load();
+  }
 
   protected readonly collapsed = signal(localStorage.getItem(COLLAPSED_STORAGE_KEY) === 'true');
 
@@ -52,9 +59,18 @@ export class Sidebar {
     { label: 'Reportes', icon: 'reports', route: '/reportes' },
   ];
 
-  protected readonly navItems = computed<NavItem[]>(() =>
-    this.authService.isAdmin()
-      ? [...this.baseNavItems, { label: 'Usuarios', icon: 'users', route: '/usuarios' }]
-      : this.baseNavItems,
-  );
+  // A module the admin principal switched off disappears for everyone,
+  // the principal included; it is switched back on from Admin auditoría.
+  protected readonly navItems = computed<NavItem[]>(() => {
+    const items = this.baseNavItems.filter((item) =>
+      this.modulosService.habilitado(item.route.slice(1)),
+    );
+    if (this.authService.isAdmin()) {
+      items.push({ label: 'Usuarios', icon: 'users', route: '/usuarios' });
+    }
+    if (this.authService.isPrincipal()) {
+      items.push({ label: 'Admin auditoría', icon: 'audit', route: '/auditoria' });
+    }
+    return items;
+  });
 }

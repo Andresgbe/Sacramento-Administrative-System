@@ -5,8 +5,8 @@
 <aside class="sidebar" [class.sidebar--open]="open" [class.sidebar--collapsed]="collapsed()">
   <div class="sidebar__brand-row">
     <div class="sidebar__brand">
-      <img class="sidebar__logo" src="/images/logo.jpg" alt="Centro Comercial Sacramento" />
-      <span class="sidebar__brand-name">Inmobiliaria Di Placido</span>
+      <img class="sidebar__logo-full" src="/images/logo-completo.jpg" alt="Inmobiliaria Di Placido C.A." />
+      <img class="sidebar__logo" src="/images/logo.jpg" alt="Inmobiliaria Di Placido C.A." />
     </div>
 
     <button
@@ -115,6 +115,16 @@
                   stroke-linecap="round"
                   stroke-linejoin="round"
                 />
+              </svg>
+            }
+            @case ('audit') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path
+                  d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6l-7-3Z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path d="m9 12 2 2 4-4" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             }
             @case ('users') {

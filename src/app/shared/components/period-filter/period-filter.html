@@ -1,19 +1,20 @@
+<!-- min/max keep the calendar from picking an end before the start. -->
 <label class="filters-field">
-  <span>Año</span>
-  <select [ngModel]="anio()" (ngModelChange)="onAnio($event)">
-    <option value="">Todos</option>
-    @for (year of anios(); track year) {
-      <option [value]="year">{{ year }}</option>
-    }
-  </select>
+  <span>Fecha inicio</span>
+  <input
+    type="date"
+    [ngModel]="inicio()"
+    [attr.max]="fin() || null"
+    (ngModelChange)="inicioChange.emit($event)"
+  />
 </label>
 
 <label class="filters-field">
-  <span>Mes</span>
-  <select [ngModel]="mes()" (ngModelChange)="onMes($event)">
-    <option value="">Todos</option>
-    @for (m of meses; track m.value) {
-      <option [value]="m.value">{{ m.label }}</option>
-    }
-  </select>
+  <span>Fecha final</span>
+  <input
+    type="date"
+    [ngModel]="fin()"
+    [attr.min]="inicio() || null"
+    (ngModelChange)="finChange.emit($event)"
+  />
 </label>

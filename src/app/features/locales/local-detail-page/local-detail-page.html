@@ -88,7 +88,27 @@
       }
 
       @if (pagoStatus() === 'parcial') {
-        <span class="detail-pago-pending"> Faltan $ {{ faltante() | number: '1.2-2' }} </span>
+        <span class="detail-pago-pending"> Faltan $ {{ faltante() | number: '1.2-2' }} este mes </span>
+      }
+
+      @if (deudaAnterior().length > 0) {
+        <div class="detail-deuda">
+          <span class="detail-deuda__title">Deuda de meses anteriores</span>
+          @for (mes of deudaAnterior(); track mes.periodo) {
+            <span class="detail-deuda__row">
+              {{ formatPeriodo(mes.periodo) }}
+              <span class="detail-pago-pending detail-pago-pending--anterior">
+                $ {{ mes.faltante | number: '1.2-2' }}
+              </span>
+            </span>
+          }
+          <span class="detail-deuda__row detail-deuda__row--total">
+            Total pendiente
+            <span class="detail-pago-pending detail-pago-pending--anterior">
+              $ {{ totalPendiente() | number: '1.2-2' }}
+            </span>
+          </span>
+        </div>
       }
     </div>
 
@@ -139,6 +159,62 @@
           appPositiveDecimal
         />
       </label>
+
+      <label class="field">
+        <span>Notas</span>
+        <textarea
+          formControlName="notas"
+          rows="5"
+          placeholder="Ej.: el contrato vence el 30/06/2027, se le sube 20% en enero…"
+        ></textarea>
+      </label>
+
+      <div class="field">
+        <span>Documentos</span>
+
+        @if (isAdmin()) {
+          <label class="upload-zone">
+            <input type="file" multiple (change)="onDocumentosSelected($event)" hidden />
+            <span class="upload-zone__icon" aria-hidden="true">&#128228;</span>
+            <span class="upload-zone__title">
+              {{ subiendoDocumentos() ? 'Subiendo…' : 'Subir documentos' }}
+            </span>
+            <span class="upload-zone__hint">
+              Fotos, contratos o cualquier archivo · se guardan al subirlos
+            </span>
+          </label>
+        }
+
+        @if (documentosError()) {
+          <p class="field__error">No se pudieron cargar los documentos: {{ documentosError() }}</p>
+        } @else if (documentos().length > 0) {
+          <ul class="upload-list">
+            @for (documento of documentos(); track documento.id) {
+              <li class="upload-list__item">
+                <button
+                  type="button"
+                  class="upload-list__name detail-documento"
+                  (click)="abrirDocumento(documento)"
+                >
+                  {{ documento.nombre }}
+                </button>
+                @if (isAdmin()) {
+                  <button
+                    type="button"
+                    class="upload-list__remove"
+                    (click)="quitarDocumento(documento)"
+                    [attr.aria-label]="'Quitar ' + documento.nombre"
+                  >
+                    &#10005;
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        } @else if (!isAdmin()) {
+          <p class="detail-documentos__vacio">Este local no tiene documentos.</p>
+        }
+      </div>
 
       @if (saveError()) {
         <p class="detail-form__error">{{ saveError() }}</p>
@@ -194,4 +270,15 @@
       </div>
     }
   </section>
+}
+
+@if (documentoAbierto(); as documento) {
+  <app-comprobante-preview-modal
+    titulo="Documento del local"
+    [nombreArchivo]="documento.nombre"
+    [url]="documentoUrl()"
+    [loading]="documentoUrlLoading()"
+    [errorMessage]="documentoUrlError()"
+    (closed)="cerrarDocumento()"
+  />
 }

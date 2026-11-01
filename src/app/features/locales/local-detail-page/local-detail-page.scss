@@ -181,6 +181,47 @@
   font-size: 0.8rem;
   font-weight: 600;
   color: #a16207;
+
+  &--anterior {
+    color: var(--color-danger);
+  }
+}
+
+// Canon carried over from earlier months, one row per month plus the total.
+.detail-deuda {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.detail-deuda__title {
+  margin-bottom: 2px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.detail-deuda__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+
+  &--total {
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid var(--color-border);
+    font-weight: 700;
+    color: var(--color-text-primary);
+  }
 }
 
 .detail-form {
@@ -202,7 +243,8 @@
   color: var(--color-text-secondary);
 
   input,
-  select {
+  select,
+  textarea {
     font-family: var(--font-body);
     font-size: 0.9rem;
     font-weight: 400;
@@ -221,6 +263,32 @@
       box-shadow: 0 0 0 3px var(--color-accent-soft);
     }
   }
+}
+
+.field textarea {
+  min-height: 110px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+// The file name opens it, so it reads as a link rather than plain text.
+.detail-documento {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-accent);
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.detail-documentos__vacio {
+  margin: 0;
+  font-weight: 400;
+  color: var(--color-text-muted);
 }
 
 .field--invalid input,
