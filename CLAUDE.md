@@ -70,9 +70,14 @@ A bare dollar sign on a screen is a bug: label it, and let
   format a money figure by hand (string concatenation, manual grouping) instead
   of the pipe or `toLocaleString('es-VE', …)`.
 - SCSS structure: organized global partials (variables, mixins, typography, etc.)
-- Favicon (`public/favicon.ico`) is a tight circular crop of `public/images/logo.jpg`
-  (the same building badge used in the sidebar/login), regenerated with Pillow —
-  no white/checkerboard halo, transparent background
+- **Logo** — Inmobiliaria Di Placido C.A.; the untouched original is
+  `resources/logo-di-placido.jpg`, and everything else is derived from it.
+  `public/images/logo-completo.jpg` is the full logo, used on the login card
+  and the expanded sidebar. `public/images/logo.jpg` is the building alone with
+  the wordmark painted out, for the collapsed rail's 52px circle, where the text
+  would be illegible and cut off.
+  `public/favicon.ico` is a circular crop of that same square on a transparent
+  background (16/32/48/256 px)
 
 ### Shared UI utilities
 
@@ -168,44 +173,40 @@ directives and services under `src/app/shared/`.
   `@if`: it used to vanish the moment it did its job, which read as the
   button deleting itself.
 - **`<app-period-filter>`** (`src/app/shared/components/period-filter/`) —
-  the Año + Mes filter pair, used by every report page (Pagos, Egresos,
-  Balance, Servicios). They are two **independent** selects, not one
-  `<input type="month">`, so "todo 2026" and "todos los septiembres" are both
-  expressible; `''` means "todos" on either. The host is `display: contents`
-  so its two `.filters-field` children land as direct grid items of
-  `.filters-bar` instead of sharing one cell. Ships with three helpers used
-  alongside it — `availableYears(fechas)` (years present in the data, newest
-  first, plus the current one), `matchesPeriod(fecha, anio, mes)` for the
-  filter predicate, `currentYear()` / `currentMonth()` for the default
-  signals, and `esPeriodoActual(anio, mes)`. Any new report page filters its
-  dates through these, never by hand-rolling `fecha.startsWith(...)`.
+  the **Fecha inicio + Fecha final** pair, used by every report page (Pagos,
+  Egresos, Balance, Servicios, Reportes, Admin auditoría). Two native
+  `<input type="date">` calendars with day, month and year, so any range across
+  months and years is expressible. It replaced separate Año and Mes selects,
+  which could not express "from March 2025 to June 2026". `''` on either end
+  means no limit on that side. The host is `display: contents`, so both fields
+  land as direct grid items of `.filters-bar__grid`. Helpers beside it:
+  `matchesRango(fecha, inicio, fin)` for the filter predicate,
+  `matchesRangoMensual()` for rows billed per month (see below),
+  `inicioMesActual()` / `finMesActual()` for the default signals, and
+  `esRangoMesActual(inicio, fin)`. Any new report page filters its dates through
+  these, never by hand-rolling string comparisons.
+
+  **Dates are compared as `YYYY-MM-DD` strings, never through `new Date()`**: a
+  date-only string parses as UTC midnight and rolls back a day in Venezuela.
+
+  **`facturas_servicio.periodo` is always the 1st of its month**, so bills go
+  through `matchesRangoMensual()`, which matches if the month touches the range.
+  The plain test would drop September's bill from "15 to 30 September".
 
   **Every report page opens on the current month, and "Limpiar filtros"
-  returns it there — never to "todos".** The one exception is **Reportes**,
-  which opens on every period and clears back to it: it is the complete
-  ledger and the point of it is searching across months, so it keeps the
-  plain `anio() !== ''` test instead. Three rules that have to move together
-  on the monthly pages, or the card misbehaves:
-  - `anio`/`mes` initialise to `currentYear()` / `currentMonth()`.
+  returns it there.** The one exception is **Reportes**, which opens with both
+  dates empty and clears back to that: it is the complete ledger and the point
+  of it is searching across months, so it keeps the plain `fechaInicio() !== ''`
+  test instead. Three rules that have to move together on the monthly pages, or
+  the card misbehaves:
+  - `fechaInicio`/`fechaFin` initialise to `inicioMesActual()` / `finMesActual()`.
   - `clearAllFilters()` sets them back to those, not to `''`. Clearing into
     an all-time view silently changed what the totals above the table were
     counting.
-  - `hasActiveFilters()` tests `!esPeriodoActual(anio, mes)`, **not**
-    `anio !== ''`. The current month is the resting state, not a filter the
-    user applied, so comparing against `''` left the clear button enabled on
-    a page nobody had touched yet.
+  - `hasActiveFilters()` tests `!esRangoMesActual(inicio, fin)`, **not**
+    `!== ''`. The current month is the resting state, not a filter the user
+    applied.
 
-  `''` still means "todos" on either select — it is reachable, just not where
-  the page starts or where clearing lands.
-
-  Both selects are driven by **`[ngModel]`, never a plain `[value]`
-  binding**. Angular applies a property binding on the `<select>` before the
-  `@for` has created its `<option>` children, so on first render the browser
-  finds no matching option and falls back to the first one. That is how the
-  filter spent a while actually filtering on the current month while the
-  select read "Todos" — a silent mismatch between what the page showed and
-  what it was doing. Same rule for any new `<select>` whose options are
-  rendered by a loop.
 - **`<app-monto-equivalencias>`**
   (`src/app/shared/components/monto-equivalencias/`) — the two lines that sit
   under every big money figure: `≈ … Bs` and `≈ $ … a tasa BCV`, both derived
@@ -369,7 +370,7 @@ directives and services under `src/app/shared/`.
 ## Database (PostgreSQL via Supabase)
 
 Implemented (migration + RLS in `supabase/migrations/`): usuarios, empresas,
-locales, pagos, pagos_comprobantes, condominio_estado, deudas, facturas_servicio,
+locales, locales_documentos, pagos, pagos_comprobantes, condominio_estado, deudas, facturas_servicio,
 facturas_servicio_fotos, egresos_servicio, documentos, tasas_cambio, egresos.
 Not built: `remodelaciones` (the works themselves — their *cost* is already
 covered by the `remodelacion` egreso category).
@@ -398,7 +399,15 @@ A business can rent more than one unit in the mall, so the two are separate:
   `imagen_url` (logo), `estado` (activo/inactivo/vencido), and its
   `documentos` (contrato/RIF scans hang off `documentos.empresa_id`).
 - **`locales`** owns only the physical unit — `numero_local`, `piso`,
-  `area_m2`, `monto_alquiler` — plus `empresa_id`.
+  `area_m2`, `monto_alquiler` — plus `empresa_id`, and `notas`, the admin's free
+  text (contract expiry, an agreed increase), written from the detail page and
+  never read by any calculation.
+- **`locales_documentos`** holds the files attached to one local, on its detail
+  page (`LocalDocumentosService`): one row per file, stored in the `documentos`
+  bucket under `locales/<local_id>/`. Separate from `documentos`, which belongs to
+  the empresa. They upload on pick, with no save step. **Removing one keeps the
+  Storage object on purpose**, unlike comprobantes: the client asked that nothing
+  be lost, and the audit log keeps the row's `ruta`.
 - Logos still upload to the Storage bucket named `locales` (renaming it would
   break the public URLs already stored on existing rows).
 - The Dashboard's "Empresas activas" tile counts `empresas`, not `locales` —
@@ -470,7 +479,8 @@ table. Anything registered now carries both. `requiereEmpresa()` and
   `PagoFormModal.esServicio()`), and `monto` (USD) is computed at submit time
   from that day's **USDT/Cash** rate. That computed figure is **real and is
   read back**: it is what these concepts contribute to every balance, since
-  they need no manual conversion. It was computed at BCV once, which put a
+  they had no manual conversion then (condominio has since gained one, see
+  "Conversión a USDT"). It was computed at BCV once, which put a
   BCV dollar in a column that holds USDT/Cash everywhere else and overstated
   every service payment by the gap between the two rates.
   The USD figures *displayed* for a service pago (the row, and the "Total
@@ -493,6 +503,14 @@ table. Anything registered now carries both. `requiereEmpresa()` and
   Only canon counts: a company can be current on its water bill and still owe
   rent. With no `montoAlquiler` on record it falls back to paid/unpaid, since
   there is nothing to compare against.
+- **Arrears carry forward** — `PagosService.deudaCanonAnterior()` lists every
+  month BEFORE the current one whose canon was not paid in full, counting
+  from the unit's first canon payment (nothing earlier is on record). A month
+  paid above the canon pays off the oldest debt first. The card shows the sum
+  as "Deuda anterior" and the detail page lists it per month with a "Total
+  pendiente"; the current month stays in "Faltan" as before, and the status
+  chip still describes only the current month. Limitation: every month is
+  measured against today's `montoAlquiler`.
 - **Income vs pass-through splits the screens.** `CONCEPTOS_DE_INGRESO`
   (`canon` + `condominio`) is the mall's own money and lives in **Reporte de
   pagos**, which has tabs Todos / Canon / Condominio. `corpoelec` and
@@ -577,21 +595,22 @@ exchange took a cut. So the amount that counts is the one that came back.
   neither half means anything alone.
 - **It is typed, never computed from a rate.** Deriving it would defeat the
   whole point, which is that what came back differs from the nominal amount.
-- **Only canon needs the manual step** (`requiereConversionManual()`). Canon
-  is agreed in dollars and arrives as dollars or as a transfer at whatever
-  rate was agreed, so what the mall ends up holding is unknown until it
-  actually buys USDT. **Condominio, Corpoelec and Hidrocapital are typed in
-  bolívares and the form values them at that day's USDT/Cash rate on the
-  spot** — `monto` is already the parallel figure, so they count immediately,
-  have no "sin convertir" state, and show "Automática" in the Conversión
-  column instead of a button. The **"Balance sin convertir" card is hidden on
-  those tabs entirely** (`muestraSinConvertir()`), keyed on the concepto and
-  not on the card reaching 0 — on Todos and Canon an empty queue is real
-  information, and hiding it there would make the card vanish the moment it
-  did its job, the same mistake `.filters-clear` made once.
+- **Every income concept needs the manual step** (`requiereConversionManual()`):
+  canon, condominio and otros. What the mall ends up holding is unknown until it
+  actually buys USDT. **Condominio is typed in bolívares and the form values it
+  at that day's USDT/Cash rate, but that `monto` is only an estimate**: it used
+  to count immediately and show "Automática", which the client rejected because
+  it read as dollars bought when the bolívares were still in the account. That
+  rule was dropped for every row, past ones included, so old condominio stopped
+  counting until converted. **Corpoelec and Hidrocapital stay automatic**: they
+  are forwarded to the provider, never become the mall's USDT, and no balance
+  counts them. The **"Balance sin convertir" card** (`muestraSinConvertir()`) is
+  keyed on the concepto, not on the card reaching 0: an empty queue is real
+  information, and hiding it would make the card vanish the moment it did its
+  job, the same mistake `.filters-clear` made once.
 - **Every income total goes through `montoRealizado(pago)`** in
-  `pago.model.ts` — `monto` for the bolívar concepts, `usdt_convertido ?? 0`
-  for canon. Reporte de pagos'
+  `pago.model.ts` — `usdt_convertido ?? 0` for income, `monto` for the two
+  pass-through services. Reporte de pagos'
   "Total cobrado", the Dashboard tiles and "Ingresos mensuales" chart, Balance
   and Reportes' summary cards all use it. **Never sum `pago.monto` for a
   balance again**: that is the nominal figure, which the mall may not have
@@ -720,7 +739,7 @@ not in the root of app/.
     is a separate scanned document in `documentos`
   - **Reporte de pagos**: tabs per concepto (Todos / Canon / Condominio /
     Corpoelec / Hidrocapital) with the total recomputed per tab, plus filters
-    for search, año, mes, monto range, empresa and local (the last two are
+    for search, fecha inicio/final, monto range, empresa and local (the last two are
     `<app-multi-select>`). Columns: ID, fecha, concepto chip, empresa, local
     (`—` for empresa-wide concepts), monto, tasa, descripción, comprobante and
     **conversión**. Full edit and delete.
@@ -784,7 +803,7 @@ not in the root of app/.
       `<app-pago-form-modal>` the three service concepts.
       The bills half records each month's bill for condominio, Corpoelec and
       Hidrocapital. One row per bill in `facturas_servicio`, with tabs per
-      service and the shared año/mes filter. Each bill carries **several photos**
+      service and the shared date-range filter. Each bill carries **several photos**
       (`facturas_servicio_fotos`) because a month's bill arrives as multiple
       pages — the Corpoelec sheets come in two parts. Files go to the existing
       private `documentos` bucket under `facturas/<factura_id>/`, same
@@ -815,7 +834,7 @@ not in the root of app/.
     Remodelaciones, count; Remodelaciones is a **subset of Egresos**, not a
     fourth side of the balance, shown so the works spend is visible without
     switching to Egresos and filtering),
-    filters for search, año, mes, tipo and empresa (both `<app-multi-select>`)
+    filters for search, fecha inicio/final, tipo and empresa (both `<app-multi-select>`)
     and a monto range, plus **Excel** and **PDF** buttons that export exactly
     the rows currently on screen. Read-only; nothing is registered here.
     Both libraries are **`import()`ed inside the click handler**, never at the
@@ -839,6 +858,31 @@ not in the root of app/.
   - **Calculadora**: BCV + paralelo rates from dolarapi.com, USDT from Binance
     P2P, fetched and cached once per day by the `tasas-cambio` Edge Function
     into the `tasas_cambio` table
+- **Admin principal** — `usuarios.es_principal`, exactly one admin
+  (`AuthService.isPrincipal()`, `principalGuard`). A flag rather than a third
+  `user_rol`, so every `rol = 'admin'` check stays as it is. A trigger stops
+  anyone signed in to the app from granting or dropping it, and stops the
+  principal being demoted; it is set only from the SQL Editor. SQL helper:
+  `public.es_admin_principal()`.
+- **Module switches** (`modulos_config`, `ModulosService`, `moduloGuard`) —
+  the principal hides sidebar modules for everyone from Admin auditoría →
+  Módulos. **Visibility only**: hiding a module never reads, changes or
+  deletes its data. A module with no row is on, and so is everything while
+  loading or if the read fails. Configurable modules are listed in
+  `MODULOS_CONFIGURABLES` (`core/models/modulo.model.ts`); Dashboard, Usuarios
+  and Admin auditoría are deliberately not, so the principal cannot lock
+  themselves out. A new module's route gets `canActivate: [moduloGuard]` and
+  an entry in that list. Servicios was shipped hidden.
+- **Admin auditoría** (`/auditoria`, principal only) — every insert, update
+  and delete on the business tables lands in `auditoria` through the
+  `registrar_auditoria()` trigger, with the full row before and after, so a
+  deleted record survives there in full. **Written only by the trigger**: no
+  insert/update/delete policy exists, so nobody, the principal included, can
+  edit or erase the log through the API. Tabs: Historial de cambios,
+  Eliminados, Módulos. `tasas_cambio` and `caja_chica` are not audited. A
+  new business table needs its trigger added in a migration, or its changes
+  go unrecorded. Storage files are NOT kept: a deleted comprobante's row is in
+  the log, but its file is gone.
 - Sidebar is collapsible on desktop (chevron toggle below the logo, icon-only
   rail at 76px, state persisted in `localStorage`); unchanged on mobile
   (<900px), which still uses the hamburger/overlay pattern
